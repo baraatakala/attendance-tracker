@@ -11,7 +11,7 @@ A comprehensive web-based attendance tracking system for schools and educational
 - 🔒 **Anti-Fraud Protection** - Built-in security measures to prevent false submissions
 - 📱 **Mobile-Responsive** - Works perfectly on all devices
 - 🌙 **Dark Mode Support** - Toggle between light and dark themes
-- ☁️ **Firebase Integration** - Cloud-based data storage and real-time sync
+- 💾 **Local Data Storage** - Secure browser-based data storage (no cloud dependencies)
 - 📈 **Excel Export** - Download attendance reports in Excel format
 - 🎨 **Modern UI** - Beautiful, intuitive user interface
 
@@ -22,7 +22,7 @@ Access the live application: [Class Attendance System](https://baraatakala.githu
 ## Technologies Used
 
 - HTML5, CSS3, JavaScript (ES6+)
-- Firebase Firestore for cloud storage
+- Local Storage for secure data persistence
 - Geolocation API for location tracking
 - Responsive design with CSS Grid and Flexbox
 - Font Awesome icons

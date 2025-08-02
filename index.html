@@ -7,38 +7,22 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    <!-- External Libraries -->
+    <script>
+        // Secure version - Using localStorage only (no exposed API keys)
+        // Note: Firebase integration removed for security compliance
         
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAp-A_3r1h5Ci9ebrPKN1A_msrjnJJN-7U",
-            authDomain: "baraa-6a2fb.firebaseapp.com",
-            databaseURL: "https://baraa-6a2fb-default-rtdb.firebaseio.com",
-            projectId: "baraa-6a2fb",
-            storageBucket: "baraa-6a2fb.firebasestorage.app",
-            messagingSenderId: "238515595857",
-            appId: "1:238515595857:web:d1deb7022766f9340fa670",
-            measurementId: "G-GN7HGVYY0L"
-        };
-        
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        // Make Firebase functions available globally
+        // Make localStorage functions available globally for compatibility
         window.firebase = {
-            db,
-            collection,
-            addDoc,
-            getDocs,
-            deleteDoc,
-            doc,
-            onSnapshot,
-            orderBy,
-            query
+            // Placeholder functions for Firebase compatibility
+            addDoc: () => Promise.resolve({ id: 'local_' + Date.now() }),
+            getDocs: () => Promise.resolve({ forEach: () => {} }),
+            deleteDoc: () => Promise.resolve(),
+            collection: () => ({}),
+            doc: () => ({}),
+            onSnapshot: () => {},
+            orderBy: () => ({}),
+            query: () => ({})
         };
     </script>
     
@@ -5745,102 +5729,41 @@ ${tips.join('\n')}
             }
         }
         
-        // Firebase Functions
+        // Secure Data Storage Functions (localStorage only - no exposed secrets)
         async function saveDataToFirestore(record) {
             try {
-                showMessage('Saving to cloud...', 'info');
-                const docRef = await window.firebase.addDoc(
-                    window.firebase.collection(window.firebase.db, 'attendance'), 
-                    record
-                );
-                console.log('Document written with ID: ', docRef.id);
-                showMessage('Attendance saved to cloud!', 'success');
+                // Save to localStorage instead of cloud for security
+                let localData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                localData.unshift(record);
+                localStorage.setItem('attendanceData', JSON.stringify(localData));
+                showMessage('Attendance saved successfully!', 'success');
             } catch (error) {
-                console.error('Error adding document: ', error);
-                showMessage('Error saving to cloud: ' + error.message, 'error');
-                
-                // Fallback to localStorage if Firebase fails
-                try {
-                    let localData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-                    localData.unshift(record);
-                    localStorage.setItem('attendanceData', JSON.stringify(localData));
-                    showMessage('Saved locally instead', 'warning');
-                } catch (localError) {
-                    showMessage('Failed to save data', 'error');
-                }
+                showMessage('Error saving data: ' + error.message, 'error');
             }
         }       
 
         async function loadDataFromFirestore() {
             try {
-                showMessage('Loading data from cloud...', 'info');
-                const q = window.firebase.query(
-                    window.firebase.collection(window.firebase.db, 'attendance'),
-                    window.firebase.orderBy('timestamp', 'desc')
-                );
-                const querySnapshot = await window.firebase.getDocs(q);
-                
-                attendanceData = [];
-                querySnapshot.forEach((doc) => {
-                    attendanceData.push({
-                        firestoreId: doc.id,
-                        ...doc.data()
-                    });
-                });
-                
-                displayRecords();
-                updateStatistics();
-                populateFilterDropdowns();
-                showMessage('Data loaded from cloud!', 'success');
+                // Load from localStorage instead of cloud
+                const saved = localStorage.getItem('attendanceData');
+                if (saved) {
+                    attendanceData = JSON.parse(saved);
+                    displayRecords();
+                    updateStatistics();
+                    populateFilterDropdowns();
+                    showMessage('Data loaded successfully!', 'success');
+                } else {
+                    showMessage('No saved data found', 'info');
+                }
             } catch (error) {
                 console.error('Error loading data: ', error);
-                showMessage('Cloud connection failed, using local storage', 'warning');
-                
-                // Fallback to localStorage
-                try {
-                    const saved = localStorage.getItem('attendanceData');
-                    if (saved) {
-                        attendanceData = JSON.parse(saved);
-                        displayRecords();
-                        updateStatistics();
-                        populateFilterDropdowns();
-                        showMessage('Local data loaded', 'info');
-                    }
-                } catch (localError) {
-                    showMessage('No data found', 'info');
-                }
+                showMessage('Error loading data: ' + error.message, 'error');
             }
         }
 
         function setupRealtimeListener() {
-            try {
-                const q = window.firebase.query(
-                    window.firebase.collection(window.firebase.db, 'attendance'),
-                    window.firebase.orderBy('timestamp', 'desc')
-                );
-                
-                window.firebase.onSnapshot(q, (querySnapshot) => {
-                    attendanceData = [];
-                    querySnapshot.forEach((doc) => {
-                        attendanceData.push({
-                            firestoreId: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    
-                    displayRecords();
-                    updateStatistics();
-                    populateFilterDropdowns();
-                }, (error) => {
-                    console.error('Real-time listener error:', error);
-                    showMessage('Real-time sync disabled', 'warning');
-                });
-                
-                showMessage('Real-time sync enabled!', 'info');
-            } catch (error) {
-                console.error('Error setting up real-time listener: ', error);
-                showMessage('Real-time sync failed: ' + error.message, 'warning');
-            }
+            // Real-time sync disabled for security (no cloud connection)
+            console.log('Real-time sync not available in secure mode');
         }
 
         async function deleteRecordFromFirestore(recordId) {
@@ -5848,27 +5771,21 @@ ${tips.join('\n')}
                 showLoading(true);
                 showMessage('Deleting record...', 'info');
                 
-                // Find the record with matching id
-                const record = attendanceData.find(r => r.id === recordId);
-                if (record && record.firestoreId) {
-                    await window.firebase.deleteDoc(
-                        window.firebase.doc(window.firebase.db, 'attendance', record.firestoreId)
-                    );
-                    showMessage('Record deleted successfully', 'success');
-                } else {
-                    showMessage('Record not found in cloud', 'warning');
-                }
-                
-                // Remove from local array regardless
+                // Remove from local array
                 attendanceData = attendanceData.filter(r => r.id !== recordId);
+                
+                // Save updated data to localStorage
+                localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
                 
                 // Update displays
                 displayRecords();
                 updateStatistics();
                 
+                showMessage('Record deleted successfully', 'success');
+                
             } catch (error) {
-                console.error('Error deleting document: ', error);
-                showMessage('Error deleting from cloud: ' + error.message, 'error');
+                console.error('Error deleting record: ', error);
+                showMessage('Error deleting record: ' + error.message, 'error');
             } finally {
                 showLoading(false);
             }
@@ -5877,22 +5794,7 @@ ${tips.join('\n')}
         async function clearAllDataFromFirestore() {
             try {
                 showLoading(true);
-                showMessage('Clearing all data from cloud...', 'info');
-                
-                const querySnapshot = await window.firebase.getDocs(
-                    window.firebase.collection(window.firebase.db, 'attendance')
-                );
-                
-                const deletePromises = [];
-                querySnapshot.forEach((doc) => {
-                    deletePromises.push(
-                        window.firebase.deleteDoc(
-                            window.firebase.doc(window.firebase.db, 'attendance', doc.id)
-                        )
-                    );
-                });
-                
-                await Promise.all(deletePromises);
+                showMessage('Clearing all data...', 'info');
                 
                 // Clear local data
                 attendanceData = [];
@@ -5906,7 +5808,7 @@ ${tips.join('\n')}
                 showMessage('All data cleared successfully', 'success');
             } catch (error) {
                 console.error('Error clearing data: ', error);
-                showMessage('Error clearing cloud data: ' + error.message, 'error');
+                showMessage('Error clearing data: ' + error.message, 'error');
             } finally {
                 showLoading(false);
             }
