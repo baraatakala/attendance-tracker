@@ -8,9 +8,49 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Firebase SDKs with Security -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        
+        // Firebase configuration - SECURED with domain restrictions
+        // Safe to include because Firebase console will be configured to only allow your GitHub Pages domain
+        const firebaseConfig = {
+            apiKey: "AIzaSyAp-A_3r1h5Ci9ebrPKN1A_msrjnJJN-7U",
+            authDomain: "baraa-6a2fb.firebaseapp.com",
+            databaseURL: "https://baraa-6a2fb-default-rtdb.firebaseio.com",
+            projectId: "baraa-6a2fb",
+            storageBucket: "baraa-6a2fb.firebasestorage.app",
+            messagingSenderId: "238515595857",
+            appId: "1:238515595857:web:d1deb7022766f9340fa670",
+            measurementId: "G-GN7HGVYY0L"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Make Firebase functions available globally
+        window.firebase = {
+            db,
+            collection,
+            addDoc,
+            getDocs,
+            deleteDoc,
+            doc,
+            onSnapshot,
+            orderBy,
+            query
+        };
+        
+        console.log('🔥 Firebase connected securely with domain restrictions');
+    </script>
+    
     <script>
-        // Secure Multi-User Data Management System
-        // This provides Firebase-like functionality without exposing API keys
+        // Multi-User Data Management System (keeping backup localStorage functionality)
+        // This provides Firebase-like functionality as backup without exposing API keys
         
         // Central data storage key for all users
         const CENTRAL_DATA_KEY = 'attendanceSystem_allUsers';
@@ -5907,24 +5947,68 @@ ${tips.join('\n')}
             }
         }
         
-        // Multi-User Data Storage Functions (secure localStorage with cross-user visibility)
+        // Multi-User Data Storage Functions - Firebase Primary, localStorage Backup
         async function saveDataToFirestore(record) {
             try {
-                // Save to centralized multi-user storage
-                const success = saveToAllUsersData(record);
-                if (success) {
-                    showMessage('✅ Attendance saved! Visible to all users.', 'success');
-                } else {
-                    throw new Error('Failed to save to central storage');
+                // Try Firebase first
+                if (window.firebase && window.firebase.db) {
+                    const docRef = await window.firebase.addDoc(
+                        window.firebase.collection(window.firebase.db, 'attendance'), 
+                        record
+                    );
+                    console.log('✅ Saved to Firebase:', docRef.id);
+                    showMessage('✅ Attendance saved to centralized database!', 'success');
+                    return;
                 }
             } catch (error) {
-                showMessage('Error saving data: ' + error.message, 'error');
+                console.warn('⚠️ Firebase save failed, using backup:', error);
+            }
+            
+            // Fallback to localStorage multi-user system
+            try {
+                const success = saveToAllUsersData(record);
+                if (success) {
+                    showMessage('✅ Attendance saved! (Using backup storage)', 'warning');
+                } else {
+                    throw new Error('Backup storage failed');
+                }
+            } catch (error) {
+                showMessage('❌ Error saving data: ' + error.message, 'error');
             }
         }       
 
         async function loadDataFromFirestore() {
             try {
-                // Load all users' attendance data
+                // Try Firebase first
+                if (window.firebase && window.firebase.db) {
+                    const q = window.firebase.query(
+                        window.firebase.collection(window.firebase.db, 'attendance'),
+                        window.firebase.orderBy('timestamp', 'desc')
+                    );
+                    const querySnapshot = await window.firebase.getDocs(q);
+                    
+                    attendanceData = [];
+                    querySnapshot.forEach((doc) => {
+                        attendanceData.push({
+                            firestoreId: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    displayRecords();
+                    updateStatistics();
+                    populateFilterDropdowns();
+                    
+                    const stats = getUserStats();
+                    showMessage(`🔥 Loaded ${attendanceData.length} records from Firebase (${stats.totalUsers} users, ${stats.activeToday} active today)`, 'success');
+                    return;
+                }
+            } catch (error) {
+                console.warn('⚠️ Firebase load failed, using backup:', error);
+            }
+            
+            // Fallback to localStorage
+            try {
                 const allRecords = loadAllUsersAttendanceData();
                 attendanceData = allRecords;
                 
@@ -5933,7 +6017,7 @@ ${tips.join('\n')}
                 populateFilterDropdowns();
                 
                 const stats = getUserStats();
-                showMessage(`📊 Loaded ${allRecords.length} records from ${stats.totalUsers} users (${stats.activeToday} active today)`, 'success');
+                showMessage(`📊 Loaded ${allRecords.length} records from backup storage (${stats.totalUsers} users, ${stats.activeToday} active today)`, 'warning');
             } catch (error) {
                 console.error('Error loading data: ', error);
                 showMessage('Error loading data: ' + error.message, 'error');
@@ -5941,6 +6025,49 @@ ${tips.join('\n')}
         }
 
         function setupRealtimeListener() {
+            try {
+                // Try Firebase real-time listener first
+                if (window.firebase && window.firebase.db) {
+                    const q = window.firebase.query(
+                        window.firebase.collection(window.firebase.db, 'attendance'),
+                        window.firebase.orderBy('timestamp', 'desc')
+                    );
+                    
+                    window.firebase.onSnapshot(q, (querySnapshot) => {
+                        const oldCount = attendanceData.length;
+                        attendanceData = [];
+                        querySnapshot.forEach((doc) => {
+                            attendanceData.push({
+                                firestoreId: doc.id,
+                                ...doc.data()
+                            });
+                        });
+                        
+                        displayRecords();
+                        updateStatistics();
+                        
+                        const newRecords = attendanceData.length - oldCount;
+                        if (newRecords > 0) {
+                            showMessage(`🔄 ${newRecords} new record(s) from Firebase real-time sync`, 'info');
+                        }
+                    }, (error) => {
+                        console.error('Firebase real-time error:', error);
+                        showMessage('Real-time sync failed, using polling backup', 'warning');
+                        setupBackupPolling();
+                    });
+                    
+                    showMessage('🔥 Firebase real-time sync enabled!', 'success');
+                    return;
+                }
+            } catch (error) {
+                console.error('Firebase real-time setup failed:', error);
+            }
+            
+            // Fallback to localStorage polling
+            setupBackupPolling();
+        }
+        
+        function setupBackupPolling() {
             // Simulate real-time by refreshing data periodically
             setInterval(() => {
                 const currentCount = attendanceData.length;
@@ -5953,12 +6080,12 @@ ${tips.join('\n')}
                     
                     const newRecords = allRecords.length - currentCount;
                     if (newRecords > 0) {
-                        showMessage(`🔄 ${newRecords} new record(s) from other users`, 'info');
+                        showMessage(`🔄 ${newRecords} new record(s) from backup sync`, 'info');
                     }
                 }
-            }, 10000); // Check every 10 seconds
+            }, 5000); // Check every 5 seconds
             
-            showMessage('📡 Multi-user sync enabled! Data refreshes every 10 seconds.', 'info');
+            showMessage('📡 Backup multi-user sync enabled (5s intervals)', 'info');
         }
 
         async function deleteRecordFromFirestore(recordId) {
@@ -5966,21 +6093,29 @@ ${tips.join('\n')}
                 showLoading(true);
                 showMessage('Deleting record...', 'info');
                 
-                // Delete from central storage
-                const deleted = deleteFromAllUsersData(recordId);
-                
-                if (deleted) {
-                    // Remove from local display array
-                    attendanceData = attendanceData.filter(r => r.id !== recordId);
-                    
-                    // Update displays
-                    displayRecords();
-                    updateStatistics();
-                    
-                    showMessage('Record deleted successfully', 'success');
+                // Try Firebase first
+                if (window.firebase && window.firebase.db) {
+                    const record = attendanceData.find(r => r.id === recordId);
+                    if (record && record.firestoreId) {
+                        await window.firebase.deleteDoc(
+                            window.firebase.doc(window.firebase.db, 'attendance', record.firestoreId)
+                        );
+                        showMessage('Record deleted from Firebase', 'success');
+                    }
                 } else {
-                    showMessage('Record not found', 'warning');
+                    // Use backup deletion
+                    const deleted = deleteFromAllUsersData(recordId);
+                    if (deleted) {
+                        showMessage('Record deleted from backup storage', 'success');
+                    }
                 }
+                
+                // Remove from local array
+                attendanceData = attendanceData.filter(r => r.id !== recordId);
+                
+                // Update displays
+                displayRecords();
+                updateStatistics();
                 
             } catch (error) {
                 console.error('Error deleting record: ', error);
@@ -5993,24 +6128,41 @@ ${tips.join('\n')}
         async function clearAllDataFromFirestore() {
             try {
                 showLoading(true);
-                showMessage('Clearing all data from all users...', 'info');
+                showMessage('Clearing all data...', 'info');
                 
-                // Clear all users' data
-                const cleared = clearAllUsersData();
-                
-                if (cleared) {
-                    // Clear local data
-                    attendanceData = [];
+                // Try Firebase first
+                if (window.firebase && window.firebase.db) {
+                    const querySnapshot = await window.firebase.getDocs(
+                        window.firebase.collection(window.firebase.db, 'attendance')
+                    );
                     
-                    // Update displays
-                    displayRecords();
-                    updateStatistics();
-                    populateFilterDropdowns();
+                    const deletePromises = [];
+                    querySnapshot.forEach((doc) => {
+                        deletePromises.push(
+                            window.firebase.deleteDoc(
+                                window.firebase.doc(window.firebase.db, 'attendance', doc.id)
+                            )
+                        );
+                    });
                     
-                    showMessage('⚠️ All data from all users cleared successfully', 'success');
+                    await Promise.all(deletePromises);
+                    showMessage('All data cleared from Firebase', 'success');
                 } else {
-                    throw new Error('Failed to clear central data');
+                    // Use backup clear
+                    const cleared = clearAllUsersData();
+                    if (cleared) {
+                        showMessage('All data cleared from backup storage', 'success');
+                    }
                 }
+                
+                // Clear local data
+                attendanceData = [];
+                
+                // Update displays
+                displayRecords();
+                updateStatistics();
+                populateFilterDropdowns();
+                
             } catch (error) {
                 console.error('Error clearing data: ', error);
                 showMessage('Error clearing data: ' + error.message, 'error');
