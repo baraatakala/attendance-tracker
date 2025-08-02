@@ -3536,6 +3536,13 @@
         let pendingAdminAction = null;
 
         function requestAdminAccess(action) {
+            // Validate action before proceeding
+            if (!action || action === null || action === undefined) {
+                console.warn('Invalid admin action requested:', action);
+                showMessage('Invalid admin action requested', 'warning');
+                return;
+            }
+            
             if (isAdminMode) {
                 // Already authenticated, execute action directly
                 executeAdminAction(action);
@@ -3634,6 +3641,12 @@
         }
 
         function executeAdminAction(action) {
+            // Check if action is valid
+            if (!action || action === null || action === undefined) {
+                console.warn('No admin action specified');
+                return;
+            }
+            
             switch(action) {
                 case 'viewRecords':
                     toggleRecordsView();
@@ -3647,8 +3660,19 @@
                 case 'viewSecurityLogs':
                     showSecurityLogsModal();
                     break;
+                case 'downloadExcel':
+                    downloadExcel();
+                    break;
+                case 'resetSubmissionCounter':
+                    resetSubmissionCounter();
+                    break;
+                case 'resetFraudProtection':
+                    resetFraudProtectionData();
+                    showMessage('Fraud protection data reset', 'success');
+                    break;
                 default:
                     console.error('Unknown admin action:', action);
+                    showMessage('Unknown admin action requested', 'error');
             }
         }
 
