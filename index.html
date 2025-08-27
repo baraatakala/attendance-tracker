@@ -7,240 +7,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <!-- Firebase SDKs with Security -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        
-        // Firebase configuration - SECURED with domain restrictions
-        // Safe to include because Firebase console will be configured to only allow your GitHub Pages domain
-        const firebaseConfig = {
-            apiKey: "AIzaSyAp-A_3r1h5Ci9ebrPKN1A_msrjnJJN-7U",
-            authDomain: "baraa-6a2fb.firebaseapp.com",
-            databaseURL: "https://baraa-6a2fb-default-rtdb.firebaseio.com",
-            projectId: "baraa-6a2fb",
-            storageBucket: "baraa-6a2fb.firebasestorage.app",
-            messagingSenderId: "238515595857",
-            appId: "1:238515595857:web:d1deb7022766f9340fa670",
-            measurementId: "G-GN7HGVYY0L"
-        };
-        
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        // Make Firebase functions available globally
-        window.firebase = {
-            db,
-            collection,
-            addDoc,
-            getDocs,
-            deleteDoc,
-            doc,
-            onSnapshot,
-            orderBy,
-            query
-        };
-        
-        console.log('🔥 Firebase connected securely with domain restrictions');
-    </script>
-    
-    <script>
-        // Multi-User Data Management System (keeping backup localStorage functionality)
-        // This provides Firebase-like functionality as backup without exposing API keys
-        
-        // Central data storage key for all users
-        const CENTRAL_DATA_KEY = 'attendanceSystem_allUsers';
-        const USER_SESSION_KEY = 'attendanceSystem_currentUser';
-        
-        // Get or create user session
-        function getCurrentUser() {
-            let user = localStorage.getItem(USER_SESSION_KEY);
-            if (!user) {
-                // Create a new user session
-                const userId = 'user_' + Date.now().toString(36) + Math.random().toString(36).substr(2);
-                const deviceInfo = {
-                    platform: navigator.platform,
-                    userAgent: navigator.userAgent.substring(0, 50),
-                    language: navigator.language,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-                };
-                user = JSON.stringify({
-                    id: userId,
-                    deviceInfo: deviceInfo,
-                    createdAt: new Date().toISOString(),
-                    lastActive: new Date().toISOString()
-                });
-                localStorage.setItem(USER_SESSION_KEY, user);
-            }
-            return JSON.parse(user);
-        }
-        
-        // Central data management functions
-        function getAllUsersData() {
-            try {
-                const data = localStorage.getItem(CENTRAL_DATA_KEY);
-                return data ? JSON.parse(data) : {};
-            } catch (error) {
-                console.error('Error loading central data:', error);
-                return {};
-            }
-        }
-        
-        function saveToAllUsersData(record) {
-            try {
-                const currentUser = getCurrentUser();
-                const allData = getAllUsersData();
-                
-                // Add user info to record
-                record.userId = currentUser.id;
-                record.userDevice = currentUser.deviceInfo.platform;
-                record.submittedBy = currentUser.id;
-                
-                // Create user-specific array if it doesn't exist
-                if (!allData[currentUser.id]) {
-                    allData[currentUser.id] = [];
-                }
-                
-                // Add record to user's data
-                allData[currentUser.id].unshift(record);
-                
-                // Save back to central storage
-                localStorage.setItem(CENTRAL_DATA_KEY, JSON.stringify(allData));
-                
-                return true;
-            } catch (error) {
-                console.error('Error saving to central data:', error);
-                return false;
-            }
-        }
-        
-        function loadAllUsersAttendanceData() {
-            try {
-                const allData = getAllUsersData();
-                const allRecords = [];
-                
-                // Combine all users' data
-                Object.keys(allData).forEach(userId => {
-                    if (Array.isArray(allData[userId])) {
-                        allData[userId].forEach(record => {
-                            allRecords.push(record);
-                        });
-                    }
-                });
-                
-                // Sort by timestamp (newest first)
-                allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                
-                return allRecords;
-            } catch (error) {
-                console.error('Error loading all users data:', error);
-                return [];
-            }
-        }
-        
-        function deleteFromAllUsersData(recordId) {
-            try {
-                const allData = getAllUsersData();
-                let deleted = false;
-                
-                // Find and remove the record from any user's data
-                Object.keys(allData).forEach(userId => {
-                    if (Array.isArray(allData[userId])) {
-                        const originalLength = allData[userId].length;
-                        allData[userId] = allData[userId].filter(record => record.id !== recordId);
-                        if (allData[userId].length < originalLength) {
-                            deleted = true;
-                        }
-                    }
-                });
-                
-                if (deleted) {
-                    localStorage.setItem(CENTRAL_DATA_KEY, JSON.stringify(allData));
-                }
-                
-                return deleted;
-            } catch (error) {
-                console.error('Error deleting from central data:', error);
-                return false;
-            }
-        }
-        
-        function clearAllUsersData() {
-            try {
-                localStorage.removeItem(CENTRAL_DATA_KEY);
-                return true;
-            } catch (error) {
-                console.error('Error clearing all users data:', error);
-                return false;
-            }
-        }
-        
-        function getUserStats() {
-            try {
-                const allData = getAllUsersData();
-                const stats = {
-                    totalUsers: Object.keys(allData).length,
-                    totalRecords: 0,
-                    activeToday: 0,
-                    userBreakdown: {}
-                };
-                
-                const today = new Date().toLocaleDateString('en-US');
-                
-                Object.keys(allData).forEach(userId => {
-                    if (Array.isArray(allData[userId])) {
-                        const userRecords = allData[userId];
-                        stats.totalRecords += userRecords.length;
-                        
-                        const todayRecords = userRecords.filter(record => record.date === today);
-                        if (todayRecords.length > 0) {
-                            stats.activeToday++;
-                        }
-                        
-                        stats.userBreakdown[userId] = {
-                            totalRecords: userRecords.length,
-                            todayRecords: todayRecords.length,
-                            lastActivity: userRecords[0]?.timestamp ? new Date(userRecords[0].timestamp).toLocaleDateString() : 'Never'
-                        };
-                    }
-                });
-                
-                return stats;
-            } catch (error) {
-                console.error('Error getting user stats:', error);
-                return { totalUsers: 0, totalRecords: 0, activeToday: 0, userBreakdown: {} };
-            }
-        }
-        
-        // Placeholder Firebase compatibility functions
-        window.firebase = {
-            addDoc: (collection, record) => {
-                const success = saveToAllUsersData(record);
-                return Promise.resolve({ id: record.id || 'local_' + Date.now() });
-            },
-            getDocs: () => {
-                const allRecords = loadAllUsersAttendanceData();
-                return Promise.resolve({
-                    forEach: (callback) => {
-                        allRecords.forEach(record => {
-                            callback({ id: record.id, data: () => record });
-                        });
-                    }
-                });
-            },
-            deleteDoc: (docRef) => Promise.resolve(),
-            collection: () => ({}),
-            doc: () => ({}),
-            onSnapshot: () => {},
-            orderBy: () => ({}),
-            query: () => ({})
-        };
-    </script>
-    
     <style>
         /* CSS Variables for Theme Support */
         :root {
@@ -501,12 +267,17 @@
             line-height: 1.4;
         }
 
-        /* Submit Button */
-        .submit-btn {
-            background: linear-gradient(135deg, var(--button-success), #2ecc71);
-            color: white;
+        /* Attendance Buttons */
+        .attendance-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .attendance-btn {
+            flex: 1;
+            padding: 15px 20px;
             border: none;
-            padding: 15px 30px;
             border-radius: 8px;
             font-size: 1.1rem;
             font-weight: 600;
@@ -515,20 +286,161 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .submit-btn:hover {
+        .attendance-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
-        .submit-btn:disabled {
-            background: #95a5a6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        .attendance-btn.selected {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: pulseSelected 0.6s ease;
+        }
+
+        @keyframes pulseSelected {
+            0% { transform: translateY(-1px) scale(1); }
+            50% { transform: translateY(-1px) scale(1.05); }
+            100% { transform: translateY(-1px) scale(1); }
+        }
+
+        .present-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        .present-btn:hover {
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+        }
+
+        .present-btn.selected {
+            background: linear-gradient(135deg, #1e8449, #27ae60);
+        }
+
+        .absent-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .absent-btn:hover {
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+        }
+
+        .absent-btn.selected {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+        }
+
+        /* Confirmation Modal */
+        .confirmation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .confirmation-modal {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 0;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .confirmation-header {
+            background: var(--button-primary);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            text-align: center;
+        }
+
+        .confirmation-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .confirmation-header i {
+            margin-right: 8px;
+        }
+
+        .confirmation-body {
+            padding: 25px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .confirmation-body p {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .confirmation-actions {
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .confirm-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .confirm-btn.cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .confirm-btn.cancel-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .confirm-btn.confirm-btn-yes {
+            background: var(--button-success);
+            color: white;
+        }
+
+        .confirm-btn.confirm-btn-yes:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
         }
 
         /* Fraud Protection Status */
@@ -1969,6 +1881,16 @@
             color: #0c5460;
         }
 
+        .status-badge.present {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.absent {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .container {
@@ -2181,21 +2103,21 @@
                             </div>
                         </div>
 
-                        <!-- Action Type -->
+                        <!-- Attendance Status -->
                         <div class="form-group">
-                            <label for="actionType"><i class="fas fa-tasks"></i> Action Type:</label>
-                            <select id="actionType" name="actionType" required 
-                                    aria-describedby="action-help" 
-                                    aria-label="Select type of attendance action">
-                                <option value="">-- Select Action --</option>
-                                <option value="check-in">✅ Check In</option>
-                                <option value="check-out">🚪 Check Out</option>
-                                <option value="break-start">☕ Break Start</option>
-                                <option value="break-end">🔄 Break End</option>
-                                <option value="lunch-start">🍽️ Lunch Start</option>
-                                <option value="lunch-end">🍽️ Lunch End</option>
-                            </select>
-                            <small id="action-help" class="form-help">Choose the appropriate attendance action</small>
+                            <label><i class="fas fa-user-check"></i> Mark Attendance:</label>
+                            <div class="attendance-buttons">
+                                <button type="button" id="presentBtn" class="attendance-btn present-btn" tabindex="0">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Present</span>
+                                </button>
+                                <button type="button" id="absentBtn" class="attendance-btn absent-btn" tabindex="0">
+                                    <i class="fas fa-times-circle"></i>
+                                    <span>Absent</span>
+                                </button>
+                            </div>
+                            <input type="hidden" id="attendanceStatus" name="attendanceStatus" required>
+                            <small id="attendance-help" class="form-help">Click Present or Absent to mark attendance</small>
                         </div>
 
                         <!-- Date & Time (Auto-filled) -->
@@ -2230,15 +2152,6 @@
                             <small id="notes-help" class="form-help">Optional additional information (max 500 characters)</small>
                         </div>
 
-                        <!-- Submit Button -->
-                        <button type="submit" class="submit-btn" id="submitBtn" 
-                                aria-describedby="submit-help"
-                                aria-label="Submit attendance record">
-                            <i class="fas fa-save" aria-hidden="true"></i>
-                            <span id="submitText">Record Attendance</span>
-                        </button>
-                        <small id="submit-help" class="form-help">Click to save the attendance record</small>
-                        
                         <!-- Fraud Protection Status -->
                         <div class="fraud-protection-status" id="fraudProtectionStatus" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #007bff;">
                             <div class="status-header">
@@ -2259,21 +2172,18 @@
             <!-- Action Buttons -->
             <section class="actions-section">
                 <div class="action-buttons">
-                    <button id="viewRecordsBtn" class="action-btn primary" onclick="requestAdminAccess('viewRecords')">
+                    <button id="viewRecordsBtn" class="action-btn primary">
                         <i class="fas fa-eye"></i> View Records
                         <i class="fas fa-lock admin-lock-icon" title="Admin access required"></i>
                     </button>
                     <button id="downloadBtn" class="action-btn success">
                         <i class="fas fa-download"></i> Download Excel
                     </button>
-                    <button id="multiUserStatsBtn" class="action-btn info" onclick="showMultiUserStats()">
-                        <i class="fas fa-users"></i> Multi-User Stats
-                    </button>
-                    <button id="clearBtn" class="action-btn danger" onclick="requestAdminAccess('clearData')">
-                        <i class="fas fa-trash"></i> Clear All Users' Data
+                    <button id="clearBtn" class="action-btn danger">
+                        <i class="fas fa-trash"></i> Clear Data
                         <i class="fas fa-lock admin-lock-icon" title="Admin access required"></i>
                     </button>
-                    <button id="securityLogsBtn" class="action-btn warning" onclick="requestAdminAccess('viewSecurityLogs')">
+                    <button id="securityLogsBtn" class="action-btn warning">
                         <i class="fas fa-shield-alt"></i> Security Logs
                         <i class="fas fa-lock admin-lock-icon" title="Admin access required"></i>
                     </button>
@@ -2298,9 +2208,12 @@
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label for="filterAction"><i class="fas fa-filter"></i> Action:</label>
+                            <label for="filterAction"><i class="fas fa-filter"></i> Status:</label>
                             <select id="filterAction">
-                                <option value="">All Actions</option>
+                                <option value="">All Status</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <!-- Legacy options for backward compatibility -->
                                 <option value="check-in">Check In</option>
                                 <option value="check-out">Check Out</option>
                                 <option value="break-start">Break Start</option>
@@ -2615,8 +2528,8 @@
         let submissionCount = 0;
         let lastSubmittedStudent = '';
         let suspiciousActivity = false;
-        const SUBMISSION_COOLDOWN = 120000; // 2 minutes between submissions
-        const MAX_HOURLY_SUBMISSIONS = 3; // 3 submissions per hour for optimal control
+        const SUBMISSION_COOLDOWN = 0; // No waiting time - instant submissions allowed
+        const MAX_HOURLY_SUBMISSIONS = Infinity; // No limit - infinite submissions allowed
         const MIN_LOCATION_ACCURACY = 20000; // Enhanced 20km range for better functionality
         const MAX_TRAVEL_SPEED = 120; // Maximum reasonable travel speed (km/h)
         const MIN_TIME_BETWEEN_LOCATIONS = 30000; // 30 seconds minimum between location changes
@@ -2741,13 +2654,13 @@
         const elements = {
             form: document.getElementById('attendanceForm'),
             student: document.getElementById('student'),
-            actionType: document.getElementById('actionType'),
+            attendanceStatus: document.getElementById('attendanceStatus'),
+            presentBtn: document.getElementById('presentBtn'),
+            absentBtn: document.getElementById('absentBtn'),
             dateTime: document.getElementById('dateTime'),
             latitude: document.getElementById('latitude'),
             longitude: document.getElementById('longitude'),
             notes: document.getElementById('notes'),
-            submitBtn: document.getElementById('submitBtn'),
-            submitText: document.getElementById('submitText'),
             
             // Display elements
             currentDate: document.getElementById('currentDate'),
@@ -2770,6 +2683,7 @@
             viewRecordsBtn: document.getElementById('viewRecordsBtn'),
             downloadBtn: document.getElementById('downloadBtn'),
             clearBtn: document.getElementById('clearBtn'),
+            securityLogsBtn: document.getElementById('securityLogsBtn'),
             statsBtn: document.getElementById('statsBtn'),
             
             // Records section
@@ -2795,29 +2709,60 @@
             studentsList: document.getElementById('studentsList')
         };
 
+        // Global variable to store selected attendance status
+        let selectedAttendanceStatus = null;
+
+        // Function to handle attendance status selection
+        function setAttendanceStatus(status) {
+            // Check if student is selected first
+            if (!elements.student.value) {
+                showMessage('Please select a student first', 'warning');
+                elements.student.focus();
+                return;
+            }
+            
+            const studentSelect = elements.student;
+            const studentName = studentSelect.options[studentSelect.selectedIndex]?.text || 'Selected Student';
+            
+            selectedAttendanceStatus = status;
+            
+            // Update button appearances
+            elements.presentBtn.classList.remove('selected');
+            elements.absentBtn.classList.remove('selected');
+            
+            if (status === 'present') {
+                elements.presentBtn.classList.add('selected');
+                elements.attendanceStatus.value = 'present';
+                // Submit form immediately without confirmation
+                setTimeout(() => {
+                    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                    elements.form.dispatchEvent(submitEvent);
+                }, 100);
+            } else if (status === 'absent') {
+                elements.absentBtn.classList.add('selected');
+                elements.attendanceStatus.value = 'absent';
+                // Submit form immediately without confirmation
+                setTimeout(() => {
+                    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                    elements.form.dispatchEvent(submitEvent);
+                }, 100);
+            }
+        }
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
         });
 
         function initializeApp() {
-            // Wait for Firebase to be ready
-            if (!window.firebase) {
-                setTimeout(initializeApp, 100);
-                return;
-            }
-            
             // Initialize theme
             initializeTheme();
             
             // Load fraud protection data (MUST be loaded before other initializations)
             loadFraudProtectionData();
             
-            // Load saved data from Firestore
-            loadDataFromFirestore();
-            
-            // Set up real-time listener
-            setupRealtimeListener();
+            // Load saved data from localStorage
+            loadDataFromStorage();
             
             // Initialize geolocation
             initializeGeolocation();
@@ -2862,8 +2807,60 @@
             // Form submission
             elements.form.addEventListener('submit', handleFormSubmit);
             
-            // Action buttons - Remove direct event listeners for protected buttons
+            // Attendance buttons
+            elements.presentBtn.addEventListener('click', () => setAttendanceStatus('present'));
+            elements.absentBtn.addEventListener('click', () => setAttendanceStatus('absent'));
+            
+            // Add keyboard support for attendance buttons
+            elements.presentBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setAttendanceStatus('present');
+                }
+            });
+            
+            elements.absentBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setAttendanceStatus('absent');
+                }
+            });
+            
+            // Student selection change - reset attendance status
+            elements.student.addEventListener('change', () => {
+                elements.presentBtn.classList.remove('selected');
+                elements.absentBtn.classList.remove('selected');
+                elements.attendanceStatus.value = '';
+                elements.submitText.textContent = 'Record Attendance';
+                
+                // Reset submit button styling
+                elements.submitBtn.style.background = '';
+                elements.submitBtn.style.boxShadow = '';
+                elements.submitBtn.style.transform = '';
+                
+                selectedAttendanceStatus = null;
+            });
+            
+            // Action buttons
+            elements.viewRecordsBtn.addEventListener('click', () => {
+                elements.viewRecordsBtn.disabled = true;
+                setTimeout(() => elements.viewRecordsBtn.disabled = false, 1000);
+                requestAdminAccess('viewRecords');
+            });
+            
             elements.downloadBtn.addEventListener('click', downloadExcel);
+            
+            elements.clearBtn.addEventListener('click', () => {
+                elements.clearBtn.disabled = true;
+                setTimeout(() => elements.clearBtn.disabled = false, 1000);
+                requestAdminAccess('clearData');
+            });
+            
+            elements.securityLogsBtn.addEventListener('click', () => {
+                elements.securityLogsBtn.disabled = true;
+                setTimeout(() => elements.securityLogsBtn.disabled = false, 1000);
+                requestAdminAccess('viewSecurityLogs');
+            });
             
             // Filters
             elements.applyFilters.addEventListener('click', applyFilters);
@@ -2933,27 +2930,11 @@
             const timeSinceLastSubmission = now - lastSubmissionTime;
             const selectedStudent = elements.student.value;
             
-            // Check 1: Submission cooldown (prevents rapid submissions)
-            if (timeSinceLastSubmission < SUBMISSION_COOLDOWN) {
-                const remainingSeconds = Math.ceil((SUBMISSION_COOLDOWN - timeSinceLastSubmission) / 1000);
-                showMessage(`⏱️ Please wait ${remainingSeconds} seconds before next submission`, 'warning');
-                return false;
-            }
+            // All cooldown checks removed - instant submissions allowed
             
-            // Check 2: Same student consecutive submissions
-            if (selectedStudent === lastSubmittedStudent && timeSinceLastSubmission < 300000) { // 5 minutes
-                showMessage('⚠️ You just recorded attendance for this student. Please wait 5 minutes before recording again.', 'warning');
-                return false;
-            }
-            
-            // Check 3: Hourly submission limit
-            hourlySubmissions = hourlySubmissions.filter(time => now - time < 3600000); // Keep only last hour
-            if (hourlySubmissions.length >= MAX_HOURLY_SUBMISSIONS) {
-                showMessage(`🚫 Maximum ${MAX_HOURLY_SUBMISSIONS} submissions per hour reached. This prevents fraudulent bulk submissions.`, 'error');
-                suspiciousActivity = true;
-                logSuspiciousActivity('Exceeded hourly submission limit');
-                return false;
-            }
+            // Check 3: Hourly submission limit - DISABLED (infinite submissions allowed)
+            hourlySubmissions = hourlySubmissions.filter(time => now - time < 3600000); // Keep only last hour for tracking
+            // Hourly limit check removed - unlimited submissions now allowed
             
             // Check 4: GPS accuracy requirement (enhanced for indoor use)
             if (!currentPosition) {
@@ -3124,7 +3105,6 @@
         let lastStatusUpdate = 0;
         let cachedStatus = '';
         let cachedRemainingSubmissions = MAX_HOURLY_SUBMISSIONS;
-        let cooldownInterval = null;
 
         function showFraudProtectionStatus() {
             const now = Date.now();
@@ -3144,15 +3124,8 @@
                 statusMessages.push('🚨 Enhanced monitoring active');
             }
             
-            const remainingSubmissions = Math.max(0, MAX_HOURLY_SUBMISSIONS - hourlySubmissions.length);
-            cachedRemainingSubmissions = remainingSubmissions;
-            
-            // Only show remaining submissions if it's getting low or if there have been submissions
-            if (remainingSubmissions < MAX_HOURLY_SUBMISSIONS) {
-                statusMessages.push(`📊 Remaining: ${remainingSubmissions}/hour`);
-            } else {
-                statusMessages.push(`📊 Ready for submissions (${MAX_HOURLY_SUBMISSIONS}/hour limit)`);
-            }
+            // Remove hourly submission limit display since it's now infinite
+            statusMessages.push(`📊 Ready for unlimited submissions`);
             
             // Only add GPS status if we have a position
             if (currentPosition) {
@@ -3166,18 +3139,7 @@
                 statusMessages.push(`📍 GPS: Waiting...`);
             }
             
-            // Only show cooldown if active
-            const timeSinceLastSubmission = now - lastSubmissionTime;
-            if (timeSinceLastSubmission < SUBMISSION_COOLDOWN && lastSubmissionTime > 0) {
-                const remainingSeconds = Math.ceil((SUBMISSION_COOLDOWN - timeSinceLastSubmission) / 1000);
-                statusMessages.push(`⏱️ Cooldown: ${remainingSeconds}s`);
-                
-                // Start countdown timer for cooldown
-                startCooldownTimer();
-            } else {
-                // Stop countdown timer if no cooldown
-                stopCooldownTimer();
-            }
+            // Cooldown display removed - no waiting time required
             
             cachedStatus = statusMessages.join('\n');
             lastStatusUpdate = now;
@@ -3185,38 +3147,7 @@
             return cachedStatus;
         }
 
-        function startCooldownTimer() {
-            if (cooldownInterval) return; // Already running
-            
-            cooldownInterval = setInterval(() => {
-                const now = Date.now();
-                const timeSinceLastSubmission = now - lastSubmissionTime;
-                
-                if (timeSinceLastSubmission >= SUBMISSION_COOLDOWN) {
-                    stopCooldownTimer();
-                    cachedStatus = ''; // Force refresh
-                    updateFraudProtectionUI();
-                } else {
-                    // Only update the cooldown part
-                    const statusElement = document.getElementById('fraudStatusText');
-                    if (statusElement) {
-                        const remainingSeconds = Math.ceil((SUBMISSION_COOLDOWN - timeSinceLastSubmission) / 1000);
-                        const html = statusElement.innerHTML;
-                        const newHtml = html.replace(/⏱️ Cooldown: \d+s/, `⏱️ Cooldown: ${remainingSeconds}s`);
-                        if (newHtml !== html) {
-                            statusElement.innerHTML = newHtml;
-                        }
-                    }
-                }
-            }, 1000);
-        }
-
-        function stopCooldownTimer() {
-            if (cooldownInterval) {
-                clearInterval(cooldownInterval);
-                cooldownInterval = null;
-            }
-        }
+        // Cooldown timer functions removed - no waiting time required
 
         function updateFraudProtectionUI() {
             const statusElement = document.getElementById('fraudStatusText');
@@ -3233,16 +3164,14 @@
             const statusContainer = document.getElementById('fraudProtectionStatus');
             if (!statusContainer) return;
             
-            let newBorderColor = '#27ae60'; // Default green
+            let newBorderColor = '#27ae60'; // Default green - unlimited submissions
             let newBackgroundColor = '#e8f5e8';
             
             if (suspiciousActivity) {
                 newBorderColor = '#e74c3c'; // Red for suspicious
                 newBackgroundColor = '#ffebee';
-            } else if (hourlySubmissions.length > MAX_HOURLY_SUBMISSIONS * 0.7) {
-                newBorderColor = '#f39c12'; // Orange for high usage
-                newBackgroundColor = '#fff8e1';
             }
+            // Removed hourly submission count warning since limit is now infinite
             
             // Only update styles if they changed
             if (statusContainer.style.borderLeftColor !== newBorderColor) {
@@ -3738,13 +3667,6 @@
         let pendingAdminAction = null;
 
         function requestAdminAccess(action) {
-            // Validate action before proceeding
-            if (!action || action === null || action === undefined) {
-                console.warn('Invalid admin action requested:', action);
-                showMessage('Invalid admin action requested', 'warning');
-                return;
-            }
-            
             if (isAdminMode) {
                 // Already authenticated, execute action directly
                 executeAdminAction(action);
@@ -3843,12 +3765,6 @@
         }
 
         function executeAdminAction(action) {
-            // Check if action is valid
-            if (!action || action === null || action === undefined) {
-                console.warn('No admin action specified');
-                return;
-            }
-            
             switch(action) {
                 case 'viewRecords':
                     toggleRecordsView();
@@ -3862,19 +3778,8 @@
                 case 'viewSecurityLogs':
                     showSecurityLogsModal();
                     break;
-                case 'downloadExcel':
-                    downloadExcel();
-                    break;
-                case 'resetSubmissionCounter':
-                    resetSubmissionCounter();
-                    break;
-                case 'resetFraudProtection':
-                    resetFraudProtectionData();
-                    showMessage('Fraud protection data reset', 'success');
-                    break;
                 default:
                     console.error('Unknown admin action:', action);
-                    showMessage('Unknown admin action requested', 'error');
             }
         }
 
@@ -5462,36 +5367,40 @@ ${tips.join('\n')}
         async function handleFormSubmit(event) {
             event.preventDefault();
             
-            // Validate form
-            if (!validateForm()) {
-                return;
-            }
-            
-            // Anti-Fraud Protection - Critical Security Check
-            if (!validateSubmission()) {
-                return;
-            }
-            
-            // Show loading
+            // Show loading first
             showLoading(true);
             
+            // Add timeout to force reset loading state after 10 seconds max
+            const timeoutId = setTimeout(() => {
+                showLoading(false);
+                showMessage('⚠️ Request timed out - attendance saved locally', 'warning');
+            }, 10000);
+            
             try {
+                // Validate form
+                if (!validateForm()) {
+                    clearTimeout(timeoutId);
+                    showLoading(false);
+                    return;
+                }
+                
+                // Anti-Fraud Protection - Critical Security Check
+                if (!validateSubmission()) {
+                    clearTimeout(timeoutId);
+                    showLoading(false);
+                    return;
+                }
+                
                 // Create attendance record
                 const record = createAttendanceRecord();
                 
                 // Update fraud protection tracking
                 updateSubmissionTracking();
                 
-                // Add to data array
+                // Add to data array immediately
                 attendanceData.unshift(record);
                 
-                // Save to Firestore
-                await saveDataToFirestore(record);
-                
-                // Reset form
-                resetForm();
-                
-                // Show success message with fraud protection status
+                // Show success immediately and reset form
                 const studentInfo = activeStudents[record.student];
                 let successMessage;
                 if (typeof studentInfo === 'object') {
@@ -5500,13 +5409,17 @@ ${tips.join('\n')}
                     successMessage = `✅ Attendance recorded for ${record.studentName}!`;
                 }
                 
-                // Add fraud protection info to success message
-                const remainingSubmissions = MAX_HOURLY_SUBMISSIONS - hourlySubmissions.length - 1;
-                if (remainingSubmissions <= 3) {
-                    successMessage += `\n📊 ${remainingSubmissions} submissions remaining this hour`;
-                }
-                
                 showMessage(successMessage, 'success');
+                resetForm();
+                
+                // Clear loading immediately after success
+                clearTimeout(timeoutId);
+                showLoading(false);
+                
+                // Save to localStorage for persistence
+                let localData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                localData.unshift(record);
+                localStorage.setItem('attendanceData', JSON.stringify(localData));
                 
                 // Update displays if records are visible
                 if (elements.recordsSection.style.display !== 'none') {
@@ -5515,8 +5428,11 @@ ${tips.join('\n')}
                 }
                 
             } catch (error) {
-                showMessage(`❌ Error recording attendance: ${error.message}`, 'error');
+                clearTimeout(timeoutId);
+                showLoading(false);
+                showMessage(`❌ Error: ${error.message}`, 'error');
             } finally {
+                // Double safety - ensure loading is always cleared
                 showLoading(false);
             }
         }
@@ -5543,7 +5459,7 @@ ${tips.join('\n')}
 
         function validateForm() {
             const student = elements.student.value;
-            const actionType = elements.actionType.value;
+            const attendanceStatus = elements.attendanceStatus.value;
             
             if (!student) {
                 showMessage('Please select a student', 'warning');
@@ -5551,9 +5467,8 @@ ${tips.join('\n')}
                 return false;
             }
             
-            if (!actionType) {
-                showMessage('Please select an action type', 'warning');
-                elements.actionType.focus();
+            if (!attendanceStatus) {
+                showMessage('Please select Present or Absent', 'warning');
                 return false;
             }
             
@@ -5589,8 +5504,8 @@ ${tips.join('\n')}
                 student: selectedStudentKey,
                 studentId: studentId,
                 studentName: studentName,
-                actionType: elements.actionType.value,
-                actionLabel: actionTypeMapping[elements.actionType.value].label,
+                attendanceStatus: elements.attendanceStatus.value,
+                attendanceLabel: elements.attendanceStatus.value === 'present' ? 'Present' : 'Absent',
                 dateTime: elements.dateTime.value,
                 date: now.toLocaleDateString('en-US'),
                 time: now.toLocaleTimeString('en-US', { hour12: true }),
@@ -5621,8 +5536,12 @@ ${tips.join('\n')}
 
         function resetForm() {
             elements.student.value = '';
-            elements.actionType.value = '';
+            elements.attendanceStatus.value = '';
             elements.notes.value = '';
+            elements.presentBtn.classList.remove('selected');
+            elements.absentBtn.classList.remove('selected');
+            
+            selectedAttendanceStatus = null;
             elements.student.focus();
         }
 
@@ -5686,9 +5605,12 @@ ${tips.join('\n')}
                 );
             }
             
-            // Filter by action
+            // Filter by action/status
             if (elements.filterAction.value) {
-                filtered = filtered.filter(record => record.actionType === elements.filterAction.value);
+                filtered = filtered.filter(record => 
+                    record.attendanceStatus === elements.filterAction.value || 
+                    record.actionType === elements.filterAction.value
+                );
             }
             
             return filtered;
@@ -5721,7 +5643,23 @@ ${tips.join('\n')}
 
         function createRecordRow(record, index) {
             const row = document.createElement('tr');
-            const actionInfo = actionTypeMapping[record.actionType];
+            
+            // Handle both new attendance status and legacy action type for backward compatibility
+            let statusInfo;
+            if (record.attendanceStatus) {
+                // New attendance system
+                statusInfo = {
+                    label: record.attendanceLabel || (record.attendanceStatus === 'present' ? 'Present' : 'Absent'),
+                    icon: record.attendanceStatus === 'present' ? 'fas fa-check-circle' : 'fas fa-times-circle',
+                    color: record.attendanceStatus === 'present' ? '#27ae60' : '#e74c3c'
+                };
+            } else if (record.actionType && actionTypeMapping[record.actionType]) {
+                // Legacy action type system
+                statusInfo = actionTypeMapping[record.actionType];
+            } else {
+                // Fallback
+                statusInfo = { label: 'Unknown', icon: 'fas fa-question', color: '#95a5a6' };
+            }
             
             // Get student display name (check both new and legacy field names for backward compatibility)
             let studentDisplay;
@@ -5753,8 +5691,8 @@ ${tips.join('\n')}
                 <td>${index + 1}</td>
                 <td><strong>${studentDisplay}</strong></td>
                 <td>
-                    <span class="status-badge ${record.actionType}">
-                        <i class="${actionInfo.icon}"></i> ${record.actionLabel}
+                    <span class="status-badge ${record.attendanceStatus || record.actionType}" style="background-color: ${statusInfo.color};">
+                        <i class="${statusInfo.icon}"></i> ${statusInfo.label}
                     </span>
                 </td>
                 <td>${record.date}</td>
@@ -5792,7 +5730,7 @@ ${tips.join('\n')}
 
         function deleteRecord(recordId) {
             if (confirm('Are you sure you want to delete this record?')) {
-                deleteRecordFromFirestore(recordId);
+                deleteRecordFromStorage(recordId);
             }
         }
 
@@ -5802,9 +5740,9 @@ ${tips.join('\n')}
             
             const stats = {
                 totalToday: todayRecords.length,
-                checkIns: todayRecords.filter(r => r.actionType === 'check-in').length,
-                checkOuts: todayRecords.filter(r => r.actionType === 'check-out').length,
-                breaks: todayRecords.filter(r => r.actionType.includes('break')).length,
+                present: todayRecords.filter(r => r.attendanceStatus === 'present' || r.actionType === 'check-in').length,
+                absent: todayRecords.filter(r => r.attendanceStatus === 'absent').length,
+                legacy: todayRecords.filter(r => !r.attendanceStatus && r.actionType && r.actionType !== 'check-in').length,
                 uniqueStudents: new Set(todayRecords.map(r => r.student || r.employee)).size
             };
             
@@ -5814,12 +5752,12 @@ ${tips.join('\n')}
                     <div class="stat-label">Total Records Today</div>
                 </div>
                 <div class="stat-card green">
-                    <div class="stat-number">${stats.checkIns}</div>
-                    <div class="stat-label">Check Ins</div>
+                    <div class="stat-number">${stats.present}</div>
+                    <div class="stat-label">Present</div>
                 </div>
                 <div class="stat-card red">
-                    <div class="stat-number">${stats.checkOuts}</div>
-                    <div class="stat-label">Check Outs</div>
+                    <div class="stat-number">${stats.absent}</div>
+                    <div class="stat-label">Absent</div>
                 </div>
                 <div class="stat-card purple">
                     <div class="stat-number">${stats.uniqueStudents}</div>
@@ -5840,14 +5778,17 @@ ${tips.join('\n')}
         }
 
         function downloadExcel() {
-            if (attendanceData.length === 0) {
-                showMessage('No data to export', 'warning');
-                return;
-            }
-            
-            showLoading(true);
-            
             try {
+                console.log('Download Excel clicked. Current attendanceData length:', attendanceData.length);
+                console.log('First 3 records:', attendanceData.slice(0, 3));
+                
+                if (attendanceData.length === 0) {
+                    showMessage('No data to export. Please submit some attendance records first.', 'warning');
+                    return;
+                }
+                
+                showLoading(true);
+                
                 // Prepare data for Excel with backward compatibility
                 const excelData = attendanceData.map((record, index) => {
                     // Get student ID and name for display
@@ -5872,23 +5813,38 @@ ${tips.join('\n')}
                         }
                     }
                     
+                    // Get action/attendance status
+                    let actionStatus = 'N/A';
+                    if (record.attendanceLabel) {
+                        actionStatus = record.attendanceLabel;
+                    } else if (record.attendanceStatus) {
+                        actionStatus = record.attendanceStatus === 'present' ? 'Present' : 'Absent';
+                    } else if (record.actionLabel) {
+                        actionStatus = record.actionLabel;
+                    } else if (record.actionType) {
+                        // Legacy format mapping
+                        const actionTypeMapping = {
+                            'check-in': 'Present',
+                            'check-out': 'Absent',
+                            'break': 'Break',
+                            'lunch': 'Lunch',
+                            'meeting': 'Meeting',
+                            'sick-leave': 'Sick Leave',
+                            'vacation': 'Vacation'
+                        };
+                        actionStatus = actionTypeMapping[record.actionType] || record.actionType;
+                    }
+                    
                     return {
                         'No.': index + 1,
                         'Student ID': studentId,
                         'Student Name': studentName,
-                        'Action': record.actionLabel,
+                        'Action': actionStatus,
                         'Date': record.date,
                         'Time': record.time,
                         'Latitude': record.latitude,
                         'Longitude': record.longitude,
-                        'Address': record.address,
-                        'Notes': record.notes || '',
-                        'Accuracy (m)': Math.round(record.accuracy),
-                        'Quality': record.locationQuality || 'Unknown',
-                        'Altitude (m)': record.altitude ? Math.round(record.altitude) : 'N/A',
-                        'Speed (km/h)': record.speed ? (record.speed * 3.6).toFixed(1) : 'N/A',
-                        'Heading': record.heading ? `${Math.round(record.heading)}°` : 'N/A',
-                        'High Accuracy': record.isHighAccuracy ? 'Yes' : 'No'
+                        'Address': record.address
                     };
                 });
                 
@@ -5906,14 +5862,7 @@ ${tips.join('\n')}
                     {wch: 12},  // Time
                     {wch: 12},  // Latitude
                     {wch: 12},  // Longitude
-                    {wch: 30},  // Address
-                    {wch: 20},  // Notes
-                    {wch: 12},  // Accuracy
-                    {wch: 10},  // Quality
-                    {wch: 12},  // Altitude
-                    {wch: 12},  // Speed
-                    {wch: 10},  // Heading
-                    {wch: 12}   // High Accuracy
+                    {wch: 40}   // Address
                 ];
                 ws['!cols'] = colWidths;
                 
@@ -5942,181 +5891,99 @@ ${tips.join('\n')}
                 return;
             }
             
-            if (confirm(`Are you sure you want to delete all ${attendanceData.length} attendance records? This action cannot be undone.`)) {
-                clearAllDataFromFirestore();
-            }
+            // Create custom confirmation dialog for data clearing
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'confirmation-overlay';
+            confirmDialog.innerHTML = `
+                <div class="confirmation-modal">
+                    <div class="confirmation-header" style="background: #e74c3c;">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Clear All Data</h3>
+                    </div>
+                    <div class="confirmation-body">
+                        <p><strong>Are you sure you want to delete all ${attendanceData.length} attendance records?</strong></p>
+                        <p style="color: #e74c3c; margin-top: 15px;"><i class="fas fa-warning"></i> This action cannot be undone!</p>
+                    </div>
+                    <div class="confirmation-actions">
+                        <button class="confirm-btn cancel-btn">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button class="confirm-btn" style="background: #e74c3c;">
+                            <i class="fas fa-trash"></i> Yes, Delete All
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(confirmDialog);
+            
+            const cancelBtn = confirmDialog.querySelector('.cancel-btn');
+            const confirmBtn = confirmDialog.querySelector('.confirm-btn:not(.cancel-btn)');
+            
+            const closeDialog = () => {
+                document.body.removeChild(confirmDialog);
+            };
+            
+            cancelBtn.addEventListener('click', closeDialog);
+            
+            confirmBtn.addEventListener('click', () => {
+                closeDialog();
+                clearAllData();
+            });
+            
+            confirmDialog.addEventListener('click', (e) => {
+                if (e.target === confirmDialog) {
+                    closeDialog();
+                }
+            });
+            
+            setTimeout(() => confirmBtn.focus(), 100);
         }
         
-        // Multi-User Data Storage Functions - Firebase Primary, localStorage Backup
-        async function saveDataToFirestore(record) {
+        // Local Storage Data Management Functions
+        function loadDataFromStorage() {
             try {
-                // Try Firebase first
-                if (window.firebase && window.firebase.db) {
-                    const docRef = await window.firebase.addDoc(
-                        window.firebase.collection(window.firebase.db, 'attendance'), 
-                        record
-                    );
-                    console.log('✅ Saved to Firebase:', docRef.id);
-                    showMessage('✅ Attendance saved to centralized database!', 'success');
-                    return;
-                }
-            } catch (error) {
-                console.warn('⚠️ Firebase save failed, using backup:', error);
-            }
-            
-            // Fallback to localStorage multi-user system
-            try {
-                const success = saveToAllUsersData(record);
-                if (success) {
-                    showMessage('✅ Attendance saved! (Using backup storage)', 'warning');
-                } else {
-                    throw new Error('Backup storage failed');
-                }
-            } catch (error) {
-                showMessage('❌ Error saving data: ' + error.message, 'error');
-            }
-        }       
-
-        async function loadDataFromFirestore() {
-            try {
-                // Try Firebase first
-                if (window.firebase && window.firebase.db) {
-                    const q = window.firebase.query(
-                        window.firebase.collection(window.firebase.db, 'attendance'),
-                        window.firebase.orderBy('timestamp', 'desc')
-                    );
-                    const querySnapshot = await window.firebase.getDocs(q);
-                    
-                    attendanceData = [];
-                    querySnapshot.forEach((doc) => {
-                        attendanceData.push({
-                            firestoreId: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    
+                const saved = localStorage.getItem('attendanceData');
+                if (saved) {
+                    attendanceData = JSON.parse(saved);
                     displayRecords();
                     updateStatistics();
                     populateFilterDropdowns();
-                    
-                    const stats = getUserStats();
-                    showMessage(`🔥 Loaded ${attendanceData.length} records from Firebase (${stats.totalUsers} users, ${stats.activeToday} active today)`, 'success');
-                    return;
+                    showMessage('📱 Data loaded from local storage', 'info');
+                } else {
+                    showMessage('📝 Ready to start recording attendance!', 'info');
                 }
             } catch (error) {
-                console.warn('⚠️ Firebase load failed, using backup:', error);
-            }
-            
-            // Fallback to localStorage
-            try {
-                const allRecords = loadAllUsersAttendanceData();
-                attendanceData = allRecords;
-                
-                displayRecords();
-                updateStatistics();
-                populateFilterDropdowns();
-                
-                const stats = getUserStats();
-                showMessage(`📊 Loaded ${allRecords.length} records from backup storage (${stats.totalUsers} users, ${stats.activeToday} active today)`, 'warning');
-            } catch (error) {
-                console.error('Error loading data: ', error);
-                showMessage('Error loading data: ' + error.message, 'error');
+                console.error('Error loading local data:', error);
+                showMessage('📝 Ready to start recording attendance!', 'info');
             }
         }
 
-        function setupRealtimeListener() {
+        function saveDataToStorage() {
             try {
-                // Try Firebase real-time listener first
-                if (window.firebase && window.firebase.db) {
-                    const q = window.firebase.query(
-                        window.firebase.collection(window.firebase.db, 'attendance'),
-                        window.firebase.orderBy('timestamp', 'desc')
-                    );
-                    
-                    window.firebase.onSnapshot(q, (querySnapshot) => {
-                        const oldCount = attendanceData.length;
-                        attendanceData = [];
-                        querySnapshot.forEach((doc) => {
-                            attendanceData.push({
-                                firestoreId: doc.id,
-                                ...doc.data()
-                            });
-                        });
-                        
-                        displayRecords();
-                        updateStatistics();
-                        
-                        const newRecords = attendanceData.length - oldCount;
-                        if (newRecords > 0) {
-                            showMessage(`🔄 ${newRecords} new record(s) from Firebase real-time sync`, 'info');
-                        }
-                    }, (error) => {
-                        console.error('Firebase real-time error:', error);
-                        showMessage('Real-time sync failed, using polling backup', 'warning');
-                        setupBackupPolling();
-                    });
-                    
-                    showMessage('🔥 Firebase real-time sync enabled!', 'success');
-                    return;
-                }
+                localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+                console.log('Data saved to local storage');
             } catch (error) {
-                console.error('Firebase real-time setup failed:', error);
+                console.error('Error saving to local storage:', error);
+                showMessage('Error saving data locally', 'error');
             }
-            
-            // Fallback to localStorage polling
-            setupBackupPolling();
-        }
-        
-        function setupBackupPolling() {
-            // Simulate real-time by refreshing data periodically
-            setInterval(() => {
-                const currentCount = attendanceData.length;
-                const allRecords = loadAllUsersAttendanceData();
-                
-                if (allRecords.length !== currentCount) {
-                    attendanceData = allRecords;
-                    displayRecords();
-                    updateStatistics();
-                    
-                    const newRecords = allRecords.length - currentCount;
-                    if (newRecords > 0) {
-                        showMessage(`🔄 ${newRecords} new record(s) from backup sync`, 'info');
-                    }
-                }
-            }, 5000); // Check every 5 seconds
-            
-            showMessage('📡 Backup multi-user sync enabled (5s intervals)', 'info');
         }
 
-        async function deleteRecordFromFirestore(recordId) {
+        function deleteRecordFromStorage(recordId) {
             try {
                 showLoading(true);
                 showMessage('Deleting record...', 'info');
                 
-                // Try Firebase first
-                if (window.firebase && window.firebase.db) {
-                    const record = attendanceData.find(r => r.id === recordId);
-                    if (record && record.firestoreId) {
-                        await window.firebase.deleteDoc(
-                            window.firebase.doc(window.firebase.db, 'attendance', record.firestoreId)
-                        );
-                        showMessage('Record deleted from Firebase', 'success');
-                    }
-                } else {
-                    // Use backup deletion
-                    const deleted = deleteFromAllUsersData(recordId);
-                    if (deleted) {
-                        showMessage('Record deleted from backup storage', 'success');
-                    }
-                }
-                
                 // Remove from local array
                 attendanceData = attendanceData.filter(r => r.id !== recordId);
+                
+                // Save updated array to localStorage
+                saveDataToStorage();
                 
                 // Update displays
                 displayRecords();
                 updateStatistics();
                 
+                showMessage('Record deleted successfully', 'success');
             } catch (error) {
                 console.error('Error deleting record: ', error);
                 showMessage('Error deleting record: ' + error.message, 'error');
@@ -6125,91 +5992,27 @@ ${tips.join('\n')}
             }
         }
 
-        async function clearAllDataFromFirestore() {
+        function clearAllData() {
             try {
                 showLoading(true);
                 showMessage('Clearing all data...', 'info');
                 
-                // Try Firebase first
-                if (window.firebase && window.firebase.db) {
-                    const querySnapshot = await window.firebase.getDocs(
-                        window.firebase.collection(window.firebase.db, 'attendance')
-                    );
-                    
-                    const deletePromises = [];
-                    querySnapshot.forEach((doc) => {
-                        deletePromises.push(
-                            window.firebase.deleteDoc(
-                                window.firebase.doc(window.firebase.db, 'attendance', doc.id)
-                            )
-                        );
-                    });
-                    
-                    await Promise.all(deletePromises);
-                    showMessage('All data cleared from Firebase', 'success');
-                } else {
-                    // Use backup clear
-                    const cleared = clearAllUsersData();
-                    if (cleared) {
-                        showMessage('All data cleared from backup storage', 'success');
-                    }
-                }
-                
                 // Clear local data
                 attendanceData = [];
+                localStorage.removeItem('attendanceData');
                 
                 // Update displays
                 displayRecords();
                 updateStatistics();
                 populateFilterDropdowns();
                 
+                showMessage('All data cleared successfully', 'success');
             } catch (error) {
                 console.error('Error clearing data: ', error);
                 showMessage('Error clearing data: ' + error.message, 'error');
             } finally {
                 showLoading(false);
             }
-        }
-        
-        // New function to show multi-user statistics
-        function showMultiUserStats() {
-            const stats = getUserStats();
-            const currentUser = getCurrentUser();
-            
-            let statsMessage = `
-👥 **Multi-User System Statistics**
-
-📊 **Overall Stats:**
-• Total Users: ${stats.totalUsers}
-• Total Records: ${stats.totalRecords}
-• Active Today: ${stats.activeToday}
-
-🔍 **Current Session:**
-• Your User ID: ${currentUser.id}
-• Device: ${currentUser.deviceInfo.platform}
-• Session Started: ${new Date(currentUser.createdAt).toLocaleString()}
-
-📈 **User Breakdown:**`;
-
-            Object.keys(stats.userBreakdown).forEach(userId => {
-                const userData = stats.userBreakdown[userId];
-                const isCurrentUser = userId === currentUser.id;
-                statsMessage += `
-• ${userId}${isCurrentUser ? ' (You)' : ''}: ${userData.totalRecords} total, ${userData.todayRecords} today`;
-            });
-            
-            alert(statsMessage);
-        }
-
-        // Legacy localStorage functions (kept for backward compatibility)
-        function saveDataToStorage() {
-            // This function is now handled by Firebase
-            console.log('Data automatically synced to Firebase');
-        }
-
-        function loadDataFromStorage() {
-            // This function is now handled by Firebase
-            console.log('Data loaded from Firebase');
         }
 
         function showMessage(message, type = 'info') {
@@ -6262,8 +6065,14 @@ ${tips.join('\n')}
 
         function showLoading(show) {
             elements.loadingOverlay.style.display = show ? 'flex' : 'none';
-            elements.submitBtn.disabled = show;
-            elements.submitText.textContent = show ? 'Processing...' : 'Record Attendance';
+            
+            // Disable/enable the attendance buttons during processing
+            if (elements.presentBtn) {
+                elements.presentBtn.disabled = show;
+            }
+            if (elements.absentBtn) {
+                elements.absentBtn.disabled = show;
+            }
         }
 
         // Export functions for global access
