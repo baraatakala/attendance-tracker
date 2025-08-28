@@ -3286,6 +3286,9 @@
             // Initialize collapsible sections
             initializeCollapsibleSections();
             
+            // Update initial statistics
+            updateStatistics();
+            
             showMessage('✅ Attendance Tracker ready! Location will be requested automatically.', 'success');
         }
 
@@ -6284,16 +6287,39 @@ ${tips.join('\n')}
         }
 
         function updateStatistics() {
-            const today = new Date().toLocaleDateString('en-US');
-            const todayRecords = attendanceData.filter(record => record.date === today);
+            const today = new Date();
+            const todayFormatted = today.toLocaleDateString('en-US');
+            console.log('Today formatted:', todayFormatted);
+            console.log('Total attendance records:', attendanceData.length);
+            
+            // Debug: Show all records and their dates
+            if (attendanceData.length > 0) {
+                console.log('Sample record dates:', attendanceData.slice(0, 3).map(r => r.date));
+            }
+            
+            const todayRecords = attendanceData.filter(record => {
+                console.log('Comparing record date:', record.date, 'with today:', todayFormatted);
+                return record.date === todayFormatted;
+            });
+            
+            console.log('Today records found:', todayRecords.length);
             
             const stats = {
                 totalToday: todayRecords.length,
-                present: todayRecords.filter(r => r.attendanceStatus === 'present' || r.actionType === 'check-in').length,
-                absent: todayRecords.filter(r => r.attendanceStatus === 'absent').length,
-                legacy: todayRecords.filter(r => !r.attendanceStatus && r.actionType && r.actionType !== 'check-in').length,
-                uniqueStudents: new Set(todayRecords.map(r => r.student || r.employee)).size
+                present: todayRecords.filter(r => {
+                    const status = (r.attendanceStatus || '').toLowerCase();
+                    const label = (r.attendanceLabel || '').toLowerCase();
+                    return status === 'present' || label === 'present' || r.actionType === 'check-in';
+                }).length,
+                absent: todayRecords.filter(r => {
+                    const status = (r.attendanceStatus || '').toLowerCase();
+                    const label = (r.attendanceLabel || '').toLowerCase();
+                    return status === 'absent' || label === 'absent';
+                }).length,
+                uniqueStudents: Object.keys(activeStudents).length // Use active students count
             };
+            
+            console.log('Calculated stats:', stats);
             
             elements.statsGrid.innerHTML = `
                 <div class="stat-card blue">
@@ -6836,26 +6862,25 @@ ${tips.join('\n')}
                 return;
             }
             
-            // Get today's date
-            const today = new Date();
-            const todayFormatted = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+            // Get ALL records instead of just today's records
+            let recordsToInclude = attendanceData.slice(); // Copy all records
             
-            // Get today's records
-            let todayRecords = attendanceData.filter(record => record.date === todayFormatted);
+            // Sort records by date and time (newest first)
+            recordsToInclude.sort((a, b) => {
+                const dateA = new Date(a.dateTime || `${a.date} ${a.time}`);
+                const dateB = new Date(b.dateTime || `${b.date} ${b.time}`);
+                return dateB - dateA; // Newest first
+            });
             
-            // If no records for today, get all recent records
-            if (todayRecords.length === 0) {
-                todayRecords = attendanceData.slice(-10); // Last 10 records
-            }
-            
-            let emailContent = `Attendance Summary - ${todayFormatted}\n\n`;
+            let emailContent = `Attendance Summary - All Records\n`;
+            emailContent += `Generated: ${new Date().toLocaleDateString('en-US')}\n\n`;
             
             // Show records based on selection
             if (reportType === 'present') {
                 emailContent += `PRESENT STUDENTS:\n`;
                 emailContent += `==================\n`;
                 let count = 0;
-                todayRecords.forEach(record => {
+                recordsToInclude.forEach(record => {
                     // Use the correct field names: attendanceStatus and attendanceLabel
                     const status = (record.attendanceStatus || record.attendanceLabel || '').toString().toLowerCase();
                     if (status.includes('present') || status === 'p' || status === '1') {
@@ -6874,7 +6899,7 @@ ${tips.join('\n')}
                 emailContent += `ABSENT STUDENTS:\n`;
                 emailContent += `================\n`;
                 let count = 0;
-                todayRecords.forEach(record => {
+                recordsToInclude.forEach(record => {
                     // Use the correct field names: attendanceStatus and attendanceLabel
                     const status = (record.attendanceStatus || record.attendanceLabel || '').toString().toLowerCase();
                     if (status.includes('absent') || status === 'a' || status === '0') {
@@ -6892,7 +6917,7 @@ ${tips.join('\n')}
             else { // both
                 emailContent += `ALL STUDENTS:\n`;
                 emailContent += `=============\n`;
-                todayRecords.forEach((record, index) => {
+                recordsToInclude.forEach((record, index) => {
                     const student = activeStudents[record.student];
                     const name = student ? student.name : (record.studentName || record.student);
                     // Use the correct status field
@@ -6901,15 +6926,15 @@ ${tips.join('\n')}
                 });
             }
             
-            emailContent += `\nTotal Records: ${todayRecords.length}\n`;
+            emailContent += `\nTotal Records: ${recordsToInclude.length}\n`;
             emailContent += `Generated: ${new Date().toLocaleString()}`;
             
             // Open email
-            const subject = `Attendance Report - ${todayFormatted}`;
+            const subject = `Attendance Report - All Records`;
             const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
             window.location.href = mailtoLink;
             
-            alert(`Email ready! Total records: ${todayRecords.length}`);
+            alert(`Email ready! Total records: ${recordsToInclude.length}`);
             closeEmailForm();
         }
 
