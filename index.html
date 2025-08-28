@@ -2439,7 +2439,7 @@
                         <div id="studentManagementPanel" class="student-management-panel" style="display: none;">
                             <div class="student-management-header">
                                 <h4><i class="fas fa-users-cog"></i> Manage Students</h4>
-                                <button type="button" id="closeStudentPanel" class="close-panel-btn">
+                                <button type="button" id="closeStudentPanel" class="close-panel-btn" onclick="closeStudentManagementPanel()">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
@@ -2488,13 +2488,14 @@
                             <small id="attendance-help" class="form-help">Click Present or Absent to mark attendance</small>
                         </div>
 
-                        <!-- Date & Time (Auto-filled) -->
+                        <!-- Date & Time (Editable) -->
                         <div class="form-group">
-                            <label for="dateTime"><i class="fas fa-calendar-alt"></i> Date & Time:</label>
-                            <input type="datetime-local" id="dateTime" name="dateTime" readonly 
+                            <label for="dateTime"><i class="fas fa-calendar-alt"></i> Date & Time: <small style="color: #3498db; font-weight: normal;">(Editable)</small></label>
+                            <input type="datetime-local" id="dateTime" name="dateTime" 
                                    aria-describedby="datetime-help" 
-                                   aria-label="Attendance date and time">
-                            <small id="datetime-help" class="form-help">Automatically set to current date and time</small>
+                                   aria-label="Attendance date and time"
+                                   title="Click to edit date and time for past lectures">
+                            <small id="datetime-help" class="form-help">📅 Auto-set to current time, but you can edit to record past lectures or specific times</small>
                         </div>
 
                         <!-- Location Fields -->
@@ -6004,7 +6005,18 @@ ${tips.join('\n')}
         }
 
         function createAttendanceRecord() {
-            const now = new Date();
+            // Use the selected date/time from the input field, or current time as fallback
+            let selectedDateTime;
+            if (elements.dateTime.value && elements.dateTime.value.trim() !== '') {
+                selectedDateTime = new Date(elements.dateTime.value);
+                // Check if the date is valid
+                if (isNaN(selectedDateTime.getTime())) {
+                    selectedDateTime = new Date(); // Fallback to current time
+                }
+            } else {
+                selectedDateTime = new Date(); // Fallback to current time
+            }
+            
             const coords = currentPosition.coords;
             
             // Get student information from activeStudents
@@ -6030,8 +6042,8 @@ ${tips.join('\n')}
                 attendanceStatus: elements.attendanceStatus.value,
                 attendanceLabel: elements.attendanceStatus.value === 'present' ? 'Present' : 'Absent',
                 dateTime: elements.dateTime.value,
-                date: now.toLocaleDateString('en-US'),
-                time: now.toLocaleTimeString('en-US', { hour12: true }),
+                date: selectedDateTime.toLocaleDateString('en-US'),
+                time: selectedDateTime.toLocaleTimeString('en-US', { hour12: true }),
                 latitude: parseFloat(elements.latitude.value),
                 longitude: parseFloat(elements.longitude.value),
                 accuracy: coords.accuracy,
@@ -6042,7 +6054,7 @@ ${tips.join('\n')}
                 locationQuality: getLocationQuality(coords.accuracy).label,
                 address: elements.locationAddress.textContent,
                 notes: elements.notes.value.trim(),
-                timestamp: now.getTime(),
+                timestamp: selectedDateTime.getTime(),
                 locationTimestamp: currentPosition.timestamp,
                 isHighAccuracy: document.getElementById('highAccuracyToggle')?.checked || false,
                 deviceInfo: {
@@ -6849,7 +6861,7 @@ ${tips.join('\n')}
                     if (status.includes('present') || status === 'p' || status === '1') {
                         count++;
                         const student = activeStudents[record.student];
-                        const name = student ? `${student.firstName} ${student.lastName}` : (record.studentName || record.student);
+                        const name = student ? student.name : (record.studentName || record.student);
                         emailContent += `${count}. ${name} - ${record.date} - ${record.time}\n`;
                     }
                 });
@@ -6868,7 +6880,7 @@ ${tips.join('\n')}
                     if (status.includes('absent') || status === 'a' || status === '0') {
                         count++;
                         const student = activeStudents[record.student];
-                        const name = student ? `${student.firstName} ${student.lastName}` : (record.studentName || record.student);
+                        const name = student ? student.name : (record.studentName || record.student);
                         emailContent += `${count}. ${name} - ${record.date} - ${record.time}\n`;
                     }
                 });
@@ -6882,7 +6894,7 @@ ${tips.join('\n')}
                 emailContent += `=============\n`;
                 todayRecords.forEach((record, index) => {
                     const student = activeStudents[record.student];
-                    const name = student ? `${student.firstName} ${student.lastName}` : (record.studentName || record.student);
+                    const name = student ? student.name : (record.studentName || record.student);
                     // Use the correct status field
                     const status = record.attendanceStatus || record.attendanceLabel || 'Unknown';
                     emailContent += `${index + 1}. ${name} - Status: "${status}" - ${record.date} - ${record.time}\n`;
@@ -7693,6 +7705,7 @@ ${tips.join('\n')}
         window.deleteRecord = deleteRecord;
         window.removeStudent = removeStudent;
         window.restoreDefaultStudents = restoreDefaultStudents;
+        window.closeStudentManagementPanel = closeStudentManagementPanel;
         window.toggleSection = toggleSection;
         window.openEmailForm = openEmailForm;
         window.closeEmailForm = closeEmailForm;
