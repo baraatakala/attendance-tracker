@@ -6872,70 +6872,226 @@ ${tips.join('\n')}
                 return dateB - dateA; // Newest first
             });
             
-            let emailContent = `Attendance Summary - All Records\n`;
-            emailContent += `Generated: ${new Date().toLocaleDateString('en-US')}\n\n`;
+            // Calculate analytics for beautiful insights
+            const analytics = calculateEmailAnalytics(recordsToInclude);
             
-            // Show records based on selection
+            // Create beautiful email content
+            let emailContent = `
+📊 ATTENDANCE ANALYSIS REPORT
+═══════════════════════════════════════════════════════════════════
+
+📅 Report Period: ${analytics.dateRange}
+🔢 Total Records: ${recordsToInclude.length}
+👥 Active Students: ${Object.keys(activeStudents).length}
+📈 Overall Attendance Rate: ${analytics.attendanceRate}%
+
+${analytics.quickInsights}
+
+`;
+
+            // Show records based on selection with beautiful formatting
             if (reportType === 'present') {
-                emailContent += `PRESENT STUDENTS:\n`;
-                emailContent += `==================\n`;
-                let count = 0;
-                recordsToInclude.forEach(record => {
-                    // Use the correct field names: attendanceStatus and attendanceLabel
-                    const status = (record.attendanceStatus || record.attendanceLabel || '').toString().toLowerCase();
-                    if (status.includes('present') || status === 'p' || status === '1') {
-                        count++;
-                        const student = activeStudents[record.student];
-                        const name = student ? student.name : (record.studentName || record.student);
-                        emailContent += `${count}. ${name} - ${record.date} - ${record.time}\n`;
-                    }
-                });
-                if (count === 0) {
-                    emailContent += `No present students found.\n`;
-                }
+                emailContent += generatePresentStudentsReport(recordsToInclude, analytics);
             }
-            
             else if (reportType === 'absent') {
-                emailContent += `ABSENT STUDENTS:\n`;
-                emailContent += `================\n`;
-                let count = 0;
-                recordsToInclude.forEach(record => {
-                    // Use the correct field names: attendanceStatus and attendanceLabel
-                    const status = (record.attendanceStatus || record.attendanceLabel || '').toString().toLowerCase();
-                    if (status.includes('absent') || status === 'a' || status === '0') {
-                        count++;
-                        const student = activeStudents[record.student];
-                        const name = student ? student.name : (record.studentName || record.student);
-                        emailContent += `${count}. ${name} - ${record.date} - ${record.time}\n`;
-                    }
-                });
-                if (count === 0) {
-                    emailContent += `No absent students found.\n`;
-                }
+                emailContent += generateAbsentStudentsReport(recordsToInclude, analytics);
             }
-            
             else { // both
-                emailContent += `ALL STUDENTS:\n`;
-                emailContent += `=============\n`;
-                recordsToInclude.forEach((record, index) => {
-                    const student = activeStudents[record.student];
-                    const name = student ? student.name : (record.studentName || record.student);
-                    // Use the correct status field
-                    const status = record.attendanceStatus || record.attendanceLabel || 'Unknown';
-                    emailContent += `${index + 1}. ${name} - Status: "${status}" - ${record.date} - ${record.time}\n`;
-                });
+                emailContent += generateCompleteAttendanceReport(recordsToInclude, analytics);
             }
+
+            emailContent += `
+═══════════════════════════════════════════════════════════════════
+📱 Generated: ${new Date().toLocaleString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
+🎯 System: Attendance Tracker v3.0
+`;
             
-            emailContent += `\nTotal Records: ${recordsToInclude.length}\n`;
-            emailContent += `Generated: ${new Date().toLocaleString()}`;
-            
-            // Open email
-            const subject = `Attendance Report - All Records`;
+            // Open email with beautiful subject
+            const subject = `📊 Attendance Report (${analytics.periodSummary}) - ${analytics.attendanceRate}% Rate`;
             const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
             window.location.href = mailtoLink;
             
-            alert(`Email ready! Total records: ${recordsToInclude.length}`);
+            alert(`📧 Beautiful email report ready!\n📊 ${recordsToInclude.length} records analyzed\n📈 ${analytics.attendanceRate}% attendance rate`);
             closeEmailForm();
+        }
+        
+        // Helper function to calculate email analytics
+        function calculateEmailAnalytics(records) {
+            if (records.length === 0) {
+                return {
+                    attendanceRate: 0,
+                    dateRange: 'No records',
+                    periodSummary: 'Empty',
+                    quickInsights: '❌ No attendance data available.'
+                };
+            }
+            
+            const presentCount = records.filter(r => {
+                const status = (r.attendanceStatus || r.attendanceLabel || '').toString().toLowerCase();
+                return status.includes('present') || status === 'p' || status === '1';
+            }).length;
+            
+            const absentCount = records.filter(r => {
+                const status = (r.attendanceStatus || r.attendanceLabel || '').toString().toLowerCase();
+                return status.includes('absent') || status === 'a' || status === '0';
+            }).length;
+            
+            const attendanceRate = records.length > 0 ? Math.round((presentCount / records.length) * 100) : 0;
+            
+            // Get date range
+            const dates = records.map(r => new Date(r.dateTime || `${r.date} ${r.time}`));
+            const oldestDate = new Date(Math.min(...dates));
+            const newestDate = new Date(Math.max(...dates));
+            
+            const dateRange = oldestDate.toDateString() === newestDate.toDateString() 
+                ? oldestDate.toLocaleDateString('en-US')
+                : `${oldestDate.toLocaleDateString('en-US')} → ${newestDate.toLocaleDateString('en-US')}`;
+            
+            const daysDifference = Math.ceil((newestDate - oldestDate) / (1000 * 60 * 60 * 24)) + 1;
+            const periodSummary = daysDifference === 1 ? 'Today' : `${daysDifference} Days`;
+            
+            // Generate insights
+            let insights = '';
+            if (attendanceRate >= 90) {
+                insights = '🎉 EXCELLENT: Outstanding attendance performance!';
+            } else if (attendanceRate >= 75) {
+                insights = '👍 GOOD: Solid attendance with room for improvement.';
+            } else if (attendanceRate >= 50) {
+                insights = '⚠️  NEEDS ATTENTION: Below average attendance detected.';
+            } else {
+                insights = '🚨 CRITICAL: Poor attendance requires immediate action.';
+            }
+            
+            const quickInsights = `
+🎯 QUICK INSIGHTS:
+${insights}
+✅ Present: ${presentCount} records (${attendanceRate}%)
+❌ Absent: ${absentCount} records (${100-attendanceRate}%)
+📊 Tracking Period: ${daysDifference} day(s)
+`;
+            
+            return {
+                attendanceRate,
+                dateRange,
+                periodSummary,
+                quickInsights,
+                presentCount,
+                absentCount
+            };
+        }
+        
+        // Helper function for present students report
+        function generatePresentStudentsReport(records, analytics) {
+            let content = `
+✅ PRESENT STUDENTS REPORT
+═══════════════════════════════════════════════════════════════════
+
+📈 SUCCESS RATE: ${analytics.presentCount}/${records.length} (${analytics.attendanceRate}%)
+
+`;
+            
+            let count = 0;
+            let currentDate = '';
+            
+            records.forEach(record => {
+                const status = (record.attendanceStatus || record.attendanceLabel || '').toString().toLowerCase();
+                if (status.includes('present') || status === 'p' || status === '1') {
+                    count++;
+                    const student = activeStudents[record.student];
+                    const name = student ? student.name : (record.studentName || record.student);
+                    
+                    // Group by date for better visualization
+                    if (currentDate !== record.date) {
+                        currentDate = record.date;
+                        content += `\n📅 ${currentDate}\n${'─'.repeat(30)}\n`;
+                    }
+                    
+                    content += `${count.toString().padStart(2, '0')}. ✅ ${name.padEnd(20)} │ ${record.time}\n`;
+                }
+            });
+            
+            if (count === 0) {
+                content += `❌ No present students found in the selected period.\n`;
+            }
+            
+            return content;
+        }
+        
+        // Helper function for absent students report  
+        function generateAbsentStudentsReport(records, analytics) {
+            let content = `
+❌ ABSENT STUDENTS REPORT
+═══════════════════════════════════════════════════════════════════
+
+📊 ABSENCE RATE: ${analytics.absentCount}/${records.length} (${100-analytics.attendanceRate}%)
+
+`;
+            
+            let count = 0;
+            let currentDate = '';
+            
+            records.forEach(record => {
+                const status = (record.attendanceStatus || record.attendanceLabel || '').toString().toLowerCase();
+                if (status.includes('absent') || status === 'a' || status === '0') {
+                    count++;
+                    const student = activeStudents[record.student];
+                    const name = student ? student.name : (record.studentName || record.student);
+                    
+                    // Group by date for better visualization
+                    if (currentDate !== record.date) {
+                        currentDate = record.date;
+                        content += `\n📅 ${currentDate}\n${'─'.repeat(30)}\n`;
+                    }
+                    
+                    content += `${count.toString().padStart(2, '0')}. ❌ ${name.padEnd(20)} │ ${record.time}\n`;
+                }
+            });
+            
+            if (count === 0) {
+                content += `✅ No absent students found - Perfect attendance!\n`;
+            }
+            
+            return content;
+        }
+        
+        // Helper function for complete attendance report
+        function generateCompleteAttendanceReport(records, analytics) {
+            let content = `
+📊 COMPLETE ATTENDANCE OVERVIEW
+═══════════════════════════════════════════════════════════════════
+
+📈 PERFORMANCE BREAKDOWN:
+✅ Present: ${analytics.presentCount} (${analytics.attendanceRate}%)
+❌ Absent:  ${analytics.absentCount} (${100-analytics.attendanceRate}%)
+
+📋 DETAILED RECORDS:
+`;
+            
+            let currentDate = '';
+            
+            records.forEach((record, index) => {
+                const student = activeStudents[record.student];
+                const name = student ? student.name : (record.studentName || record.student);
+                const status = record.attendanceStatus || record.attendanceLabel || 'Unknown';
+                const statusIcon = status.toLowerCase().includes('present') ? '✅' : '❌';
+                
+                // Group by date for better visualization
+                if (currentDate !== record.date) {
+                    currentDate = record.date;
+                    content += `\n📅 ${currentDate}\n${'─'.repeat(50)}\n`;
+                }
+                
+                content += `${statusIcon} ${name.padEnd(20)} │ ${status.padEnd(8)} │ ${record.time}\n`;
+            });
+            
+            return content;
         }
 
         function closeEmailPreview() {
