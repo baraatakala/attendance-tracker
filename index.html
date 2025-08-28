@@ -2428,11 +2428,8 @@
                                         aria-label="Manage student list"
                                         aria-expanded="false"
                                         aria-controls="studentManagementPanel"
-                                        onclick="requestAdminAccess('manageStudents')">
+                                        onclick="toggleStudentManagementPanel()">
                                     <i class="fas fa-cog" aria-hidden="true"></i>
-                                    <i class="fas fa-lock admin-lock-icon" 
-                                       style="display: inline; margin-left: 5px; font-size: 0.8em; opacity: 0.7;" 
-                                       aria-hidden="true"></i>
                                 </button>
                             </div>
                             <small id="student-help" class="form-help">Select the student for attendance tracking</small>
@@ -2454,7 +2451,7 @@
                                         <input type="text" id="newStudentId" placeholder="Student ID (optional - auto-generated if empty)" maxlength="20">
                                         <input type="text" id="newStudentName" placeholder="Student Full Name (e.g., John Smith)" maxlength="100">
                                     </div>
-                                    <button type="button" id="addStudentBtn" class="add-student-btn">
+                                    <button type="button" id="addStudentBtn" class="add-student-btn" onclick="addNewStudent()">
                                         <i class="fas fa-plus"></i> Add Student
                                     </button>
                                 </div>
@@ -2550,14 +2547,12 @@
                 <div class="action-buttons">
                     <button id="viewRecordsBtn" class="action-btn primary">
                         <i class="fas fa-eye"></i> View Records
-                        <i class="fas fa-lock admin-lock-icon" title="Admin access required"></i>
                     </button>
                     <button id="downloadBtn" class="action-btn success">
                         <i class="fas fa-download"></i> Download Excel
                     </button>
-                    <button id="clearBtn" class="action-btn danger" onclick="testClearData()">
+                    <button id="clearBtn" class="action-btn danger" onclick="clearAllData()">
                         <i class="fas fa-trash"></i> Clear Data
-                        <i class="fas fa-lock admin-lock-icon" title="Admin access required"></i>
                     </button>
                 </div>
                 
@@ -3335,7 +3330,7 @@
             elements.viewRecordsBtn.addEventListener('click', () => {
                 elements.viewRecordsBtn.disabled = true;
                 setTimeout(() => elements.viewRecordsBtn.disabled = false, 1000);
-                requestAdminAccess('viewRecords');
+                toggleRecordsView();
             });
             
             elements.downloadBtn.addEventListener('click', downloadExcel);
@@ -3366,7 +3361,7 @@
             elements.clearBtn.addEventListener('click', () => {
                 elements.clearBtn.disabled = true;
                 setTimeout(() => elements.clearBtn.disabled = false, 1000);
-                requestAdminAccess('clearData');
+                clearAllData();
             });
             
             // Filters
@@ -3878,11 +3873,10 @@
         }
 
         function setupStudentManagementListeners() {
-            // Manage students button - requires admin password
+            // Manage students button - direct access, no password needed
             if (elements.manageStudentsBtn) {
                 elements.manageStudentsBtn.addEventListener('click', () => {
-                    // Require admin authentication for student management
-                    requestAdminAccess('manageStudents');
+                    toggleStudentManagementPanel();
                 });
             }
 
@@ -3900,6 +3894,7 @@
             if (elements.newStudentId) {
                 elements.newStudentId.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
+                        e.preventDefault();
                         addNewStudent();
                     }
                 });
@@ -3911,6 +3906,7 @@
             if (elements.newStudentName) {
                 elements.newStudentName.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
+                        e.preventDefault();
                         addNewStudent();
                     }
                 });
@@ -4037,13 +4033,24 @@
         }
 
         function addNewStudent() {
+            console.log('🔧 Add New Student function called');
             const idInput = elements.newStudentId;
             const nameInput = elements.newStudentName;
 
-            if (!nameInput) return;
+            console.log('🔧 ID Input:', idInput);
+            console.log('🔧 Name Input:', nameInput);
+
+            if (!nameInput) {
+                console.log('🔧 Error: Name input not found');
+                showMessage('Name input field not found', 'error');
+                return;
+            }
 
             const name = nameInput.value.trim();
             const providedId = idInput ? idInput.value.trim() : '';
+
+            console.log('🔧 Name value:', name);
+            console.log('🔧 ID value:', providedId);
 
             // Validate inputs
             if (!name) {
@@ -4058,6 +4065,7 @@
 
             // Generate or use provided ID
             const studentId = providedId || generateNextStudentId();
+            console.log('🔧 Generated/Used ID:', studentId);
             
             // Check for duplicate ID
             const idExists = Object.keys(activeStudents).some(key => {
@@ -4104,7 +4112,8 @@
                 return;
             }
 
-            const studentName = activeStudents[studentKey];
+            const student = activeStudents[studentKey];
+            const studentName = typeof student === 'string' ? student : (student.name || 'Unknown Student');
             
             // Confirm removal
             if (!confirm(`Are you sure you want to remove "${studentName}" from the student list?\n\nThis will not delete their attendance records, but they will no longer appear in the dropdown for new entries.`)) {
@@ -4161,13 +4170,12 @@
         }
 
         function restoreDefaultStudents() {
-            if (confirm('This will restore all default students. Continue?')) {
-                activeStudents = {...defaultStudentNames};
-                saveActiveStudents();
-                populateStudentDropdown();
-                updateStudentsList();
-                showMessage('Default students restored', 'success');
-            }
+            // Restore default students immediately without confirmation
+            activeStudents = {...defaultStudentNames};
+            saveActiveStudents();
+            populateStudentDropdown();
+            updateStudentsList();
+            showMessage('Default students restored successfully!', 'success');
         }
 
         // Admin Security Functions
@@ -7693,6 +7701,19 @@ ${tips.join('\n')}
         window.sendFinalEmail = sendFinalEmail;
         window.testEmailForm = testEmailForm;
         window.testClearData = testClearData;
+        window.addNewStudent = addNewStudent;
+        
+        // Test function for debugging
+        window.testAddStudent = function() {
+            console.log('🧪 Testing Add Student function...');
+            console.log('🧪 Elements:', {
+                addStudentBtn: elements.addStudentBtn,
+                newStudentId: elements.newStudentId,
+                newStudentName: elements.newStudentName
+            });
+            console.log('🧪 Active Students:', activeStudents);
+            addNewStudent();
+        };
     </script>
 </body>
 </html>
