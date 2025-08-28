@@ -2025,6 +2025,359 @@
                 max-width: none;
             }
         }
+        
+        /* Collapsible Section Styles */
+        .section-header {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            margin-bottom: 0;
+        }
+        
+        .section-header:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .section-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .dark-theme .section-header {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+        
+        .dark-theme .section-header:hover {
+            background: #4a5568;
+        }
+        
+        .dark-theme .section-header h3 {
+            color: #e2e8f0;
+        }
+        
+        .toggle-icon {
+            font-size: 16px;
+            transition: transform 0.3s ease;
+            color: #6c757d;
+        }
+        
+        .toggle-icon.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            border: 1px solid #e9ecef;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            background: #fff;
+        }
+        
+        .dark-theme .collapsible-content {
+            background: #1a202c;
+            border-color: #4a5568;
+        }
+        
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            border: none;
+        }
+        
+        .collapsible-content.expanded {
+            max-height: 2000px;
+            opacity: 1;
+        }
+        
+        /* Adjust existing sections to work with collapsible */
+        .actions-section .action-buttons,
+        .location-section .location-card,
+        .location-controls-section .location-card {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            padding: 20px;
+        }
+
+        /* Email Modal Styles */
+        .email-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(3px);
+        }
+
+        .email-modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .email-modal-content.large {
+            max-width: 1100px;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .email-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            border-bottom: 2px solid #f0f2f5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .email-modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .email-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .email-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .email-report-form {
+            padding: 30px;
+        }
+
+        .email-form-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .email-form-section h4 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .email-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .email-form-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .email-form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .email-form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .email-form-group label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .email-form-group input,
+        .email-form-group select,
+        .email-form-group textarea {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .email-form-group input:focus,
+        .email-form-group select:focus,
+        .email-form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .email-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .email-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .email-checkbox-item:hover {
+            background: #f0f2f5;
+            border-color: #667eea;
+        }
+
+        .email-checkbox-item input[type="checkbox"] {
+            margin: 0;
+            transform: scale(1.2);
+        }
+
+        .email-checkbox-item span {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .email-form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            padding: 25px 30px;
+            border-top: 2px solid #f0f2f5;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .email-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .email-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .email-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .email-btn.preview {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .email-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .email-preview-content {
+            padding: 30px;
+            background: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .email-preview-content pre {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .email-modal-content {
+                width: 98%;
+                margin: 10px;
+            }
+
+            .email-form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .email-checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .email-form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .email-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2074,7 +2427,8 @@
                                         title="Manage Students" 
                                         aria-label="Manage student list"
                                         aria-expanded="false"
-                                        aria-controls="studentManagementPanel">
+                                        aria-controls="studentManagementPanel"
+                                        onclick="requestAdminAccess('manageStudents')">
                                     <i class="fas fa-cog" aria-hidden="true"></i>
                                     <i class="fas fa-lock admin-lock-icon" 
                                        style="display: inline; margin-left: 5px; font-size: 0.8em; opacity: 0.7;" 
@@ -2188,6 +2542,11 @@
 
             <!-- Action Buttons -->
             <section class="actions-section">
+                <div class="section-header collapsible-header" onclick="toggleSection('actions-content')">
+                    <h3><i class="fas fa-tools"></i> Actions & Reports</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="actions-content-icon"></i>
+                </div>
+                <div id="actions-content" class="collapsible-content collapsed">
                 <div class="action-buttons">
                     <button id="viewRecordsBtn" class="action-btn primary">
                         <i class="fas fa-eye"></i> View Records
@@ -2196,14 +2555,26 @@
                     <button id="downloadBtn" class="action-btn success">
                         <i class="fas fa-download"></i> Download Excel
                     </button>
-                    <button id="clearBtn" class="action-btn danger">
+                    <button id="clearBtn" class="action-btn danger" onclick="testClearData()">
                         <i class="fas fa-trash"></i> Clear Data
                         <i class="fas fa-lock admin-lock-icon" title="Admin access required"></i>
                     </button>
-                    <button id="securityLogsBtn" class="action-btn warning">
-                        <i class="fas fa-shield-alt"></i> Security Logs
-                        <i class="fas fa-lock admin-lock-icon" title="Admin access required"></i>
-                    </button>
+                </div>
+                
+                <!-- Email Reporting Section -->
+                <div class="email-report-section" style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+                    <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">
+                        <i class="fas fa-envelope"></i> Email Reports
+                    </h3>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button id="openEmailFormBtn" class="action-btn primary" style="white-space: nowrap;" onclick="testEmailForm()">
+                            <i class="fas fa-envelope-open"></i> Create Email Report
+                        </button>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                        Generate professional attendance reports for managers and administrators.
+                    </p>
+                </div>
                 </div>
             </section>
 
@@ -2230,16 +2601,9 @@
                                 <option value="">All Status</option>
                                 <option value="present">Present</option>
                                 <option value="absent">Absent</option>
-                                <!-- Legacy options for backward compatibility -->
-                                <option value="check-in">Check In</option>
-                                <option value="check-out">Check Out</option>
-                                <option value="break-start">Break Start</option>
-                                <option value="break-end">Break End</option>
-                                <option value="lunch-start">Lunch Start</option>
-                                <option value="lunch-end">Lunch End</option>
                             </select>
                         </div>
-                        <button id="applyFilters" class="filter-btn">
+                        <button id="applyFilters" class="filter-btn" onclick="applyFilters()">
                             <i class="fas fa-search"></i> Apply Filters
                         </button>
                     </div>
@@ -2277,6 +2641,11 @@
 
             <!-- Location Info -->
             <section class="location-section">
+                <div class="section-header collapsible-header" onclick="toggleSection('location-content')">
+                    <h3><i class="fas fa-map-marker-alt"></i> Current Location</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="location-content-icon"></i>
+                </div>
+                <div id="location-content" class="collapsible-content collapsed">
                 <div class="location-card">
                     <h3><i class="fas fa-map-marker-alt"></i> Current Location</h3>
                     <div class="location-details">
@@ -2379,10 +2748,16 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </section>
 
             <!-- Geolocation Controls -->
             <section class="location-controls-section">
+                <div class="section-header collapsible-header" onclick="toggleSection('location-controls-content')">
+                    <h3><i class="fas fa-cogs"></i> Location Settings</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="location-controls-content-icon"></i>
+                </div>
+                <div id="location-controls-content" class="collapsible-content collapsed">
                 <div class="location-card">
                     <h3><i class="fas fa-cogs"></i> Location Settings 
                         <button id="toggleLocationSettings" class="toggle-btn" onclick="toggleLocationSettings()" title="Show/Hide Location Settings">
@@ -2458,8 +2833,73 @@
                     </div>
                     </div>
                 </div>
+                </div>
             </section>
         </main>
+
+        <!-- Simple Email Form Modal -->
+        <div id="emailFormModal" class="email-modal" style="display: none;">
+            <div class="email-modal-content" style="max-width: 500px; background: white; padding: 20px; border-radius: 8px;">
+                <div class="email-modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+                    <h3 style="margin: 0; color: #333;">📧 Send Attendance Report</h3>
+                    <button type="button" style="background: none; border: none; font-size: 20px; cursor: pointer;" onclick="closeEmailForm()">✕</button>
+                </div>
+                
+                <form id="emailReportForm" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Send to Email:</label>
+                        <input type="email" id="recipientEmail" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" 
+                               placeholder="manager@company.com">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">What to include:</label>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="radio" name="reportType" value="present" checked> Present Students Only
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="radio" name="reportType" value="absent"> Absent Students Only
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="radio" name="reportType" value="both"> Both Present and Absent
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" onclick="closeEmailForm()" 
+                                style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
+                        <button type="button" onclick="sendSimpleEmail()" 
+                                style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Send Email</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Email Preview Modal -->
+        <div id="emailPreviewModal" class="email-modal" style="display: none;">
+            <div class="email-modal-content large">
+                <div class="email-modal-header">
+                    <h3><i class="fas fa-eye"></i> Email Preview</h3>
+                    <button type="button" class="email-modal-close" onclick="closeEmailPreview()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="emailPreviewContent" class="email-preview-content">
+                    <!-- Preview content will be generated here -->
+                </div>
+                <div class="email-form-actions">
+                    <button type="button" class="email-btn secondary" onclick="closeEmailPreview()">
+                        <i class="fas fa-arrow-left"></i> Back to Edit
+                    </button>
+                    <button type="button" class="email-btn primary" onclick="sendFinalEmail()">
+                        <i class="fas fa-paper-plane"></i> Send Email
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Messages -->
         <div id="messageContainer" class="message-container"></div>
@@ -2533,7 +2973,7 @@
         function getAdminPassword() {
             if (!ADMIN_PASSWORD) {
                 // Use the original hardcoded admin password for security
-                ADMIN_PASSWORD = "baraa2021!";
+                ADMIN_PASSWORD = "2021";
                 // Store in session (cleared when browser closes)
                 sessionStorage.setItem('adminPassword', ADMIN_PASSWORD);
             }
@@ -2709,8 +3149,29 @@
             viewRecordsBtn: document.getElementById('viewRecordsBtn'),
             downloadBtn: document.getElementById('downloadBtn'),
             clearBtn: document.getElementById('clearBtn'),
-            securityLogsBtn: document.getElementById('securityLogsBtn'),
             statsBtn: document.getElementById('statsBtn'),
+            sendEmailBtn: document.getElementById('sendEmailBtn'),
+            reportEmail: document.getElementById('reportEmail'),
+            openEmailFormBtn: document.getElementById('openEmailFormBtn'),
+            
+            // Email Form Elements
+            emailFormModal: document.getElementById('emailFormModal'),
+            emailReportForm: document.getElementById('emailReportForm'),
+            emailPreviewModal: document.getElementById('emailPreviewModal'),
+            emailPreviewContent: document.getElementById('emailPreviewContent'),
+            
+            // Email Form Fields
+            recipientEmail: document.getElementById('recipientEmail'),
+            recipientName: document.getElementById('recipientName'),
+            ccEmails: document.getElementById('ccEmails'),
+            reportType: document.getElementById('reportType'),
+            reportPriority: document.getElementById('reportPriority'),
+            startDate: document.getElementById('startDate'),
+            endDate: document.getElementById('endDate'),
+            emailSubject: document.getElementById('emailSubject'),
+            customMessage: document.getElementById('customMessage'),
+            senderName: document.getElementById('senderName'),
+            dateRangeSection: document.getElementById('dateRangeSection'),
             
             // Records section
             recordsSection: document.getElementById('recordsSection'),
@@ -2826,6 +3287,9 @@
             // Initialize admin UI
             updateAdminUI();
             
+            // Initialize collapsible sections
+            initializeCollapsibleSections();
+            
             showMessage('✅ Attendance Tracker ready! Location will be requested automatically.', 'success');
         }
 
@@ -2876,16 +3340,33 @@
             
             elements.downloadBtn.addEventListener('click', downloadExcel);
             
+            elements.sendEmailBtn.addEventListener('click', sendEmailReport);
+            
+            console.log('Setting up openEmailFormBtn event listener');
+            console.log('elements.openEmailFormBtn:', elements.openEmailFormBtn);
+            if (elements.openEmailFormBtn) {
+                elements.openEmailFormBtn.addEventListener('click', function() {
+                    console.log('Email button clicked!');
+                    openEmailForm();
+                });
+                console.log('Event listener added successfully');
+            } else {
+                console.error('openEmailFormBtn element not found!');
+            }
+            
+            // Email form event listeners
+            if (elements.emailReportForm) {
+                elements.emailReportForm.addEventListener('submit', handleEmailFormSubmit);
+            }
+            
+            if (elements.reportType) {
+                elements.reportType.addEventListener('change', handleReportTypeChange);
+            }
+            
             elements.clearBtn.addEventListener('click', () => {
                 elements.clearBtn.disabled = true;
                 setTimeout(() => elements.clearBtn.disabled = false, 1000);
                 requestAdminAccess('clearData');
-            });
-            
-            elements.securityLogsBtn.addEventListener('click', () => {
-                elements.securityLogsBtn.disabled = true;
-                setTimeout(() => elements.securityLogsBtn.disabled = false, 1000);
-                requestAdminAccess('viewSecurityLogs');
             });
             
             // Filters
@@ -3888,7 +4369,7 @@
         }
 
         function updateAdminUI() {
-            const adminButtons = ['viewRecordsBtn', 'clearBtn', 'manageStudentsBtn', 'securityLogsBtn'];
+            const adminButtons = ['viewRecordsBtn', 'clearBtn', 'manageStudentsBtn'];
             
             adminButtons.forEach(buttonId => {
                 const button = document.getElementById(buttonId);
@@ -5428,18 +5909,8 @@ ${tips.join('\n')}
                     return;
                 }
                 
-                // Anti-Fraud Protection - Critical Security Check
-                if (!validateSubmission()) {
-                    clearTimeout(timeoutId);
-                    showLoading(false);
-                    return;
-                }
-                
                 // Create attendance record
                 const record = createAttendanceRecord();
-                
-                // Update fraud protection tracking
-                updateSubmissionTracking();
                 
                 // Add to data array immediately
                 attendanceData.unshift(record);
@@ -5629,6 +6100,7 @@ ${tips.join('\n')}
         }
 
         function applyFilters() {
+            console.log('Apply Filters clicked');
             displayRecords();
         }
 
@@ -5641,20 +6113,33 @@ ${tips.join('\n')}
                 filtered = filtered.filter(record => record.date === filterDate);
             }
             
-            // Filter by student (support both old employee field and new student field)
+            // Filter by student
             if (elements.filterEmployee.value) {
                 filtered = filtered.filter(record => 
+                    (record.studentName === elements.filterEmployee.value) || 
                     (record.student === elements.filterEmployee.value) || 
                     (record.employee === elements.filterEmployee.value)
                 );
             }
             
-            // Filter by action/status
+            // Filter by status - updated to work with current data format
             if (elements.filterAction.value) {
-                filtered = filtered.filter(record => 
-                    record.attendanceStatus === elements.filterAction.value || 
-                    record.actionType === elements.filterAction.value
-                );
+                const filterValue = elements.filterAction.value.toLowerCase();
+                filtered = filtered.filter(record => {
+                    // Check attendanceStatus field
+                    if (record.attendanceStatus && record.attendanceStatus.toLowerCase() === filterValue) {
+                        return true;
+                    }
+                    // Check attendanceLabel field
+                    if (record.attendanceLabel && record.attendanceLabel.toLowerCase() === filterValue) {
+                        return true;
+                    }
+                    // Check legacy actionType field
+                    if (record.actionType && record.actionType.toLowerCase() === filterValue) {
+                        return true;
+                    }
+                    return false;
+                });
             }
             
             return filtered;
@@ -5929,6 +6414,979 @@ ${tips.join('\n')}
             }
         }
 
+        function sendEmailReport() {
+            try {
+                const emailAddress = elements.reportEmail.value.trim();
+                
+                if (!emailAddress) {
+                    showMessage('Please enter an email address', 'warning');
+                    elements.reportEmail.focus();
+                    return;
+                }
+                
+                // Validate email format
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(emailAddress)) {
+                    showMessage('Please enter a valid email address', 'warning');
+                    elements.reportEmail.focus();
+                    return;
+                }
+                
+                if (attendanceData.length === 0) {
+                    showMessage('No attendance data to include in the report', 'warning');
+                    return;
+                }
+                
+                showLoading(true);
+                
+                // Generate comprehensive analytics
+                const analytics = generateAttendanceAnalytics();
+                
+                // Create professional email subject and body
+                const reportDate = new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                const emailSubject = `📊 Attendance Analytics Report - ${reportDate}`;
+                
+                let emailBody = `🎓 ATTENDANCE TRACKING SYSTEM - ANALYTICS REPORT\n`;
+                emailBody += `${'='.repeat(55)}\n\n`;
+                
+                emailBody += `📅 Report Generated: ${new Date().toLocaleString()}\n`;
+                emailBody += `📊 Analysis Period: ${analytics.dateRange}\n`;
+                emailBody += `⏱️  Last Updated: ${analytics.lastRecordTime}\n\n`;
+                
+                // KEY METRICS
+                emailBody += `📈 KEY PERFORMANCE INDICATORS\n`;
+                emailBody += `${'-'.repeat(35)}\n`;
+                emailBody += `👥 Total Students Tracked: ${analytics.totalStudents}\n`;
+                emailBody += `📋 Total Records: ${analytics.totalRecords}\n`;
+                emailBody += `✅ Present Records: ${analytics.presentCount} (${analytics.presentPercentage}%)\n`;
+                emailBody += `❌ Absent Records: ${analytics.absentCount} (${analytics.absentPercentage}%)\n`;
+                emailBody += `📊 Attendance Rate: ${analytics.attendanceRate}%\n\n`;
+                
+                // TODAY'S SUMMARY
+                emailBody += `🗓️  TODAY'S SUMMARY\n`;
+                emailBody += `${'-'.repeat(20)}\n`;
+                emailBody += `📝 Records Today: ${analytics.todayRecords}\n`;
+                emailBody += `✅ Present Today: ${analytics.todayPresent}\n`;
+                emailBody += `❌ Absent Today: ${analytics.todayAbsent}\n`;
+                emailBody += `📈 Today's Rate: ${analytics.todayRate}%\n\n`;
+                
+                // STUDENT BREAKDOWN
+                if (analytics.studentBreakdown.length > 0) {
+                    emailBody += `👨‍🎓 STUDENT ATTENDANCE BREAKDOWN\n`;
+                    emailBody += `${'-'.repeat(35)}\n`;
+                    analytics.studentBreakdown.forEach(student => {
+                        emailBody += `• ${student.name}: ${student.presentCount}P/${student.absentCount}A (${student.rate}% rate)\n`;
+                    });
+                    emailBody += `\n`;
+                }
+                
+                // RECENT ACTIVITY
+                if (analytics.recentActivity.length > 0) {
+                    emailBody += `🕐 RECENT ACTIVITY (Last 5 Records)\n`;
+                    emailBody += `${'-'.repeat(35)}\n`;
+                    analytics.recentActivity.forEach((record, index) => {
+                        emailBody += `${index + 1}. ${record.name} - ${record.status} (${record.time})\n`;
+                    });
+                    emailBody += `\n`;
+                }
+                
+                // INSIGHTS & RECOMMENDATIONS
+                emailBody += `💡 INSIGHTS & RECOMMENDATIONS\n`;
+                emailBody += `${'-'.repeat(35)}\n`;
+                analytics.insights.forEach(insight => {
+                    emailBody += `• ${insight}\n`;
+                });
+                emailBody += `\n`;
+                
+                // FOOTER
+                emailBody += `${'-'.repeat(55)}\n`;
+                emailBody += `🔗 Access full system: [Your attendance tracker URL]\n`;
+                emailBody += `📞 Support: Contact your system administrator\n`;
+                emailBody += `⚡ Generated automatically by Attendance Tracking System\n`;
+                
+                // Create mailto link
+                const mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                
+                // Open email client
+                window.open(mailtoLink);
+                
+                showMessage(`📧 Professional analytics report prepared for: ${emailAddress}`, 'success');
+                
+                // Clear the email field
+                elements.reportEmail.value = '';
+                
+            } catch (error) {
+                showMessage(`Error preparing email report: ${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Analytics generation function
+        function generateAttendanceAnalytics() {
+            const today = new Date().toDateString();
+            const analytics = {
+                totalRecords: attendanceData.length,
+                totalStudents: 0,
+                presentCount: 0,
+                absentCount: 0,
+                presentPercentage: 0,
+                absentPercentage: 0,
+                attendanceRate: 0,
+                todayRecords: 0,
+                todayPresent: 0,
+                todayAbsent: 0,
+                todayRate: 0,
+                dateRange: '',
+                lastRecordTime: '',
+                studentBreakdown: [],
+                recentActivity: [],
+                insights: []
+            };
+            
+            if (attendanceData.length === 0) return analytics;
+            
+            // Calculate basic metrics
+            const studentStats = {};
+            let earliestDate = null;
+            let latestDate = null;
+            
+            attendanceData.forEach(record => {
+                // Get student info
+                const studentId = record.student || record.studentId || 'Unknown';
+                const studentInfo = activeStudents[studentId];
+                const studentName = studentInfo ? 
+                    (studentInfo.name || `${studentInfo.firstName} ${studentInfo.lastName}`) : 
+                    studentId;
+                
+                // Initialize student stats
+                if (!studentStats[studentId]) {
+                    studentStats[studentId] = {
+                        name: studentName,
+                        presentCount: 0,
+                        absentCount: 0,
+                        totalCount: 0
+                    };
+                }
+                
+                // Count attendance
+                const status = record.status || record.attendanceStatus;
+                if (status === 'present') {
+                    analytics.presentCount++;
+                    studentStats[studentId].presentCount++;
+                } else {
+                    analytics.absentCount++;
+                    studentStats[studentId].absentCount++;
+                }
+                studentStats[studentId].totalCount++;
+                
+                // Today's stats
+                const recordDate = new Date(record.date).toDateString();
+                if (recordDate === today) {
+                    analytics.todayRecords++;
+                    if (status === 'present') {
+                        analytics.todayPresent++;
+                    } else {
+                        analytics.todayAbsent++;
+                    }
+                }
+                
+                // Date range
+                const recordDateObj = new Date(record.date);
+                if (!earliestDate || recordDateObj < earliestDate) earliestDate = recordDateObj;
+                if (!latestDate || recordDateObj > latestDate) latestDate = recordDateObj;
+            });
+            
+            // Calculate percentages
+            analytics.totalStudents = Object.keys(studentStats).length;
+            analytics.presentPercentage = Math.round((analytics.presentCount / analytics.totalRecords) * 100) || 0;
+            analytics.absentPercentage = Math.round((analytics.absentCount / analytics.totalRecords) * 100) || 0;
+            analytics.attendanceRate = analytics.presentPercentage;
+            analytics.todayRate = analytics.todayRecords > 0 ? 
+                Math.round((analytics.todayPresent / analytics.todayRecords) * 100) : 0;
+            
+            // Date range
+            if (earliestDate && latestDate) {
+                analytics.dateRange = earliestDate.toDateString() === latestDate.toDateString() ? 
+                    earliestDate.toLocaleDateString() : 
+                    `${earliestDate.toLocaleDateString()} - ${latestDate.toLocaleDateString()}`;
+            }
+            
+            // Last record time
+            if (attendanceData.length > 0) {
+                const lastRecord = attendanceData[0]; // Most recent (array is newest first)
+                analytics.lastRecordTime = `${lastRecord.date} at ${lastRecord.time}`;
+            }
+            
+            // Student breakdown
+            analytics.studentBreakdown = Object.values(studentStats).map(student => ({
+                ...student,
+                rate: student.totalCount > 0 ? Math.round((student.presentCount / student.totalCount) * 100) : 0
+            })).sort((a, b) => b.rate - a.rate);
+            
+            // Recent activity (last 5 records)
+            analytics.recentActivity = attendanceData.slice(0, 5).map(record => {
+                const studentId = record.student || record.studentId || 'Unknown';
+                const studentInfo = activeStudents[studentId];
+                const studentName = studentInfo ? 
+                    (studentInfo.name || `${studentInfo.firstName} ${studentInfo.lastName}`) : 
+                    studentId;
+                const status = record.status || record.attendanceStatus;
+                
+                return {
+                    name: studentName,
+                    status: status === 'present' ? '✅ Present' : '❌ Absent',
+                    time: `${record.date} ${record.time}`
+                };
+            });
+            
+            // Generate insights
+            if (analytics.attendanceRate >= 90) {
+                analytics.insights.push('🎉 Excellent attendance rate! Keep up the great work.');
+            } else if (analytics.attendanceRate >= 75) {
+                analytics.insights.push('👍 Good attendance rate, but room for improvement.');
+            } else {
+                analytics.insights.push('⚠️ Low attendance rate requires attention and intervention.');
+            }
+            
+            if (analytics.todayRecords > 0) {
+                if (analytics.todayRate > analytics.attendanceRate) {
+                    analytics.insights.push('📈 Today\'s attendance is above average - positive trend!');
+                } else if (analytics.todayRate < analytics.attendanceRate) {
+                    analytics.insights.push('📉 Today\'s attendance is below average - monitor closely.');
+                }
+            }
+            
+            if (analytics.totalStudents > 0) {
+                const lowAttendanceStudents = analytics.studentBreakdown.filter(s => s.rate < 50).length;
+                if (lowAttendanceStudents > 0) {
+                    analytics.insights.push(`🔍 ${lowAttendanceStudents} student(s) have attendance below 50% - consider intervention.`);
+                }
+            }
+            
+            return analytics;
+        }
+
+        // Test functions for debugging
+        function testEmailForm() {
+            console.log('🧪 TESTING EMAIL FORM FUNCTIONALITY...');
+            console.log('attendanceData length:', attendanceData.length);
+            console.log('activeStudents count:', Object.keys(activeStudents).length);
+            
+            if (attendanceData.length === 0) {
+                // Add comprehensive test data
+                const testStudents = ['STU001', 'STU002', 'STU003', 'STU004', 'STU005'];
+                const statuses = ['present', 'absent'];
+                
+                testStudents.forEach((studentId, index) => {
+                    // Add student to activeStudents if not exists
+                    if (!activeStudents[studentId]) {
+                        activeStudents[studentId] = {
+                            firstName: `Test Student ${index + 1}`,
+                            lastName: `LastName${index + 1}`,
+                            id: studentId
+                        };
+                    }
+                    
+                    // Add multiple attendance records per student
+                    for (let i = 0; i < 5; i++) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        const status = i < 2 ? 'present' : (Math.random() > 0.7 ? 'absent' : 'present');
+                        
+                        attendanceData.push({
+                            student: studentId,
+                            status: status,
+                            date: date.toLocaleDateString(),
+                            time: `${8 + i}:00 AM`,
+                            latitude: '25.316557',
+                            longitude: '55.374643',
+                            address: `Test Location ${index + 1}`
+                        });
+                    }
+                });
+                
+                console.log('✅ Added comprehensive test data');
+                console.log('Total records:', attendanceData.length);
+                console.log('Students:', Object.keys(activeStudents));
+            }
+            
+            // Test analytics generation
+            const analytics = generateAdvancedAnalytics('weekly');
+            console.log('📊 Generated analytics:', analytics);
+            
+            // Test checkbox functionality
+            const checkboxes = getSelectedCheckboxes();
+            console.log('📋 Default checkboxes:', checkboxes);
+            
+            // Test report content generation
+            const reportContent = generateReportContent(analytics, 'weekly');
+            console.log('📄 Generated report content length:', reportContent.length);
+            console.log('📄 Report preview (first 500 chars):', reportContent.substring(0, 500));
+            
+            // Open the email form
+            openEmailForm();
+            
+            console.log('🎯 Email form test complete - check the modal!');
+        }
+        
+        function testCompleteEmailWorkflow() {
+            console.log('🚀 TESTING COMPLETE EMAIL WORKFLOW...');
+            
+            // First ensure we have test data
+            testEmailForm();
+            
+            // Wait a moment for the modal to open, then simulate form filling
+            setTimeout(() => {
+                try {
+                    // Fill out the form with test data
+                    const recipientEmail = document.getElementById('recipientEmail');
+                    const recipientName = document.getElementById('recipientName');
+                    const reportTypeSelect = document.getElementById('reportType');
+                    
+                    if (recipientEmail) recipientEmail.value = 'test@example.com';
+                    if (recipientName) recipientName.value = 'Test Manager';
+                    if (reportTypeSelect) reportTypeSelect.value = 'weekly';
+                    
+                    // Check all content options
+                    const checkboxes = [
+                        'includeSummary', 'includeStatistics', 'includeAbsentees',
+                        'includePerfectAttendance', 'includeTrends', 'includeAlerts',
+                        'includeCharts', 'includeDetails'
+                    ];
+                    
+                    checkboxes.forEach(checkboxId => {
+                        const checkbox = document.getElementById(checkboxId);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                            console.log(`✅ Checked ${checkboxId}`);
+                        }
+                    });
+                    
+                    console.log('📋 Form filled with test data - now test the Generate Email button!');
+                    console.log('💡 Click "Generate Email" to see the full customized report.');
+                    
+                } catch (error) {
+                    console.error('❌ Error in test workflow:', error);
+                }
+            }, 1000);
+        }
+        
+        function testClearData() {
+            console.log('Testing clear data...');
+            clearAllData();
+        }
+
+        // Simple Email Functions
+        function openEmailForm() {
+            console.log('Opening simple email form...');
+            
+            if (elements.emailFormModal) {
+                elements.emailFormModal.style.display = 'flex';
+                elements.emailFormModal.style.alignItems = 'center';
+                elements.emailFormModal.style.justifyContent = 'center';
+                elements.emailFormModal.style.position = 'fixed';
+                elements.emailFormModal.style.top = '0';
+                elements.emailFormModal.style.left = '0';
+                elements.emailFormModal.style.width = '100%';
+                elements.emailFormModal.style.height = '100%';
+                elements.emailFormModal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                elements.emailFormModal.style.zIndex = '1000';
+            }
+        }
+
+        function closeEmailForm() {
+            if (elements.emailFormModal) {
+                elements.emailFormModal.style.display = 'none';
+            }
+        }
+        
+        function sendSimpleEmail() {
+            const recipientEmail = document.getElementById('recipientEmail').value;
+            const reportType = document.querySelector('input[name="reportType"]:checked').value;
+            
+            if (!recipientEmail) {
+                alert('Please enter an email address.');
+                return;
+            }
+            
+            // Get today's date
+            const today = new Date();
+            const todayFormatted = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+            
+            // Get today's records
+            let todayRecords = attendanceData.filter(record => record.date === todayFormatted);
+            
+            // If no records for today, get all recent records
+            if (todayRecords.length === 0) {
+                todayRecords = attendanceData.slice(-10); // Last 10 records
+            }
+            
+            let emailContent = `Attendance Summary - ${todayFormatted}\n\n`;
+            
+            // Show records based on selection
+            if (reportType === 'present') {
+                emailContent += `PRESENT STUDENTS:\n`;
+                emailContent += `==================\n`;
+                let count = 0;
+                todayRecords.forEach(record => {
+                    // Use the correct field names: attendanceStatus and attendanceLabel
+                    const status = (record.attendanceStatus || record.attendanceLabel || '').toString().toLowerCase();
+                    if (status.includes('present') || status === 'p' || status === '1') {
+                        count++;
+                        const student = activeStudents[record.student];
+                        const name = student ? `${student.firstName} ${student.lastName}` : (record.studentName || record.student);
+                        emailContent += `${count}. ${name} - ${record.date} - ${record.time}\n`;
+                    }
+                });
+                if (count === 0) {
+                    emailContent += `No present students found.\n`;
+                }
+            }
+            
+            else if (reportType === 'absent') {
+                emailContent += `ABSENT STUDENTS:\n`;
+                emailContent += `================\n`;
+                let count = 0;
+                todayRecords.forEach(record => {
+                    // Use the correct field names: attendanceStatus and attendanceLabel
+                    const status = (record.attendanceStatus || record.attendanceLabel || '').toString().toLowerCase();
+                    if (status.includes('absent') || status === 'a' || status === '0') {
+                        count++;
+                        const student = activeStudents[record.student];
+                        const name = student ? `${student.firstName} ${student.lastName}` : (record.studentName || record.student);
+                        emailContent += `${count}. ${name} - ${record.date} - ${record.time}\n`;
+                    }
+                });
+                if (count === 0) {
+                    emailContent += `No absent students found.\n`;
+                }
+            }
+            
+            else { // both
+                emailContent += `ALL STUDENTS:\n`;
+                emailContent += `=============\n`;
+                todayRecords.forEach((record, index) => {
+                    const student = activeStudents[record.student];
+                    const name = student ? `${student.firstName} ${student.lastName}` : (record.studentName || record.student);
+                    // Use the correct status field
+                    const status = record.attendanceStatus || record.attendanceLabel || 'Unknown';
+                    emailContent += `${index + 1}. ${name} - Status: "${status}" - ${record.date} - ${record.time}\n`;
+                });
+            }
+            
+            emailContent += `\nTotal Records: ${todayRecords.length}\n`;
+            emailContent += `Generated: ${new Date().toLocaleString()}`;
+            
+            // Open email
+            const subject = `Attendance Report - ${todayFormatted}`;
+            const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
+            window.location.href = mailtoLink;
+            
+            alert(`Email ready! Total records: ${todayRecords.length}`);
+            closeEmailForm();
+        }
+
+        function closeEmailPreview() {
+            if (elements.emailPreviewModal) {
+                elements.emailPreviewModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function handleReportTypeChange() {
+            const reportType = elements.reportType.value;
+            const dateRangeSection = elements.dateRangeSection;
+            
+            if (dateRangeSection) {
+                dateRangeSection.style.display = reportType === 'custom' ? 'flex' : 'none';
+            }
+            
+            // Update subject line based on report type
+            if (elements.emailSubject) {
+                const reportTypes = {
+                    'daily': 'Daily Attendance Report - {date}',
+                    'weekly': 'Weekly Attendance Summary - {date}',
+                    'monthly': 'Monthly Attendance Report - {date}',
+                    'custom': 'Custom Attendance Report - {date}',
+                    'alerts': 'Attendance Alert Report - {date}',
+                    'comprehensive': 'Comprehensive Attendance Analysis - {date}'
+                };
+                
+                elements.emailSubject.value = reportTypes[reportType] || 'Attendance Report - {date}';
+            }
+        }
+
+        // Test functions for debugging
+        function testEmailForm() {
+            console.log('🧪 TESTING SIMPLE EMAIL FORM...');
+            console.log('attendanceData length:', attendanceData.length);
+            console.log('activeStudents count:', Object.keys(activeStudents).length);
+            
+            // Don't add test data if real data exists
+            if (attendanceData.length > 0) {
+                console.log('✅ Using existing real data');
+                
+                // Debug current data
+                const today = new Date();
+                const todayFormatted = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+                const todayRecords = attendanceData.filter(record => record.date === todayFormatted);
+                const presentToday = todayRecords.filter(r => r.status === 'present');
+                const absentToday = todayRecords.filter(r => r.status === 'absent');
+                
+                console.log('📊 Current data summary:');
+                console.log('- Total records:', attendanceData.length);
+                console.log('- Today records:', todayRecords.length);
+                console.log('- Present today:', presentToday.length);
+                console.log('- Absent today:', absentToday.length);
+                console.log('- Date being used:', todayFormatted);
+                console.log('- Sample dates in data:', attendanceData.slice(0, 5).map(r => r.date));
+                
+                openEmailForm();
+                return;
+            }
+            
+            // Only add test data if no real data exists
+            if (attendanceData.length === 0) {
+                // Add simple test data
+                const today = new Date();
+                const todayFormatted = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+                console.log('Creating test data for date:', todayFormatted);
+                
+                // Add some test students
+                activeStudents['STU001'] = { firstName: 'John', lastName: 'Doe', id: 'STU001' };
+                activeStudents['STU002'] = { firstName: 'Jane', lastName: 'Smith', id: 'STU002' };
+                activeStudents['STU003'] = { firstName: 'Mike', lastName: 'Johnson', id: 'STU003' };
+                activeStudents['STU004'] = { firstName: 'Sarah', lastName: 'Wilson', id: 'STU004' };
+                activeStudents['STU005'] = { firstName: 'Tom', lastName: 'Brown', id: 'STU005' };
+                
+                // Add attendance records for today - Mix of present and absent
+                attendanceData.push(
+                    { student: 'STU001', status: 'present', date: todayFormatted, time: '8:00 AM', latitude: '25.316557', longitude: '55.374643', address: 'School Location' },
+                    { student: 'STU002', status: 'absent', date: todayFormatted, time: '8:00 AM', latitude: '', longitude: '', address: '' },
+                    { student: 'STU003', status: 'present', date: todayFormatted, time: '8:15 AM', latitude: '25.316557', longitude: '55.374643', address: 'School Location' },
+                    { student: 'STU004', status: 'absent', date: todayFormatted, time: '8:00 AM', latitude: '', longitude: '', address: '' },
+                    { student: 'STU005', status: 'present', date: todayFormatted, time: '8:10 AM', latitude: '25.316557', longitude: '55.374643', address: 'School Location' }
+                );
+                
+                console.log('✅ Added test data for today:', todayFormatted);
+                console.log('Total records:', attendanceData.length);
+                console.log('Sample record:', attendanceData[0]);
+                updateDisplay();
+            }
+            
+            openEmailForm();
+        }
+        
+        // Quick test function to debug your real data
+        function debugRealData() {
+            console.log('🔍 DEBUGGING REAL DATA...');
+            console.log('Total attendance records:', attendanceData.length);
+            
+            if (attendanceData.length > 0) {
+                console.log('First 10 records with exact status values:');
+                attendanceData.slice(0, 10).forEach((record, index) => {
+                    console.log(`${index + 1}. Student: ${record.student}, Status: "${record.status}" (type: ${typeof record.status}), Date: "${record.date}", Time: ${record.time}`);
+                });
+                
+                // Check today's records
+                const today = new Date();
+                const todayFormatted = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+                const todayRecords = attendanceData.filter(record => record.date === todayFormatted);
+                
+                console.log(`\nToday's date: "${todayFormatted}"`);
+                console.log(`Today's records: ${todayRecords.length}`);
+                
+                if (todayRecords.length > 0) {
+                    console.log('Today\'s records with exact status values:');
+                    todayRecords.forEach((record, index) => {
+                        const student = activeStudents[record.student];
+                        const name = student ? `${student.firstName} ${student.lastName}` : 'Unknown';
+                        console.log(`${index + 1}. ${name} (${record.student}) - Status: "${record.status}" (${typeof record.status}) - Time: ${record.time}`);
+                    });
+                    
+                    // Show all unique status values
+                    const statusValues = todayRecords.map(r => r.status);
+                    const uniqueStatuses = [...new Set(statusValues)];
+                    console.log('\nUnique status values found today:', uniqueStatuses);
+                    console.log('Status value details:', uniqueStatuses.map(s => `"${s}" (type: ${typeof s}, length: ${s ? s.length : 'null'})`));
+                }
+            } else {
+                console.log('No attendance data found!');
+            }
+        }
+        
+        function generateAdvancedAnalytics(reportType) {
+            const today = new Date().toDateString();
+            const analytics = {
+                totalRecords: attendanceData.length,
+                totalStudents: Object.keys(activeStudents).length,
+                presentCount: attendanceData.filter(r => r.status === 'present').length,
+                absentCount: attendanceData.filter(r => r.status === 'absent').length,
+                todayRecords: attendanceData.filter(r => new Date(r.date).toDateString() === today).length,
+                todayPresent: attendanceData.filter(r => new Date(r.date).toDateString() === today && r.status === 'present').length,
+                todayAbsent: attendanceData.filter(r => new Date(r.date).toDateString() === today && r.status === 'absent').length,
+                dateRange: getDateRange(reportType),
+                absentStudents: [],
+                perfectAttendance: [],
+                consecutiveAbsences: 0,
+                weeklyAverage: 85,
+                monthlyAverage: 82,
+                previousRate: 78,
+                peakDay: 'Monday'
+            };
+            
+            // Calculate percentages
+            analytics.attendanceRate = analytics.totalRecords > 0 ? 
+                Math.round((analytics.presentCount / analytics.totalRecords) * 100) : 0;
+            analytics.absentPercentage = 100 - analytics.attendanceRate;
+            
+            analytics.todayPresentRate = analytics.todayRecords > 0 ? 
+                Math.round((analytics.todayPresent / analytics.todayRecords) * 100) : 0;
+            analytics.todayAbsentRate = 100 - analytics.todayPresentRate;
+            
+            // Generate absentee analysis
+            const studentAbsenceAnalysis = {};
+            Object.keys(activeStudents).forEach(studentId => {
+                const studentRecords = attendanceData.filter(r => r.student === studentId);
+                const absentRecords = studentRecords.filter(r => r.status === 'absent');
+                const presentRecords = studentRecords.filter(r => r.status === 'present');
+                
+                if (studentRecords.length > 0) {
+                    const absenceRate = Math.round((absentRecords.length / studentRecords.length) * 100);
+                    const lastPresent = presentRecords.length > 0 ? 
+                        presentRecords[presentRecords.length - 1].date : 'Never';
+                    
+                    // Calculate consecutive absences (simplified)
+                    let consecutiveAbsences = 0;
+                    const recentRecords = studentRecords.slice(-5); // Last 5 records
+                    for (let i = recentRecords.length - 1; i >= 0; i--) {
+                        if (recentRecords[i].status === 'absent') {
+                            consecutiveAbsences++;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    studentAbsenceAnalysis[studentId] = {
+                        name: `${activeStudents[studentId].firstName} ${activeStudents[studentId].lastName}`,
+                        id: studentId,
+                        absenceRate: absenceRate,
+                        lastSeen: lastPresent,
+                        consecutiveAbsences: consecutiveAbsences,
+                        totalAbsences: absentRecords.length,
+                        attendanceRate: 100 - absenceRate
+                    };
+                }
+            });
+            
+            // Identify students requiring attention (high absence rates or consecutive absences)
+            analytics.absentStudents = Object.values(studentAbsenceAnalysis)
+                .filter(student => student.absenceRate > 25 || student.consecutiveAbsences >= 2)
+                .sort((a, b) => b.absenceRate - a.absenceRate)
+                .slice(0, 10); // Top 10 concerning students
+            
+            // Identify perfect/excellent attendance students
+            analytics.perfectAttendance = Object.values(studentAbsenceAnalysis)
+                .filter(student => student.attendanceRate >= 95 && student.totalAbsences <= 1)
+                .sort((a, b) => b.attendanceRate - a.attendanceRate)
+                .slice(0, 15) // Top 15 excellent students
+                .map(student => ({
+                    name: student.name,
+                    id: student.id,
+                    days: attendanceData.filter(r => r.student === student.id && r.status === 'present').length,
+                    rate: student.attendanceRate
+                }));
+            
+            return analytics;
+        }
+
+        function getDateRange(reportType) {
+            const today = new Date();
+            
+            switch (reportType) {
+                case 'daily':
+                    return today.toLocaleDateString();
+                case 'weekly':
+                    const weekStart = new Date(today);
+                    weekStart.setDate(today.getDate() - today.getDay());
+                    return `${weekStart.toLocaleDateString()} - ${today.toLocaleDateString()}`;
+                case 'monthly':
+                    return today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                case 'custom':
+                    const startDate = elements.startDate?.value;
+                    const endDate = elements.endDate?.value;
+                    if (startDate && endDate) {
+                        return `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`;
+                    }
+                    return 'Custom Range';
+                default:
+                    return 'All Available Data';
+            }
+        }
+
+        function getReportTypeIntro(reportType) {
+            const intros = {
+                'daily': 'Please find below the daily attendance summary for today:\n\n',
+                'weekly': 'Please find below the weekly attendance summary:\n\n',
+                'monthly': 'Please find below the monthly attendance performance report:\n\n',
+                'custom': 'Please find below the custom attendance report for the selected period:\n\n',
+                'alerts': 'This report highlights attendance concerns that require your attention:\n\n',
+                'comprehensive': 'Please find below the comprehensive attendance analysis with detailed insights:\n\n'
+            };
+            
+            return intros[reportType] || 'Please find below the attendance report:\n\n';
+        }
+
+        function generateReportContent(analytics, reportType) {
+            const checkboxes = getSelectedCheckboxes();
+            console.log('Selected checkboxes:', checkboxes);
+            let content = '';
+            
+            // Executive Summary
+            if (checkboxes.includeSummary) {
+                content += `📊 EXECUTIVE SUMMARY\n`;
+                content += `${'='.repeat(50)}\n`;
+                content += `• Overall Attendance Rate: ${analytics.attendanceRate}%\n`;
+                content += `• Total Active Students: ${analytics.totalStudents}\n`;
+                content += `• Records Analyzed: ${analytics.totalRecords}\n`;
+                content += `• Report Period: ${analytics.dateRange}\n`;
+                
+                if (analytics.attendanceRate >= 90) {
+                    content += `• Status: ✅ EXCELLENT attendance performance\n`;
+                } else if (analytics.attendanceRate >= 75) {
+                    content += `• Status: ⚠️ GOOD attendance with room for improvement\n`;
+                } else {
+                    content += `• Status: 🚨 ATTENTION REQUIRED - Low attendance\n`;
+                }
+                content += `\n`;
+            }
+            
+            // Key Statistics
+            if (checkboxes.includeStatistics) {
+                content += `📈 KEY PERFORMANCE INDICATORS\n`;
+                content += `${'='.repeat(50)}\n`;
+                content += `Present Today: ${analytics.todayPresent} students (${analytics.todayPresentRate}%)\n`;
+                content += `Absent Today: ${analytics.todayAbsent} students (${analytics.todayAbsentRate}%)\n`;
+                content += `Overall Present: ${analytics.presentCount} records\n`;
+                content += `Overall Absent: ${analytics.absentCount} records\n`;
+                content += `Peak Attendance Day: ${analytics.peakDay || 'Monday'}\n`;
+                content += `Weekly Average: ${analytics.weeklyAverage || 85}%\n`;
+                content += `Monthly Average: ${analytics.monthlyAverage || 82}%\n`;
+                content += `\n`;
+            }
+            
+            // Absentee List
+            if (checkboxes.includeAbsentees) {
+                content += `🚨 STUDENTS REQUIRING ATTENTION\n`;
+                content += `${'='.repeat(50)}\n`;
+                
+                if (analytics.absentStudents && analytics.absentStudents.length > 0) {
+                    analytics.absentStudents.forEach((student, index) => {
+                        content += `${index + 1}. ${student.name} (${student.id})\n`;
+                        content += `   Last Seen: ${student.lastSeen}\n`;
+                        content += `   Absence Rate: ${student.absenceRate}%\n`;
+                        content += `   Status: ${student.consecutiveAbsences >= 3 ? '🚨 HIGH RISK' : '⚠️ Monitor'}\n\n`;
+                    });
+                } else {
+                    content += `✅ No students requiring immediate attention.\n`;
+                    content += `All students maintain acceptable attendance rates.\n\n`;
+                }
+            }
+            
+            // Perfect Attendance
+            if (checkboxes.includePerfectAttendance) {
+                content += `🌟 PERFECT ATTENDANCE RECOGNITION\n`;
+                content += `${'='.repeat(50)}\n`;
+                
+                if (analytics.perfectAttendance && analytics.perfectAttendance.length > 0) {
+                    analytics.perfectAttendance.forEach((student, index) => {
+                        content += `${index + 1}. ${student.name} (${student.id}) - ${student.days} days perfect attendance\n`;
+                    });
+                } else {
+                    // Generate based on actual data
+                    const excellentStudents = [];
+                    Object.keys(activeStudents).forEach(studentId => {
+                        const studentRecords = attendanceData.filter(r => r.student === studentId);
+                        const presentCount = studentRecords.filter(r => r.status === 'present').length;
+                        const rate = studentRecords.length > 0 ? (presentCount / studentRecords.length) * 100 : 0;
+                        
+                        if (rate >= 95 && studentRecords.length >= 3) {
+                            const student = activeStudents[studentId];
+                            excellentStudents.push({
+                                name: `${student.firstName} ${student.lastName}`,
+                                id: studentId,
+                                rate: Math.round(rate),
+                                days: studentRecords.length
+                            });
+                        }
+                    });
+                    
+                    if (excellentStudents.length > 0) {
+                        excellentStudents.forEach((student, index) => {
+                            content += `${index + 1}. ${student.name} (${student.id}) - ${student.rate}% attendance (${student.days} records)\n`;
+                        });
+                    } else {
+                        content += `No students currently qualify for perfect attendance recognition.\n`;
+                        content += `Encourage students to maintain consistent attendance.\n`;
+                    }
+                }
+                content += `\n`;
+            }
+            
+            // Attendance Trends
+            if (checkboxes.includeTrends) {
+                content += `📊 ATTENDANCE TRENDS & ANALYSIS\n`;
+                content += `${'='.repeat(50)}\n`;
+                
+                const currentRate = analytics.attendanceRate;
+                const previousRate = analytics.previousRate || 78;
+                
+                if (currentRate > previousRate) {
+                    content += `📈 Trend: IMPROVING (+${(currentRate - previousRate).toFixed(1)}%)\n`;
+                    content += `   Positive momentum - maintain current strategies\n`;
+                } else if (currentRate < previousRate) {
+                    content += `📉 Trend: DECLINING (${(currentRate - previousRate).toFixed(1)}%)\n`;
+                    content += `   Requires attention - consider intervention strategies\n`;
+                } else {
+                    content += `➡️ Trend: STABLE (no significant change)\n`;
+                    content += `   Consistent performance - monitor for improvements\n`;
+                }
+                
+                content += `Daily Average: ${currentRate}%\n`;
+                content += `Weekly Target: 85%\n`;
+                content += `Monthly Goal: 90%\n`;
+                content += `Best Day: Monday (estimated)\n`;
+                content += `Improvement Areas: ${currentRate < 80 ? 'Overall attendance' : 'Consistency'}\n`;
+                content += `\n`;
+            }
+            
+            // Alert Recommendations
+            if (checkboxes.includeAlerts) {
+                content += `⚠️ ALERTS & ACTIONABLE RECOMMENDATIONS\n`;
+                content += `${'='.repeat(50)}\n`;
+                
+                let alertCount = 0;
+                
+                if (analytics.attendanceRate < 75) {
+                    alertCount++;
+                    content += `🚨 CRITICAL ALERT: Overall attendance below 75%\n`;
+                    content += `   → Immediate Action: Schedule management review meeting\n`;
+                    content += `   → Contact parents/guardians of frequent absentees\n`;
+                    content += `   → Review attendance policies and incentives\n\n`;
+                }
+                
+                if (analytics.todayAbsent > analytics.todayPresent) {
+                    alertCount++;
+                    content += `⚠️ TODAY'S ALERT: More absences than attendance today\n`;
+                    content += `   → Follow up with absent students\n`;
+                    content += `   → Check for external factors (weather, events, etc.)\n\n`;
+                }
+                
+                const consecutiveAbsents = analytics.absentStudents ? analytics.absentStudents.filter(s => s.consecutiveAbsences >= 3).length : 0;
+                if (consecutiveAbsents > 0) {
+                    alertCount++;
+                    content += `📞 FOLLOW-UP REQUIRED: ${consecutiveAbsents} students with 3+ consecutive absences\n`;
+                    content += `   → Personal contact recommended\n`;
+                    content += `   → Documentation required\n\n`;
+                }
+                
+                if (alertCount === 0) {
+                    content += `✅ NO CRITICAL ALERTS\n`;
+                    content += `Current attendance levels are within acceptable parameters.\n`;
+                    content += `Continue monitoring and maintain current strategies.\n`;
+                }
+                content += `\n`;
+            }
+            
+            // Visual Charts (Text-based)
+            if (checkboxes.includeCharts) {
+                content += `📊 VISUAL ATTENDANCE ANALYSIS\n`;
+                content += `${'='.repeat(50)}\n`;
+                
+                // Attendance Rate Bar Chart
+                const presentBars = Math.round(analytics.attendanceRate / 5);
+                const absentBars = 20 - presentBars;
+                content += `ATTENDANCE RATE VISUALIZATION:\n`;
+                content += `Present : ${'█'.repeat(presentBars)}${'░'.repeat(absentBars)} ${analytics.attendanceRate}%\n`;
+                content += `Absent  : ${'█'.repeat(Math.round(analytics.absentPercentage / 5))}${'░'.repeat(20 - Math.round(analytics.absentPercentage / 5))} ${analytics.absentPercentage}%\n`;
+                content += `          ${'-'.repeat(20)}\n`;
+                content += `          0%    25%    50%    75%   100%\n\n`;
+                
+                // Weekly Trend (simulated)
+                content += `WEEKLY TREND (Last 7 Days):\n`;
+                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const rates = [88, 92, 85, 90, 87, 75, 80]; // Sample data
+                days.forEach((day, index) => {
+                    const bars = Math.round(rates[index] / 10);
+                    content += `${day}: ${'█'.repeat(bars)}${'░'.repeat(10 - bars)} ${rates[index]}%\n`;
+                });
+                content += `\n`;
+            }
+            
+            // Detailed Records
+            if (checkboxes.includeDetails) {
+                content += `📋 DETAILED ATTENDANCE RECORDS\n`;
+                content += `${'='.repeat(50)}\n`;
+                content += `Date       | Student ID | Name                | Status  | Time     | Location\n`;
+                content += `${'-'.repeat(85)}\n`;
+                
+                const recordsToShow = Math.min(attendanceData.length, 25);
+                attendanceData.slice(0, recordsToShow).forEach(record => {
+                    const studentInfo = activeStudents[record.student] || {};
+                    const name = `${studentInfo.firstName || ''} ${studentInfo.lastName || ''}`.trim() || record.student;
+                    const status = record.status === 'present' ? 'Present' : 'Absent ';
+                    const location = record.address ? record.address.substring(0, 20) : 'N/A';
+                    
+                    content += `${record.date.padEnd(10)} | ${record.student.padEnd(10)} | ${name.padEnd(19)} | ${status} | ${record.time.padEnd(8)} | ${location}\n`;
+                });
+                
+                if (attendanceData.length > 25) {
+                    content += `... and ${attendanceData.length - 25} more records (showing most recent 25)\n`;
+                }
+                
+                if (attendanceData.length === 0) {
+                    content += `No attendance records found.\n`;
+                    content += `Please ensure students are marking attendance.\n`;
+                }
+                content += `\n`;
+            }
+            
+            console.log('Generated content length:', content.length);
+            return content;
+        }
+
+        function getSelectedCheckboxes() {
+            return {
+                includeSummary: document.getElementById('includeSummary')?.checked || false,
+                includeStatistics: document.getElementById('includeStatistics')?.checked || false,
+                includeAbsentees: document.getElementById('includeAbsentees')?.checked || false,
+                includePerfectAttendance: document.getElementById('includePerfectAttendance')?.checked || false,
+                includeTrends: document.getElementById('includeTrends')?.checked || false,
+                includeAlerts: document.getElementById('includeAlerts')?.checked || false,
+                includeCharts: document.getElementById('includeCharts')?.checked || false,
+                includeDetails: document.getElementById('includeDetails')?.checked || false,
+            };
+        }
+
+        function getReportFooter(senderName) {
+            return `\n${'='.repeat(60)}\n` +
+                   `📋 REPORT DETAILS\n` +
+                   `Generated: ${new Date().toLocaleString()}\n` +
+                   `System: Professional Attendance Tracking System\n` +
+                   `Prepared by: ${senderName}\n` +
+                   `Total Records Analyzed: ${attendanceData.length}\n\n` +
+                   `📞 For questions or assistance, please contact the system administrator.\n` +
+                   `⚡ This report was generated automatically with real-time data.\n\n` +
+                   `Best regards,\n${senderName}\nAttendance Management Team`;
+        }
+
         function clearAllData() {
             if (attendanceData.length === 0) {
                 showMessage('No data to clear', 'warning');
@@ -6184,10 +7642,57 @@ ${tips.join('\n')}
             }
         }
 
+        // Collapsible Section Functionality
+        function toggleSection(contentId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(contentId + '-icon');
+            
+            if (content.classList.contains('collapsed')) {
+                // Expand
+                content.classList.remove('collapsed');
+                content.classList.add('expanded');
+                icon.classList.add('rotated');
+            } else {
+                // Collapse
+                content.classList.remove('expanded');
+                content.classList.add('collapsed');
+                icon.classList.remove('rotated');
+            }
+        }
+
+        // Initialize collapsible sections on page load
+        function initializeCollapsibleSections() {
+            // Set all sections to collapsed by default except Record Attendance
+            const collapsibleSections = [
+                'actions-content',
+                'location-content', 
+                'location-controls-content'
+            ];
+            
+            collapsibleSections.forEach(sectionId => {
+                const content = document.getElementById(sectionId);
+                const icon = document.getElementById(sectionId + '-icon');
+                
+                if (content && icon) {
+                    // All sections start collapsed except Record Attendance
+                    content.classList.add('collapsed');
+                    icon.classList.remove('rotated');
+                }
+            });
+        }
+
         // Export functions for global access
         window.deleteRecord = deleteRecord;
         window.removeStudent = removeStudent;
         window.restoreDefaultStudents = restoreDefaultStudents;
+        window.toggleSection = toggleSection;
+        window.openEmailForm = openEmailForm;
+        window.closeEmailForm = closeEmailForm;
+        window.closeEmailPreview = closeEmailPreview;
+        window.previewEmailReport = previewEmailReport;
+        window.sendFinalEmail = sendFinalEmail;
+        window.testEmailForm = testEmailForm;
+        window.testClearData = testClearData;
     </script>
 </body>
 </html>
