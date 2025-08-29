@@ -6,6 +6,8 @@
     <title>Class Attendance System - School Management</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
     <style>
         /* CSS Variables for Theme Support */
@@ -870,26 +872,45 @@
 
         .filter-group input,
         .filter-group select {
-            padding: 8px 12px;
+            padding: 10px 14px;
             border: 2px solid #e0e6ed;
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            min-height: 42px;
+            line-height: 1.4;
+        }
+
+        /* Enhanced dropdown options styling */
+        .filter-group select option {
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 8px 12px;
+            line-height: 1.5;
+            background-color: var(--card-background);
+            color: var(--text-color);
+        }
+
+        .filter-group select:focus {
+            border-color: var(--button-primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            outline: none;
         }
 
         .filter-btn {
             background: linear-gradient(135deg, var(--button-primary), #2980b9);
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 10px 18px;
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 5px;
-            height: fit-content;
+            gap: 6px;
+            min-height: 42px;
         }
 
         .filter-btn:hover {
@@ -2601,6 +2622,12 @@
                         </div>
                         <button id="applyFilters" class="filter-btn" onclick="applyFilters()">
                             <i class="fas fa-search"></i> Apply Filters
+                        </button>
+                        <button id="clearFilters" class="filter-btn" onclick="clearFilters()" style="background-color: #95a5a6; margin-left: 5px;">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                        <button id="exportPdf" class="filter-btn" onclick="exportFilteredRecordsToPdf()" style="background-color: #e74c3c; margin-left: 10px;">
+                            <i class="fas fa-file-pdf"></i> Export PDF
                         </button>
                     </div>
 
@@ -6101,70 +6128,135 @@ ${tips.join('\n')}
             // Clear existing options
             elements.filterEmployee.innerHTML = '<option value="">All Students</option>';
             
-            // Get unique students from attendance data
-            const uniqueStudents = [...new Set(attendanceData.map(record => record.student || record.employee))]; // Support both old and new format
+            // Get unique students from attendance data or use active students
+            let studentsToShow = new Map();
             
-            // If no data exists yet, use active students
-            if (uniqueStudents.length === 0) {
-                Object.keys(activeStudents).sort().forEach(student => {
-                    const option = document.createElement('option');
-                    option.value = student;
-                    option.textContent = activeStudents[student];
-                    elements.filterEmployee.appendChild(option);
-                });
-            } else {
-                uniqueStudents.forEach(student => {
-                    const option = document.createElement('option');
-                    option.value = student;
-                    option.textContent = studentNames[student] || activeStudents[student] || student;
-                    elements.filterEmployee.appendChild(option);
+            // First, add students from attendance data
+            attendanceData.forEach(record => {
+                const studentKey = record.student || record.employee;
+                if (studentKey && !studentsToShow.has(studentKey)) {
+                    const studentInfo = activeStudents[studentKey];
+                    let displayName = studentKey; // fallback
+                    
+                    if (typeof studentInfo === 'string') {
+                        displayName = studentInfo;
+                    } else if (studentInfo && studentInfo.name) {
+                        displayName = studentInfo.name;
+                    } else if (record.studentName) {
+                        displayName = record.studentName;
+                    }
+                    
+                    studentsToShow.set(studentKey, displayName);
+                }
+            });
+            
+            // If no attendance data, use all active students
+            if (studentsToShow.size === 0) {
+                Object.keys(activeStudents).forEach(studentKey => {
+                    const student = activeStudents[studentKey];
+                    const displayName = typeof student === 'string' ? student : (student.name || studentKey);
+                    studentsToShow.set(studentKey, displayName);
                 });
             }
+            
+            // Sort by display name and add to dropdown
+            Array.from(studentsToShow.entries())
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .forEach(([studentKey, displayName]) => {
+                    const option = document.createElement('option');
+                    option.value = studentKey;
+                    option.textContent = displayName;
+                    elements.filterEmployee.appendChild(option);
+                });
         }
 
         function applyFilters() {
             console.log('Apply Filters clicked');
+            console.log('Filter values:', {
+                date: elements.filterDate.value,
+                student: elements.filterEmployee.value,
+                status: elements.filterAction.value
+            });
+            
+            const beforeCount = attendanceData.length;
             displayRecords();
+            const afterCount = getFilteredRecords().length;
+            
+            // Show filter feedback
+            if (beforeCount !== afterCount) {
+                showMessage(`🔍 Filtered: Showing ${afterCount} of ${beforeCount} records`, 'info');
+            } else if (beforeCount === 0) {
+                showMessage('📝 No records to filter', 'warning');
+            } else {
+                showMessage(`📊 Showing all ${beforeCount} records`, 'info');
+            }
+        }
+        
+        function clearFilters() {
+            console.log('Clear Filters clicked');
+            
+            // Reset all filter inputs
+            elements.filterDate.value = '';
+            elements.filterEmployee.value = '';
+            elements.filterAction.value = '';
+            
+            // Refresh the display
+            displayRecords();
+            showMessage('🔄 Filters cleared - showing all records', 'info');
         }
 
         function getFilteredRecords() {
             let filtered = [...attendanceData];
+            console.log('Starting with', filtered.length, 'records');
             
             // Filter by date
             if (elements.filterDate.value) {
                 const filterDate = new Date(elements.filterDate.value).toLocaleDateString('en-US');
-                filtered = filtered.filter(record => record.date === filterDate);
+                console.log('Filtering by date:', filterDate);
+                filtered = filtered.filter(record => {
+                    console.log('Record date:', record.date, 'vs filter:', filterDate);
+                    return record.date === filterDate;
+                });
+                console.log('After date filter:', filtered.length, 'records');
             }
             
             // Filter by student
             if (elements.filterEmployee.value) {
-                filtered = filtered.filter(record => 
-                    (record.studentName === elements.filterEmployee.value) || 
-                    (record.student === elements.filterEmployee.value) || 
-                    (record.employee === elements.filterEmployee.value)
-                );
+                const selectedStudent = elements.filterEmployee.value;
+                console.log('Filtering by student:', selectedStudent);
+                filtered = filtered.filter(record => {
+                    // Check multiple student fields for better compatibility
+                    const matches = (record.student === selectedStudent) || 
+                                  (record.studentId === selectedStudent) ||
+                                  (record.employee === selectedStudent);
+                    console.log('Record student fields:', {
+                        student: record.student,
+                        studentId: record.studentId,
+                        employee: record.employee,
+                        matches: matches
+                    });
+                    return matches;
+                });
+                console.log('After student filter:', filtered.length, 'records');
             }
             
-            // Filter by status - updated to work with current data format
+            // Filter by status - improved logic
             if (elements.filterAction.value) {
                 const filterValue = elements.filterAction.value.toLowerCase();
+                console.log('Filtering by status:', filterValue);
                 filtered = filtered.filter(record => {
-                    // Check attendanceStatus field
-                    if (record.attendanceStatus && record.attendanceStatus.toLowerCase() === filterValue) {
-                        return true;
-                    }
-                    // Check attendanceLabel field
-                    if (record.attendanceLabel && record.attendanceLabel.toLowerCase() === filterValue) {
-                        return true;
-                    }
-                    // Check legacy actionType field
-                    if (record.actionType && record.actionType.toLowerCase() === filterValue) {
-                        return true;
-                    }
-                    return false;
+                    // Check multiple status fields with flexible matching
+                    const status = (record.attendanceStatus || record.attendanceLabel || record.actionType || '').toLowerCase();
+                    const matches = status.includes(filterValue) || 
+                                  (filterValue === 'present' && (status === 'p' || status === '1' || status.includes('check-in'))) ||
+                                  (filterValue === 'absent' && (status === 'a' || status === '0'));
+                    console.log('Record status:', status, 'vs filter:', filterValue, 'matches:', matches);
+                    return matches;
                 });
+                console.log('After status filter:', filtered.length, 'records');
             }
             
+            console.log('Final filtered records:', filtered.length);
             return filtered;
         }
 
@@ -6455,6 +6547,176 @@ ${tips.join('\n')}
                 
             } catch (error) {
                 showMessage(`Error creating Excel file: ${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function exportFilteredRecordsToPdf() {
+            try {
+                // Get filtered records based on current filter settings
+                const filteredRecords = getFilteredRecords();
+                
+                if (filteredRecords.length === 0) {
+                    showMessage('No records to export. Please adjust your filters or add some attendance records.', 'warning');
+                    return;
+                }
+                
+                showLoading(true);
+                
+                // Create new PDF document
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add title and header information
+                doc.setFontSize(18);
+                doc.setFont(undefined, 'bold');
+                doc.text('📊 Attendance Records Report', 14, 22);
+                
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 32);
+                doc.text(`Total Records: ${filteredRecords.length}`, 14, 40);
+                
+                // Get current filter values for display
+                const filterDate = elements.filterDate.value;
+                const filterStudent = elements.filterEmployee.value;
+                const filterStatus = elements.filterAction.value;
+                
+                let filterInfo = 'Filters Applied: ';
+                if (filterDate) filterInfo += `Date: ${filterDate} `;
+                if (filterStudent) {
+                    const studentInfo = activeStudents[filterStudent];
+                    const studentName = typeof studentInfo === 'string' ? studentInfo : (studentInfo?.name || filterStudent);
+                    filterInfo += `Student: ${studentName} `;
+                }
+                if (filterStatus) filterInfo += `Status: ${filterStatus} `;
+                if (!filterDate && !filterStudent && !filterStatus) filterInfo += 'None (All Records)';
+                
+                doc.setFontSize(10);
+                doc.text(filterInfo, 14, 48);
+                
+                // Prepare table data
+                const tableData = filteredRecords.map((record, index) => {
+                    // Get student name
+                    let studentName = 'Unknown Student';
+                    if (record.studentName) {
+                        studentName = record.studentName;
+                    } else if (record.student && activeStudents[record.student]) {
+                        const studentInfo = activeStudents[record.student];
+                        studentName = typeof studentInfo === 'string' ? studentInfo : (studentInfo.name || record.student);
+                    }
+                    
+                    // Get status with emoji
+                    const status = record.attendanceStatus || record.attendanceLabel || 'Unknown';
+                    const statusDisplay = status.toLowerCase().includes('present') ? '✅ Present' : 
+                                        status.toLowerCase().includes('absent') ? '❌ Absent' : status;
+                    
+                    // Format address (short version for table)
+                    const address = record.address ? 
+                        (record.address.length > 30 ? record.address.substring(0, 30) + '...' : record.address) : 
+                        'N/A';
+                    
+                    return [
+                        index + 1,
+                        studentName,
+                        statusDisplay,
+                        record.date || 'N/A',
+                        record.time || 'N/A',
+                        address
+                    ];
+                });
+                
+                // Table headers
+                const headers = [['#', 'Student Name', 'Status', 'Date', 'Time', 'Location']];
+                
+                // Add table to PDF
+                doc.autoTable({
+                    head: headers,
+                    body: tableData,
+                    startY: 55,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [52, 73, 94],
+                        textColor: 255,
+                        fontStyle: 'bold'
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245]
+                    },
+                    columnStyles: {
+                        0: { halign: 'center', cellWidth: 10 },  // #
+                        1: { cellWidth: 45 },                    // Student Name
+                        2: { halign: 'center', cellWidth: 25 },  // Status
+                        3: { halign: 'center', cellWidth: 25 },  // Date
+                        4: { halign: 'center', cellWidth: 25 },  // Time
+                        5: { cellWidth: 50 }                     // Location
+                    },
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3
+                    },
+                    margin: { top: 55, left: 14, right: 14 }
+                });
+                
+                // Add summary at the bottom
+                const finalY = doc.lastAutoTable.finalY + 10;
+                
+                // Calculate statistics
+                const presentCount = filteredRecords.filter(r => {
+                    const status = (r.attendanceStatus || r.attendanceLabel || '').toLowerCase();
+                    return status.includes('present');
+                }).length;
+                
+                const absentCount = filteredRecords.filter(r => {
+                    const status = (r.attendanceStatus || r.attendanceLabel || '').toLowerCase();
+                    return status.includes('absent');
+                }).length;
+                
+                const attendanceRate = filteredRecords.length > 0 ? 
+                    Math.round((presentCount / filteredRecords.length) * 100) : 0;
+                
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text('📈 Summary Statistics:', 14, finalY);
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                doc.text(`✅ Present: ${presentCount} records`, 14, finalY + 10);
+                doc.text(`❌ Absent: ${absentCount} records`, 14, finalY + 18);
+                doc.text(`📊 Attendance Rate: ${attendanceRate}%`, 14, finalY + 26);
+                
+                // Add footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10);
+                    doc.text('Generated by Attendance Tracker v3.0', 14, doc.internal.pageSize.height - 10);
+                }
+                
+                // Generate filename
+                const now = new Date();
+                const dateStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
+                const timeStr = `${now.getHours().toString().padStart(2,'0')}-${now.getMinutes().toString().padStart(2,'0')}`;
+                
+                let filename = `attendance_report_${dateStr}_${timeStr}`;
+                if (filterStudent) {
+                    const studentInfo = activeStudents[filterStudent];
+                    const studentName = typeof studentInfo === 'string' ? studentInfo : (studentInfo?.name || filterStudent);
+                    filename += `_${studentName.replace(/\s+/g, '_')}`;
+                }
+                filename += '.pdf';
+                
+                // Save the PDF
+                doc.save(filename);
+                
+                showMessage(`📄 PDF exported successfully: ${filename}\n📊 ${filteredRecords.length} records exported\n📈 ${attendanceRate}% attendance rate`, 'success');
+                
+            } catch (error) {
+                console.error('PDF Export Error:', error);
+                showMessage(`Error creating PDF: ${error.message}`, 'error');
             } finally {
                 showLoading(false);
             }
@@ -7896,6 +8158,7 @@ ${insights}
         window.testEmailForm = testEmailForm;
         window.testClearData = testClearData;
         window.addNewStudent = addNewStudent;
+        window.exportFilteredRecordsToPdf = exportFilteredRecordsToPdf;
         
         // Test function for debugging
         window.testAddStudent = function() {
