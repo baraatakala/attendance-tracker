@@ -6663,11 +6663,12 @@ ${tips.join('\n')}
                 
                 tableRows.forEach((row, index) => {
                     const cells = row.querySelectorAll('td');
-                    if (cells.length >= 4) { // Make sure we have enough cells
+                    if (cells.length >= 6) { // Make sure we have enough cells including notes
                         const studentName = cells[1].textContent.trim(); // Student column
                         const status = cells[2].textContent.trim(); // Action/Status column
                         const date = cells[3].textContent.trim(); // Date column
                         const time = cells[4].textContent.trim(); // Time column
+                        const notes = cells[6] ? cells[6].textContent.trim() : ''; // Notes column (index 6, location is 5)
                         
                         // Count status for statistics
                         if (status.toLowerCase().includes('present')) {
@@ -6681,13 +6682,14 @@ ${tips.join('\n')}
                             studentName,
                             status,
                             date,
-                            time
+                            time,
+                            notes || '-' // Show dash if no notes
                         ]);
                     }
                 });
                 
                 // Create table headers
-                const headers = [['#', 'Student Name', 'Status', 'Date', 'Time']];
+                const headers = [['#', 'Student Name', 'Status', 'Date', 'Time', 'Notes']];
                 
                 // Add table to PDF using the data from displayed table
                 doc.autoTable({
@@ -6704,11 +6706,12 @@ ${tips.join('\n')}
                         fillColor: [245, 245, 245]
                     },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 15 },  // #
-                        1: { cellWidth: 60 },                    // Student Name
-                        2: { halign: 'center', cellWidth: 30 },  // Status
-                        3: { halign: 'center', cellWidth: 35 },  // Date
-                        4: { halign: 'center', cellWidth: 35 }   // Time
+                        0: { halign: 'center', cellWidth: 12 },  // # (made smaller)
+                        1: { cellWidth: 45 },                    // Student Name (made smaller)
+                        2: { halign: 'center', cellWidth: 25 },  // Status (made smaller)
+                        3: { halign: 'center', cellWidth: 30 },  // Date (made smaller)
+                        4: { halign: 'center', cellWidth: 30 },  // Time (made smaller)  
+                        5: { cellWidth: 50 }                     // Notes (new column)
                     },
                     styles: {
                         fontSize: 10,
