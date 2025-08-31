@@ -846,33 +846,81 @@
 
         /* Filters */
         .filters {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            align-items: end;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            align-items: start;
         }
 
         .filter-group {
+            position: relative;
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            flex: 1;
-            min-width: 150px;
+            gap: 4px;
         }
 
         .filter-group label {
-            font-weight: 600;
-            color: #34495e;
+            font-weight: 500;
+            color: var(--text-color);
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .filter-group label i {
+            color: var(--primary-color);
         }
 
         .filter-group input,
         .filter-group select {
-            padding: 10px 14px;
+            width: 100%;
+            padding: 6px 10px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .date-range-inputs {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .date-range-inputs input {
+            width: 100%;
+        }
+
+        .date-separator {
+            display: none;
+        }
+
+        /* Ensure date inputs don't overlap */
+        .filter-group.date-range {
+            grid-row: span 2;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+            outline: none;
+        }
+
+        .filter-group input:hover,
+        .filter-group select:hover {
+            border-color: var(--primary-color);
             border: 2px solid #e0e6ed;
             border-radius: 6px;
             font-size: 1.1rem;
@@ -937,9 +985,39 @@
         .records-table th {
             background: linear-gradient(135deg, var(--text-secondary), var(--text-secondary));
             color: white;
-            padding: 15px 12px;
+            padding: 15px 25px 15px 12px;
             text-align: left;
             font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .records-table th:hover {
+            background: linear-gradient(135deg, var(--text-secondary-hover, #34495e), var(--text-secondary-hover, #2c3e50));
+        }
+
+        .records-table th::after {
+            content: '⇕';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+            font-size: 0.8em;
+        }
+
+        .records-table th.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+            color: #2ecc71;
+        }
+
+        .records-table th.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+            color: #e74c3c;
             font-size: 0.9rem;
         }
 
@@ -2603,12 +2681,30 @@
                     <!-- Filters -->
                     <div class="filters">
                         <div class="filter-group">
-                            <label for="filterDate"><i class="fas fa-calendar"></i> Date:</label>
-                            <input type="date" id="filterDate">
+                            <label for="dateFilterType"><i class="fas fa-calendar"></i> Filter By:</label>
+                            <select id="dateFilterType" class="compact-select">
+                                <option value="single">Single Day</option>
+                                <option value="range">Date Range</option>
+                            </select>
                         </div>
+                        
+                        <div class="filter-group" id="singleDateFilter">
+                            <label for="filterDate"><i class="fas fa-calendar-day"></i> Select Date:</label>
+                            <input type="date" id="filterDate" class="compact-input">
+                        </div>
+
+                        <div class="filter-group" id="dateRangeFilter" style="display: none;">
+                            <label><i class="fas fa-calendar-week"></i> Period:</label>
+                            <div class="date-range-inputs">
+                                <input type="date" id="filterDateStart" class="compact-input" title="Start Date">
+                                <span class="date-separator">→</span>
+                                <input type="date" id="filterDateEnd" class="compact-input" title="End Date">
+                            </div>
+                        </div>
+
                         <div class="filter-group">
                             <label for="filterEmployee"><i class="fas fa-user"></i> Student:</label>
-                            <select id="filterEmployee">
+                            <select id="filterEmployee" class="compact-select">
                                 <option value="">All Students</option>
                             </select>
                         </div>
@@ -2636,13 +2732,13 @@
                         <table id="recordsTable" class="records-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Student</th>
-                                    <th>Action</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Location</th>
-                                    <th>Notes</th>
+                                    <th data-column="id">ID</th>
+                                    <th data-column="student">Student</th>
+                                    <th data-column="action">Action</th>
+                                    <th data-column="date">Date</th>
+                                    <th data-column="time">Time</th>
+                                    <th data-column="location">Location</th>
+                                    <th data-column="notes">Notes</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -3149,6 +3245,12 @@
             dateTime: document.getElementById('dateTime'),
             latitude: document.getElementById('latitude'),
             longitude: document.getElementById('longitude'),
+            // Date Filter Elements
+            dateFilterType: document.getElementById('dateFilterType'),
+            singleDateFilter: document.getElementById('singleDateFilter'),
+            dateRangeFilter: document.getElementById('dateRangeFilter'),
+            filterDateStart: document.getElementById('filterDateStart'),
+            filterDateEnd: document.getElementById('filterDateEnd'),
             notes: document.getElementById('notes'),
             
             // Display elements
@@ -3261,6 +3363,8 @@
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize table sorting
+            initializeTableSorting();
             initializeApp();
         });
 
@@ -3326,6 +3430,20 @@
             // Attendance buttons
             elements.presentBtn.addEventListener('click', () => setAttendanceStatus('present'));
             elements.absentBtn.addEventListener('click', () => setAttendanceStatus('absent'));
+            
+            // Date filter type change
+            elements.dateFilterType.addEventListener('change', function() {
+                const isRange = this.value === 'range';
+                elements.singleDateFilter.style.display = isRange ? 'none' : 'block';
+                elements.dateRangeFilter.style.display = isRange ? 'block' : 'none';
+                if (isRange) {
+                    elements.filterDate.value = ''; // Clear single date when switching to range
+                } else {
+                    elements.filterDateStart.value = ''; // Clear date range when switching to single
+                    elements.filterDateEnd.value = '';
+                }
+                applyFilters(); // Reapply filters when changing filter type
+            });
             
             // Add keyboard support for attendance buttons
             elements.presentBtn.addEventListener('keydown', (e) => {
@@ -6197,8 +6315,15 @@ ${tips.join('\n')}
             
             // Reset all filter inputs
             elements.filterDate.value = '';
+            elements.filterDateStart.value = '';
+            elements.filterDateEnd.value = '';
             elements.filterEmployee.value = '';
             elements.filterAction.value = '';
+            
+            // Reset date filter type to single
+            elements.dateFilterType.value = 'single';
+            elements.singleDateFilter.style.display = 'block';
+            elements.dateRangeFilter.style.display = 'none';
             
             // Refresh the display
             displayRecords();
@@ -6209,56 +6334,62 @@ ${tips.join('\n')}
             let filtered = [...attendanceData];
             console.log('Starting with', filtered.length, 'records');
             
-            // Filter by date with improved logic
-            if (elements.filterDate.value) {
-                const inputDate = elements.filterDate.value;
-                console.log('Input date value:', inputDate);
+            // Filter by date (single date or date range)
+            const isDateRange = elements.dateFilterType.value === 'range';
+            if (isDateRange && (elements.filterDateStart.value || elements.filterDateEnd.value)) {
+                const startDate = elements.filterDateStart.value ? new Date(elements.filterDateStart.value) : null;
+                const endDate = elements.filterDateEnd.value ? new Date(elements.filterDateEnd.value) : null;
                 
-                // Convert input date to multiple possible formats for comparison
-                const inputDateObj = new Date(inputDate);
-                const filterFormats = [
-                    inputDateObj.toLocaleDateString('en-US'), // 8/12/2025
-                    inputDateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }), // 08/12/2025
-                    inputDateObj.toLocaleDateString('en-GB'), // 12/08/2025 (day/month/year)
-                    inputDate, // Keep original input format
-                    inputDateObj.toISOString().split('T')[0] // 2025-08-12
-                ];
+                if (startDate) startDate.setHours(0, 0, 0, 0);
+                if (endDate) endDate.setHours(23, 59, 59, 999);
                 
-                console.log('Trying to match against formats:', filterFormats);
+                console.log('Filtering by date range:', 
+                    startDate ? startDate.toISOString() : 'any',
+                    'to',
+                    endDate ? endDate.toISOString() : 'any'
+                );
                 
                 filtered = filtered.filter(record => {
-                    const recordDate = record.date;
-                    console.log('Comparing record date:', recordDate);
+                    if (!record.date) return true;
                     
-                    // Try exact match first
-                    if (filterFormats.includes(recordDate)) {
-                        console.log('✅ Exact match found:', recordDate);
-                        return true;
-                    }
-                    
-                    // Try converting record date to same formats for comparison
                     try {
-                        const recordDateObj = new Date(recordDate);
-                        const recordFormats = [
-                            recordDateObj.toLocaleDateString('en-US'),
-                            recordDateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
-                            recordDateObj.toISOString().split('T')[0]
-                        ];
+                        const recordDate = new Date(record.date);
+                        recordDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
                         
-                        const matches = filterFormats.some(filterFormat => recordFormats.includes(filterFormat));
-                        if (matches) {
-                            console.log('✅ Format conversion match found');
-                        } else {
-                            console.log('❌ No match for:', recordDate, 'against:', filterFormats);
+                        if (startDate && endDate) {
+                            return recordDate >= startDate && recordDate <= endDate;
+                        } else if (startDate) {
+                            return recordDate >= startDate;
+                        } else if (endDate) {
+                            return recordDate <= endDate;
                         }
-                        return matches;
+                        return true;
                     } catch (e) {
-                        console.log('❌ Date conversion error for:', recordDate);
+                        console.log('❌ Date conversion error for:', record.date);
                         return false;
                     }
                 });
-                console.log('After date filter:', filtered.length, 'records');
+            } else if (!isDateRange && elements.filterDate.value) {
+                const filterDate = new Date(elements.filterDate.value);
+                filterDate.setHours(0, 0, 0, 0);
+                const filterEndDate = new Date(filterDate);
+                filterEndDate.setHours(23, 59, 59, 999);
+                
+                console.log('Filtering by single date:', filterDate.toISOString());
+                
+                filtered = filtered.filter(record => {
+                    if (!record.date) return true;
+                    
+                    try {
+                        const recordDate = new Date(record.date);
+                        return recordDate >= filterDate && recordDate <= filterEndDate;
+                    } catch (e) {
+                        console.log('❌ Date conversion error for:', record.date);
+                        return false;
+                    }
+                });
             }
+            console.log('After date filter:', filtered.length, 'records');
             
             // Filter by student
             if (elements.filterEmployee.value) {
@@ -6300,11 +6431,76 @@ ${tips.join('\n')}
             return filtered;
         }
 
+        // Sort state
+        let currentSort = {
+            column: null,
+            direction: 'asc'
+        };
+
+        // Initialize sorting
+        function initializeTableSorting() {
+            const headers = document.querySelectorAll('.records-table th');
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-column');
+                    if (!column) return;
+                    
+                    // Remove sort classes from all headers
+                    headers.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+
+                    // Toggle sort direction
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'asc';
+                    }
+
+                    // Add sort class to current header
+                    header.classList.add(`sort-${currentSort.direction}`);
+                    
+                    displayRecords();
+                });
+            });
+        }
+
+        function compareValues(a, b) {
+            if (a === b) return 0;
+            if (a === null || a === undefined) return 1;
+            if (b === null || b === undefined) return -1;
+            return a < b ? -1 : 1;
+        }
+
+        function sortRecords(records) {
+            if (!currentSort.column) return records;
+
+            return records.sort((a, b) => {
+                let valueA = a[currentSort.column];
+                let valueB = b[currentSort.column];
+
+                // Special handling for dates and times
+                if (currentSort.column === 'date') {
+                    valueA = new Date(valueA).getTime();
+                    valueB = new Date(valueB).getTime();
+                } else if (currentSort.column === 'time') {
+                    valueA = new Date('1970/01/01 ' + valueA).getTime();
+                    valueB = new Date('1970/01/01 ' + valueB).getTime();
+                }
+
+                const comparison = compareValues(valueA, valueB);
+                return currentSort.direction === 'asc' ? comparison : -comparison;
+            });
+        }
+
         function displayRecords() {
-            const filteredRecords = getFilteredRecords();
+            let records = getFilteredRecords();
+            records = sortRecords(records);
+            
             elements.recordsTableBody.innerHTML = '';
             
-            if (filteredRecords.length === 0) {
+            if (records.length === 0) {
                 elements.recordsTableBody.innerHTML = `
                     <tr>
                         <td colspan="8" style="text-align: center; padding: 40px; color: #7f8c8d;">
@@ -6316,7 +6512,7 @@ ${tips.join('\n')}
                 return;
             }
             
-            filteredRecords.forEach((record, index) => {
+            records.forEach((record, index) => {
                 const row = createRecordRow(record, index);
                 elements.recordsTableBody.appendChild(row);
             });
