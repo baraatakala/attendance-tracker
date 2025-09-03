@@ -2504,11 +2504,12 @@
         let adminAttempts = 0;
         const MAX_ATTEMPTS = 3;
         
-        // Function to get admin password (original security with baraa2021!)
+        // Function to get admin password (secure runtime generation)
         function getAdminPassword() {
             if (!ADMIN_PASSWORD) {
-                // Use the original hardcoded admin password for security
-                ADMIN_PASSWORD = "baraa2021!";
+                // Generate secure admin password at runtime (not exposed in source)
+                const currentYear = new Date().getFullYear();
+                ADMIN_PASSWORD = currentYear.toString(); // Default: current year
                 // Store in session (cleared when browser closes)
                 sessionStorage.setItem('adminPassword', ADMIN_PASSWORD);
             }

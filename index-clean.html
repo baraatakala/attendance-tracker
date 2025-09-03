@@ -9,269 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- Firebase SDK -->
-    <script type="module">
-        // Import the functions you need from the SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc, where, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCB2BR1uIJLXH_tw-AJatC5f9tVrMhhHio",
-            authDomain: "smstt-c0a67.firebaseapp.com",
-            projectId: "smstt-c0a67",
-            storageBucket: "smstt-c0a67.firebasestorage.app",
-            messagingSenderId: "6657651110",
-            appId: "1:6657651110:web:78567936db83da39025f67",
-            measurementId: "G-3H3TQEQFH9"
-        };
-
-        // Initialize Firebase with error handling
-        let app, db, analytics;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            analytics = getAnalytics(app);
-            
-            console.log("🔥 Firebase initialized successfully!");
-            // Enable Firebase mode since initialization was successful
-            window.useFirebase = true;
-        } catch (firebaseInitError) {
-            console.error("🔥 Firebase initialization failed:", firebaseInitError);
-            // Disable Firebase if initialization fails
-            window.useFirebase = false;
-        }
-
-        // Make Firebase functions available globally (similar to index-clean.html structure)
-        if (app && db) {
-            window.firebaseDB = db;
-            window.firebaseApp = app;
-            window.firebaseAnalytics = analytics;
-            
-            // Also make functions available globally like in index-clean.html
-            window.firebase = {
-                db,
-                collection,
-                addDoc,
-                getDocs,
-                deleteDoc,
-                doc,
-                onSnapshot,
-                orderBy,
-                query,
-                updateDoc,
-                where,
-                limit
-            };
-            
-            // Update Firebase status in the UI
-            console.log("🔥 Firebase is ready, updating UI...");
-        
-            // Firebase Firestore helper functions
-            window.FirebaseHelper = {
-                // Collection names
-                COLLECTIONS: {
-                    ATTENDANCE: 'attendance',
-                    STUDENTS: 'students',
-                    SETTINGS: 'app_settings'
-                },
-
-            // Add a new attendance record
-            async addAttendanceRecord(recordData) {
-                try {
-                    const docRef = await addDoc(collection(db, this.COLLECTIONS.ATTENDANCE), {
-                        ...recordData,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    });
-                    console.log("Document written with ID: ", docRef.id);
-                    return { success: true, id: docRef.id };
-                } catch (error) {
-                    console.error("Error adding document: ", error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Get all attendance records
-            async getAttendanceRecords() {
-                try {
-                    const querySnapshot = await getDocs(
-                        query(collection(db, this.COLLECTIONS.ATTENDANCE), orderBy("date", "desc"))
-                    );
-                    const records = [];
-                    querySnapshot.forEach((doc) => {
-                        records.push({ id: doc.id, ...doc.data() });
-                    });
-                    return { success: true, data: records };
-                } catch (error) {
-                    console.error("Error getting documents: ", error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Get attendance records by student
-            async getAttendanceByStudent(studentId) {
-                try {
-                    const q = query(
-                        collection(db, this.COLLECTIONS.ATTENDANCE), 
-                        where("studentId", "==", studentId),
-                        orderBy("date", "desc")
-                    );
-                    const querySnapshot = await getDocs(q);
-                    const records = [];
-                    querySnapshot.forEach((doc) => {
-                        records.push({ id: doc.id, ...doc.data() });
-                    });
-                    return { success: true, data: records };
-                } catch (error) {
-                    console.error("Error getting student records: ", error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Get attendance records by date range
-            async getAttendanceByDateRange(startDate, endDate) {
-                try {
-                    const q = query(
-                        collection(db, this.COLLECTIONS.ATTENDANCE),
-                        where("date", ">=", startDate),
-                        where("date", "<=", endDate),
-                        orderBy("date", "desc")
-                    );
-                    const querySnapshot = await getDocs(q);
-                    const records = [];
-                    querySnapshot.forEach((doc) => {
-                        records.push({ id: doc.id, ...doc.data() });
-                    });
-                    return { success: true, data: records };
-                } catch (error) {
-                    console.error("Error getting date range records: ", error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Update an attendance record
-            async updateAttendanceRecord(recordId, updateData) {
-                try {
-                    const recordRef = doc(db, this.COLLECTIONS.ATTENDANCE, recordId);
-                    await updateDoc(recordRef, {
-                        ...updateData,
-                        updatedAt: new Date()
-                    });
-                    return { success: true };
-                } catch (error) {
-                    console.error("Error updating document: ", error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Delete an attendance record
-            async deleteAttendanceRecord(recordId) {
-                try {
-                    console.log("🔥 FirebaseHelper.deleteAttendanceRecord called with ID:", recordId);
-                    console.log("🔥 About to call deleteDoc with collection path:", this.COLLECTIONS.ATTENDANCE);
-                    console.log("🔥 Full document path:", `${this.COLLECTIONS.ATTENDANCE}/${recordId}`);
-                    
-                    const docRef = doc(db, this.COLLECTIONS.ATTENDANCE, recordId);
-                    console.log("🔥 Document reference created:", docRef);
-                    
-                    await deleteDoc(docRef);
-                    console.log("🔥 deleteDoc completed successfully for ID:", recordId);
-                    
-                    return { success: true };
-                } catch (error) {
-                    console.error("🔥 Error deleting document: ", error);
-                    console.error("🔥 Error code:", error.code);
-                    console.error("🔥 Error message:", error.message);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Add or update student
-            async saveStudent(studentData) {
-                try {
-                    const docRef = await addDoc(collection(db, this.COLLECTIONS.STUDENTS), {
-                        ...studentData,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    });
-                    return { success: true, id: docRef.id };
-                } catch (error) {
-                    console.error("Error saving student: ", error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Get all students
-            async getStudents() {
-                try {
-                    const querySnapshot = await getDocs(collection(db, this.COLLECTIONS.STUDENTS));
-                    const students = [];
-                    querySnapshot.forEach((doc) => {
-                        students.push({ id: doc.id, ...doc.data() });
-                    });
-                    return { success: true, data: students };
-                } catch (error) {
-                    console.error("Error getting students: ", error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Sync local data to Firebase
-            async syncLocalToFirebase(localData) {
-                try {
-                    let successCount = 0;
-                    let errorCount = 0;
-                    
-                    for (const record of localData) {
-                        const result = await this.addAttendanceRecord(record);
-                        if (result.success) {
-                            successCount++;
-                        } else {
-                            errorCount++;
-                        }
-                    }
-                    
-                    return { 
-                        success: true, 
-                        syncedCount: successCount, 
-                        errorCount: errorCount 
-                    };
-                } catch (error) {
-                    console.error("Error syncing data: ", error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // Get real-time updates (optional)
-            onAttendanceUpdates(callback) {
-                const unsubscribe = onSnapshot(
-                    query(collection(db, this.COLLECTIONS.ATTENDANCE), orderBy("date", "desc")),
-                    (querySnapshot) => {
-                        const records = [];
-                        querySnapshot.forEach((doc) => {
-                            records.push({ id: doc.id, ...doc.data() });
-                        });
-                        callback(records);
-                    }
-                );
-                return unsubscribe; // Call this function to stop listening
-            }
-        };
-        
-        } // End of if (app && db) block
-
-        // Additional safety check
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('🔥 DOM loaded, Firebase status:', {
-                firebaseApp: !!window.firebaseApp,
-                firebaseDB: !!window.firebaseDB,
-                FirebaseHelper: !!window.FirebaseHelper
-            });
-        });
-    </script>
-    
     <style>
         /* CSS Variables for Theme Support */
         :root {
@@ -367,19 +104,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        /* Screen Reader Only - Accessibility */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
         }
 
         body {
@@ -808,9 +532,6 @@
             margin-top: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             animation: slideDown 0.3s ease;
-            position: relative;
-            z-index: 100;
-            min-height: 200px;
         }
 
         @keyframes slideDown {
@@ -1388,391 +1109,6 @@
         .stat-label {
             font-size: 0.9rem;
             opacity: 0.9;
-        }
-
-        /* Analytics Dashboard */
-        .analytics-section {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #ecf0f1;
-            display: none;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 20px 0;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        .analytics-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .analytics-header h3 {
-            color: white;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.8rem;
-            font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .analytics-header h3 i {
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 2rem;
-        }
-
-        .analytics-controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .analytics-filter {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
-            font-size: 1rem;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        .analytics-filter:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        }
-
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .analytics-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .analytics-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .analytics-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-        }
-
-        .analytics-card h4 {
-            color: #2c3e50;
-            margin: 0 0 20px 0;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-        }
-
-        .analytics-card h4 i {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 1.5rem;
-        }
-
-        .analytics-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .analytics-list li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            color: #2c3e50;
-            transition: all 0.2s ease;
-        }
-
-        .analytics-list li:hover {
-            background: rgba(102, 126, 234, 0.05);
-            padding-left: 10px;
-            border-radius: 8px;
-        }
-
-        .analytics-list li:last-child {
-            border-bottom: none;
-        }
-
-        .analytics-metric {
-            font-weight: 700;
-            color: #2c3e50;
-            font-size: 1.1rem;
-        }
-
-        .analytics-percentage {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .percentage-high {
-            background: linear-gradient(45deg, #2ecc71, #27ae60);
-            color: white;
-        }
-
-        .percentage-medium {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
-            color: white;
-        }
-
-        .percentage-low {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            color: white;
-        }
-
-        .analytics-chart {
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 15px;
-            margin-top: 15px;
-            position: relative;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px;
-        }
-
-        .analytics-empty {
-            color: #7f8c8d;
-            font-style: italic;
-            text-align: center;
-            padding: 20px;
-            font-size: 1.1rem;
-        }
-
-        .date-analytics {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            padding: 25px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .date-analytics h4 {
-            color: #2c3e50;
-            margin: 0 0 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
-
-        .date-analytics h4 i {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .absence-timeline {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        .timeline-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: linear-gradient(45deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
-            border-radius: 12px;
-            border-left: 4px solid #e74c3c;
-            transition: all 0.3s ease;
-        }
-
-        .timeline-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.2);
-        }
-
-        .timeline-date {
-            font-weight: 700;
-            color: #2c3e50;
-            font-size: 1.1rem;
-        }
-
-        .timeline-count {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            box-shadow: 0 3px 10px rgba(231, 76, 60, 0.3);
-        }
-
-        .individual-stats {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .individual-stats h4 {
-            color: #2c3e50;
-            margin: 0 0 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
-
-        .student-detail {
-            padding: 15px 20px;
-            background: linear-gradient(45deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
-            border-radius: 12px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .student-detail:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .student-name {
-            font-weight: 700;
-            color: #2c3e50;
-            font-size: 1.1rem;
-        }
-
-        .absence-badge {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            box-shadow: 0 3px 10px rgba(231, 76, 60, 0.3);
-        }
-
-        .refresh-analytics {
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
-            color: #333;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .refresh-analytics:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
-        }
-
-        .refresh-analytics i {
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        /* Student stat item styling */
-        .student-stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 15px;
-            margin: 8px 0;
-            background: linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
-            border-radius: 10px;
-            border-left: 4px solid;
-            transition: all 0.3s ease;
-        }
-
-        .student-stat-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .student-stat-item.excellent {
-            border-left-color: #2ecc71;
-        }
-
-        .student-stat-item.good {
-            border-left-color: #3498db;
-        }
-
-        .student-stat-item.average {
-            border-left-color: #f39c12;
-        }
-
-        .student-stat-item.poor {
-            border-left-color: #e74c3c;
-        }
-
-        .stat-details {
-            font-size: 0.9rem;
-            color: #7f8c8d;
-            margin-top: 5px;
         }
 
         /* Location Section */
@@ -3190,7 +2526,8 @@
                                         title="Manage Students" 
                                         aria-label="Manage student list"
                                         aria-expanded="false"
-                                        aria-controls="studentManagementPanel">
+                                        aria-controls="studentManagementPanel"
+                                        onclick="toggleStudentManagementPanel()">
                                     <i class="fas fa-cog" aria-hidden="true"></i>
                                 </button>
                             </div>
@@ -3210,9 +2547,7 @@
                             <div class="add-student-section">
                                 <div class="add-student-form">
                                     <div class="form-row">
-                                        <label for="newStudentId" class="sr-only">Student ID</label>
                                         <input type="text" id="newStudentId" placeholder="Student ID (optional - auto-generated if empty)" maxlength="20">
-                                        <label for="newStudentName" class="sr-only">Student Full Name</label>
                                         <input type="text" id="newStudentName" placeholder="Student Full Name (e.g., John Smith)" maxlength="100">
                                     </div>
                                     <button type="button" id="addStudentBtn" class="add-student-btn" onclick="addNewStudent()">
@@ -3237,23 +2572,19 @@
 
                         <!-- Attendance Status -->
                         <div class="form-group">
-                            <fieldset style="border: none; padding: 0; margin: 0;">
-                                <legend style="font-weight: 600; color: #34495e; display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                    <i class="fas fa-user-check"></i> Mark Attendance:
-                                </legend>
-                                <div class="attendance-buttons">
-                                    <button type="button" id="presentBtn" class="attendance-btn present-btn" tabindex="0">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span>Present</span>
-                                    </button>
-                                    <button type="button" id="absentBtn" class="attendance-btn absent-btn" tabindex="0">
-                                        <i class="fas fa-times-circle"></i>
-                                        <span>Absent</span>
-                                    </button>
-                                </div>
-                                <input type="hidden" id="attendanceStatus" name="attendanceStatus" required>
-                                <small id="attendance-help" class="form-help">Click Present or Absent to mark attendance</small>
-                            </fieldset>
+                            <label><i class="fas fa-user-check"></i> Mark Attendance:</label>
+                            <div class="attendance-buttons">
+                                <button type="button" id="presentBtn" class="attendance-btn present-btn" tabindex="0">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Present</span>
+                                </button>
+                                <button type="button" id="absentBtn" class="attendance-btn absent-btn" tabindex="0">
+                                    <i class="fas fa-times-circle"></i>
+                                    <span>Absent</span>
+                                </button>
+                            </div>
+                            <input type="hidden" id="attendanceStatus" name="attendanceStatus" required>
+                            <small id="attendance-help" class="form-help">Click Present or Absent to mark attendance</small>
                         </div>
 
                         <!-- Date & Time (Editable) -->
@@ -3317,38 +2648,12 @@
                     <button id="viewRecordsBtn" class="action-btn primary">
                         <i class="fas fa-eye"></i> View Records
                     </button>
-                    <button id="viewAnalyticsBtn" class="action-btn info">
-                        <i class="fas fa-chart-line"></i> View Analytics
-                    </button>
                     <button id="downloadBtn" class="action-btn success">
                         <i class="fas fa-download"></i> Download Excel
                     </button>
                     <button id="clearBtn" class="action-btn danger" onclick="clearAllData()">
                         <i class="fas fa-trash"></i> Clear Data
                     </button>
-                </div>
-
-                <!-- Firebase Cloud Sync Section -->
-                <div class="firebase-section" style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <h3 style="margin: 0 0 15px 0; color: white; font-size: 18px;">
-                        <i class="fas fa-cloud"></i> Firebase Cloud Sync
-                    </h3>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
-                        <button id="toggleFirebaseBtn" class="action-btn" style="background: #4CAF50; color: white;" onclick="toggleFirebaseMode()">
-                            <i class="fas fa-toggle-on"></i> <span id="firebaseStatusText">Enable Cloud Sync</span>
-                        </button>
-                        <button id="syncNowBtn" class="action-btn" style="background: #2196F3; color: white;" onclick="syncWithFirebase()">
-                            <i class="fas fa-sync"></i> Sync Now
-                        </button>
-                        <button class="action-btn" style="background: #FF9800; color: white;" onclick="showFirebaseStatus()">
-                            <i class="fas fa-info-circle"></i> Status
-                        </button>
-                    </div>
-                    <div id="firebaseStatusInfo" style="font-size: 12px; color: #e8f4fd; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px;">
-                        <div>🔗 Status: <span id="connectionStatus">Checking...</span></div>
-                        <div>📊 Sync Queue: <span id="syncQueueCount">0</span> pending</div>
-                        <div>🔥 Mode: <span id="currentMode">Local Only</span></div>
-                    </div>
                 </div>
                 
                 <!-- Email Reporting Section -->
@@ -3389,12 +2694,10 @@
                         </div>
 
                         <div class="filter-group" id="dateRangeFilter" style="display: none;">
-                            <label for="filterDateStart"><i class="fas fa-calendar-week"></i> Period:</label>
+                            <label><i class="fas fa-calendar-week"></i> Period:</label>
                             <div class="date-range-inputs">
-                                <label for="filterDateStart" class="sr-only">Start Date</label>
                                 <input type="date" id="filterDateStart" class="compact-input" title="Start Date">
                                 <span class="date-separator">→</span>
-                                <label for="filterDateEnd" class="sr-only">End Date</label>
                                 <input type="date" id="filterDateEnd" class="compact-input" title="End Date">
                             </div>
                         </div>
@@ -3451,67 +2754,6 @@
                         <div class="stats-grid" id="statsGrid">
                             <!-- Stats will be inserted here -->
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Analytics Dashboard -->
-            <section id="analyticsSection" class="analytics-section">
-                <div class="analytics-header">
-                    <h3><i class="fas fa-chart-line"></i> Analytics Dashboard</h3>
-                    <div class="analytics-controls">
-                        <select id="analyticsFilter" class="analytics-filter">
-                            <option value="all">All Time</option>
-                            <option value="last7days">Last 7 Days</option>
-                            <option value="last30days">Last 30 Days</option>
-                            <option value="thismonth">This Month</option>
-                            <option value="lastmonth">Last Month</option>
-                        </select>
-                        <button class="refresh-analytics" onclick="generateAnalytics()">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
-                    </div>
-                </div>
-
-                <div class="analytics-grid">
-                    <!-- Highest Attendance Rate -->
-                    <div class="analytics-card">
-                        <h4><i class="fas fa-trophy"></i> Highest Attendance Rate</h4>
-                        <ul id="highestAttendanceList" class="analytics-list">
-                            <li class="analytics-empty">No data available</li>
-                        </ul>
-                    </div>
-
-                    <!-- Lowest Attendance Rate -->
-                    <div class="analytics-card">
-                        <h4><i class="fas fa-exclamation-triangle"></i> Lowest Attendance Rate</h4>
-                        <ul id="lowestAttendanceList" class="analytics-list">
-                            <li class="analytics-empty">No data available</li>
-                        </ul>
-                    </div>
-
-                    <!-- Individual Absence Count -->
-                    <div class="analytics-card">
-                        <h4><i class="fas fa-user-times"></i> Individual Absence Count</h4>
-                        <ul id="individualAbsenceList" class="analytics-list">
-                            <li class="analytics-empty">No data available</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Dates with Highest Absences -->
-                <div class="date-analytics">
-                    <h4><i class="fas fa-calendar-times"></i> Dates with Highest Absences</h4>
-                    <div id="absenceTimeline" class="absence-timeline">
-                        <div class="analytics-empty">No absence data available</div>
-                    </div>
-                </div>
-
-                <!-- Detailed Student Statistics -->
-                <div class="individual-stats">
-                    <h4><i class="fas fa-users"></i> Detailed Student Statistics</h4>
-                    <div id="detailedStudentStats" class="analytics-chart">
-                        <div class="analytics-empty">No detailed statistics available</div>
                     </div>
                 </div>
             </section>
@@ -3690,11 +2932,11 @@
                                     <i class="fas fa-lightbulb"></i> 
                                     <strong>Tips for better location accuracy:</strong><br>
                                     📍 <strong>Permission:</strong> Enable location permission when prompted<br>
-                                    � <strong>Indoor Use:</strong> System supports indoor tracking with network/WiFi location<br>
+                                      <strong>Indoor Use:</strong> System supports indoor tracking with network/WiFi location<br>
                                     🌤️ <strong>Best Results:</strong> Near windows or outdoors for GPS signal<br>
                                     📱 <strong>Device:</strong> Enable WiFi and mobile data for better indoor accuracy<br>
                                     ⚙️ <strong>Settings:</strong> Location services must be enabled in device settings<br>
-                                    � <strong>Indoor Mode:</strong> 1-5km accuracy is normal and acceptable for home/office use<br>
+                                      <strong>Indoor Mode:</strong> 1-5km accuracy is normal and acceptable for home/office use<br>
                                     📶 <strong>Network:</strong> Strong WiFi connection helps with indoor positioning<br>
                                     🎯 <strong>Outdoors:</strong> Move outside briefly for high-precision GPS if needed<br>
                                     ⏱️ <strong>Patience:</strong> Allow 30-60 seconds for location services to initialize
@@ -3724,33 +2966,31 @@
                 
                 <form id="emailReportForm" style="display: flex; flex-direction: column; gap: 15px;">
                     <div>
-                        <label for="recipientEmail" style="display: block; margin-bottom: 5px; font-weight: bold;">Send to Email:</label>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Send to Email:</label>
                         <input type="email" id="recipientEmail" required 
                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" 
                                placeholder="manager@company.com">
                     </div>
                     
                     <div>
-                        <fieldset style="border: none; padding: 0; margin: 0;">
-                            <legend style="display: block; margin-bottom: 10px; font-weight: bold;">What to include:</legend>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <label style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="radio" name="reportType" value="present" checked> Present Students Only
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="radio" name="reportType" value="absent"> Absent Students Only
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="radio" name="reportType" value="both"> Both Present and Absent
-                                </label>
-                            </div>
-                        </fieldset>
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">What to include:</label>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="radio" name="reportType" value="present" checked> Present Students Only
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="radio" name="reportType" value="absent"> Absent Students Only
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="radio" name="reportType" value="both"> Both Present and Absent
+                            </label>
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
                         <button type="button" onclick="closeEmailForm()" 
                                 style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
-                        <button type="button" id="sendEmailBtn" onclick="sendSimpleEmail()" 
+                        <button type="button" onclick="sendSimpleEmail()" 
                                 style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Send Email</button>
                     </div>
                 </form>
@@ -3839,11 +3079,6 @@
         let autoRefreshInterval = null;
         let isAutoRefreshEnabled = false;
         
-            // Firebase Integration Settings
-            let useFirebase = true; // Enable Firebase by default since we have working configuration
-            let offlineMode = false; // Track offline status
-            let syncQueue = []; // Queue for offline submissions
-        
         // Theme Management
         let isDarkMode = false;
         
@@ -3853,17 +3088,12 @@
         let adminAttempts = 0;
         const MAX_ATTEMPTS = 3;
         
-        // Function to get admin password (secure runtime generation)
+        // Function to get admin password (original security with baraa2021!)
         function getAdminPassword() {
             if (!ADMIN_PASSWORD) {
-                // Generate secure admin password at runtime (not exposed in source)
-                const currentYear = new Date().getFullYear();
-                const monthDay = String(new Date().getMonth() + 1).padStart(2, '0') + 
-                                String(new Date().getDate()).padStart(2, '0');
-                ADMIN_PASSWORD = currentYear.toString(); // Default: current year
-                
-                // For production, you should implement proper authentication
-                // This is a basic security measure for demonstration
+                // Use the original hardcoded admin password for security
+                ADMIN_PASSWORD = "2021";
+                // Store in session (cleared when browser closes)
                 sessionStorage.setItem('adminPassword', ADMIN_PASSWORD);
             }
             return ADMIN_PASSWORD;
@@ -3969,27 +3199,27 @@
         // Student Management
         let activeStudents = {}; // Dynamic list of active students
         
-        // Default student names (anonymized for public deployment)
+        // Default student names (can be restored if needed)
         const defaultStudentNames = {
-            'STU001': { id: 'STU001', name: 'Student A' },
-            'STU002': { id: 'STU002', name: 'Student B' },
-            'STU003': { id: 'STU003', name: 'Student C' },
-            'STU004': { id: 'STU004', name: 'Student D' },
-            'STU005': { id: 'STU005', name: 'Student E' },
-            'STU006': { id: 'STU006', name: 'Student F' },
-            'STU007': { id: 'STU007', name: 'Student G' },
-            'STU008': { id: 'STU008', name: 'Student H' },
-            'STU009': { id: 'STU009', name: 'Student I' },
-            'STU010': { id: 'STU010', name: 'Student J' },
-            'STU011': { id: 'STU011', name: 'Student K' },
-            'STU012': { id: 'STU012', name: 'Student L' },
-            'STU013': { id: 'STU013', name: 'Student M' },
-            'STU014': { id: 'STU014', name: 'Student N' },
-            'STU015': { id: 'STU015', name: 'Student O' },
-            'STU016': { id: 'STU016', name: 'Student P' },
-            'STU017': { id: 'STU017', name: 'Student Q' },
-            'STU018': { id: 'STU018', name: 'Student R' },
-            'STU019': { id: 'STU019', name: 'Student S' }
+            'STU001': { id: 'STU001', name: 'Baraa Takala' },
+            'STU002': { id: 'STU002', name: 'Yaman Takala' },
+            'STU003': { id: 'STU003', name: 'Baraa Shaibani' },
+            'STU004': { id: 'STU004', name: 'Homam Hassan' },
+            'STU005': { id: 'STU005', name: 'Ahmed Naqawa' },
+            'STU006': { id: 'STU006', name: 'Yahya Aldaik' },
+            'STU007': { id: 'STU007', name: 'Asaad Diaa' },
+            'STU008': { id: 'STU008', name: 'obada' },
+            'STU009': { id: 'STU009', name: 'Omar Bawab' },
+            'STU010': { id: 'STU010', name: 'Yosuf Sadek' },
+            'STU011': { id: 'STU011', name: 'Mohamed Kheir' },
+            'STU012': { id: 'STU012', name: 'Lyth atour' },
+            'STU013': { id: 'STU013', name: 'Zouher Qbaqibi' },
+            'STU014': { id: 'STU014', name: 'Mohamed Qbaqibi' },
+            'STU015': { id: 'STU015', name: 'Abdul Aziz Alzaubi' },
+            'STU016': { id: 'STU016', name: 'Omar Akeel' },
+            'STU017': { id: 'STU017', name: 'Maleek Bitar' },
+            'STU018': { id: 'STU018', name: 'Mohamed Amin' },
+            'STU019': { id: 'STU019', name: 'Lyth Kawokgi' }
         };
 
         // Student names mapping (for backward compatibility)
@@ -4042,7 +3272,6 @@
             
             // Action buttons
             viewRecordsBtn: document.getElementById('viewRecordsBtn'),
-            viewAnalyticsBtn: document.getElementById('viewAnalyticsBtn'),
             downloadBtn: document.getElementById('downloadBtn'),
             clearBtn: document.getElementById('clearBtn'),
             statsBtn: document.getElementById('statsBtn'),
@@ -4071,7 +3300,6 @@
             
             // Records section
             recordsSection: document.getElementById('recordsSection'),
-            analyticsSection: document.getElementById('analyticsSection'),
             filterDate: document.getElementById('filterDate'),
             filterEmployee: document.getElementById('filterEmployee'),
             filterAction: document.getElementById('filterAction'),
@@ -4141,27 +3369,14 @@
         });
 
         function initializeApp() {
-            // Wait for Firebase to be ready
-            if (!window.firebase) {
-                setTimeout(initializeApp, 100);
-                return;
-            }
-            
             // Initialize theme
             initializeTheme();
             
             // Load fraud protection data (MUST be loaded before other initializations)
             loadFraudProtectionData();
             
-            // Load saved data from Firestore (preferred) with localStorage fallback
-            loadDataFromFirestore();
-            
-            // Temporarily disable real-time listener to avoid WebChannel errors
-            // setupRealtimeListener();
-            console.log('🔥 Real-time listener temporarily disabled - use manual refresh');
-            
-            // Initialize Firebase UI
-            initializeFirebaseUI();
+            // Load saved data from localStorage
+            loadDataFromStorage();
             
             // Initialize geolocation
             initializeGeolocation();
@@ -4202,12 +3417,6 @@
             // Initialize collapsible sections
             initializeCollapsibleSections();
             
-            // Analytics filter event listener
-            const analyticsFilter = document.getElementById('analyticsFilter');
-            if (analyticsFilter) {
-                analyticsFilter.addEventListener('change', generateAnalytics);
-            }
-            
             // Update initial statistics
             updateStatistics();
             
@@ -4215,132 +3424,68 @@
         }
 
         function setupEventListeners() {
-            // Add null checks for all elements before adding event listeners
-            console.log('🔧 Setting up event listeners...');
-            
             // Form submission
-            if (elements.form) {
-                elements.form.addEventListener('submit', handleFormSubmit);
-                console.log('✅ Form event listener added');
-            } else {
-                console.error('❌ Form element not found');
-            }
+            elements.form.addEventListener('submit', handleFormSubmit);
             
             // Attendance buttons
-            if (elements.presentBtn) {
-                elements.presentBtn.addEventListener('click', () => setAttendanceStatus('present'));
-                console.log('✅ Present button event listener added');
-            } else {
-                console.error('❌ Present button element not found');
-            }
-            
-            if (elements.absentBtn) {
-                elements.absentBtn.addEventListener('click', () => setAttendanceStatus('absent'));
-                console.log('✅ Absent button event listener added');
-            } else {
-                console.error('❌ Absent button element not found');
-            }
+            elements.presentBtn.addEventListener('click', () => setAttendanceStatus('present'));
+            elements.absentBtn.addEventListener('click', () => setAttendanceStatus('absent'));
             
             // Date filter type change
-            if (elements.dateFilterType) {
-                elements.dateFilterType.addEventListener('change', function() {
-                    const isRange = this.value === 'range';
-                    if (elements.singleDateFilter && elements.dateRangeFilter) {
-                        elements.singleDateFilter.style.display = isRange ? 'none' : 'block';
-                        elements.dateRangeFilter.style.display = isRange ? 'block' : 'none';
-                    }
-                    if (isRange) {
-                        if (elements.filterDate) elements.filterDate.value = '';
-                    } else {
-                        if (elements.filterDateStart) elements.filterDateStart.value = '';
-                        if (elements.filterDateEnd) elements.filterDateEnd.value = '';
-                    }
-                    applyFilters();
-                });
-                console.log('✅ Date filter event listener added');
-            } else {
-                console.warn('⚠️ Date filter type element not found');
-            }
+            elements.dateFilterType.addEventListener('change', function() {
+                const isRange = this.value === 'range';
+                elements.singleDateFilter.style.display = isRange ? 'none' : 'block';
+                elements.dateRangeFilter.style.display = isRange ? 'block' : 'none';
+                if (isRange) {
+                    elements.filterDate.value = ''; // Clear single date when switching to range
+                } else {
+                    elements.filterDateStart.value = ''; // Clear date range when switching to single
+                    elements.filterDateEnd.value = '';
+                }
+                applyFilters(); // Reapply filters when changing filter type
+            });
             
             // Add keyboard support for attendance buttons
-            if (elements.presentBtn) {
-                elements.presentBtn.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setAttendanceStatus('present');
-                    }
-                });
-            }
+            elements.presentBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setAttendanceStatus('present');
+                }
+            });
             
-            if (elements.absentBtn) {
-                elements.absentBtn.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setAttendanceStatus('absent');
-                    }
-                });
-            }
+            elements.absentBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setAttendanceStatus('absent');
+                }
+            });
             
             // Student selection change - reset attendance status
-            if (elements.student) {
-                elements.student.addEventListener('change', () => {
-                    if (elements.presentBtn) elements.presentBtn.classList.remove('selected');
-                    if (elements.absentBtn) elements.absentBtn.classList.remove('selected');
-                    if (elements.attendanceStatus) elements.attendanceStatus.value = '';
-                    if (elements.submitText) elements.submitText.textContent = 'Record Attendance';
-                    
-                    // Reset submit button styling
-                    if (elements.submitBtn) {
-                        elements.submitBtn.style.background = '';
-                        elements.submitBtn.style.boxShadow = '';
-                        elements.submitBtn.style.transform = '';
-                    }
-                    
-                    selectedAttendanceStatus = null;
-                });
-                console.log('✅ Student selection event listener added');
-            } else {
-                console.error('❌ Student selection element not found');
-            }
+            elements.student.addEventListener('change', () => {
+                elements.presentBtn.classList.remove('selected');
+                elements.absentBtn.classList.remove('selected');
+                elements.attendanceStatus.value = '';
+                elements.submitText.textContent = 'Record Attendance';
+                
+                // Reset submit button styling
+                elements.submitBtn.style.background = '';
+                elements.submitBtn.style.boxShadow = '';
+                elements.submitBtn.style.transform = '';
+                
+                selectedAttendanceStatus = null;
+            });
             
-            // Action buttons - with null checks
-            if (elements.viewRecordsBtn) {
-                elements.viewRecordsBtn.addEventListener('click', () => {
-                    elements.viewRecordsBtn.disabled = true;
-                    setTimeout(() => elements.viewRecordsBtn.disabled = false, 1000);
-                    toggleRecordsView();
-                });
-                console.log('✅ View records button event listener added');
-            } else {
-                console.warn('⚠️ View records button not found');
-            }
-
-            if (elements.viewAnalyticsBtn) {
-                elements.viewAnalyticsBtn.addEventListener('click', () => {
-                    elements.viewAnalyticsBtn.disabled = true;
-                    setTimeout(() => elements.viewAnalyticsBtn.disabled = false, 1000);
-                    toggleAnalyticsView();
-                });
-                console.log('✅ View analytics button event listener added');
-            } else {
-                console.warn('⚠️ View analytics button not found');
-            }
+            // Action buttons
+            elements.viewRecordsBtn.addEventListener('click', () => {
+                elements.viewRecordsBtn.disabled = true;
+                setTimeout(() => elements.viewRecordsBtn.disabled = false, 1000);
+                toggleRecordsView();
+            });
             
-            if (elements.downloadBtn) {
-                elements.downloadBtn.addEventListener('click', downloadExcel);
-                console.log('✅ Download button event listener added');
-            } else {
-                console.warn('⚠️ Download button not found');
-            }
+            elements.downloadBtn.addEventListener('click', downloadExcel);
             
-            if (elements.sendEmailBtn) {
-                elements.sendEmailBtn.addEventListener('click', sendEmailReport);
-                console.log('✅ Send email button event listener added');
-            } else {
-                console.warn('⚠️ Send email button not found');
-            }
+            elements.sendEmailBtn.addEventListener('click', sendEmailReport);
             
-            // Email form button
             console.log('Setting up openEmailFormBtn event listener');
             console.log('elements.openEmailFormBtn:', elements.openEmailFormBtn);
             if (elements.openEmailFormBtn) {
@@ -4348,17 +3493,14 @@
                     console.log('Email button clicked!');
                     openEmailForm();
                 });
-                console.log('✅ Email form button event listener added');
+                console.log('Event listener added successfully');
             } else {
-                console.warn('⚠️ Email form button not found');
+                console.error('openEmailFormBtn element not found!');
             }
             
             // Email form event listeners
             if (elements.emailReportForm) {
                 elements.emailReportForm.addEventListener('submit', handleEmailFormSubmit);
-                console.log('✅ Email form event listener added');
-            } else {
-                console.warn('⚠️ Email report form not found');
             }
             
             if (elements.reportType) {
@@ -4380,27 +3522,6 @@
             // Real-time datetime update
             updateDateTime();
             setInterval(updateDateTime, 1000);
-            
-            // Detect when user manually edits datetime
-            if (elements.dateTime) {
-                elements.dateTime.addEventListener('input', () => {
-                    dateTimeUserEdited = true;
-                    console.log('📅 User manually edited datetime, stopping auto-update');
-                });
-                
-                elements.dateTime.addEventListener('change', () => {
-                    dateTimeUserEdited = true;
-                    console.log('📅 User changed datetime, stopping auto-update');
-                });
-                
-                // Reset when form is submitted
-                if (elements.form) {
-                    elements.form.addEventListener('submit', () => {
-                        dateTimeUserEdited = false;
-                        console.log('📅 Form submitted, resuming auto-update for next entry');
-                    });
-                }
-            }
             
             // Character counter for notes
             const notesField = document.getElementById('notes');
@@ -4880,46 +4001,19 @@
             const currentValue = filterStudent.value;
             filterStudent.innerHTML = '<option value="">All Students</option>';
 
-            console.log('DROPDOWN DEBUG - activeStudents:', activeStudents);
-
-            // Get unique students from actual attendance data
-            const studentsFromData = new Set();
-            if (attendanceData && attendanceData.length > 0) {
-                attendanceData.forEach(record => {
-                    if (record.studentName) studentsFromData.add(record.studentName);
-                    if (record.studentId) studentsFromData.add(record.studentId);
-                    if (record.student) studentsFromData.add(record.student);
-                });
-            }
-
-            console.log('DROPDOWN DEBUG - students from data:', Array.from(studentsFromData));
-
-            // Use students from activeStudents if available, otherwise from data
-            if (Object.keys(activeStudents).length > 0) {
-                Object.keys(activeStudents).sort().forEach(key => {
-                    const option = document.createElement('option');
-                    option.value = key;
-                    
-                    // Handle both old string format and new object format
-                    if (typeof activeStudents[key] === 'string') {
-                        option.textContent = activeStudents[key]; // Legacy format - just the name
-                        console.log(`DROPDOWN DEBUG - Legacy: ${key} = "${activeStudents[key]}"`);
-                    } else {
-                        option.textContent = `${activeStudents[key].id} - ${activeStudents[key].name}`;
-                        console.log(`DROPDOWN DEBUG - New: ${key} = "${activeStudents[key].id} - ${activeStudents[key].name}"`);
-                    }
-                    
-                    filterStudent.appendChild(option);
-                });
-            } else {
-                // Fallback: use students from attendance data
-                Array.from(studentsFromData).sort().forEach(studentName => {
-                    const option = document.createElement('option');
-                    option.value = studentName;
-                    option.textContent = studentName;
-                    filterStudent.appendChild(option);
-                });
-            }
+            Object.keys(activeStudents).sort().forEach(key => {
+                const option = document.createElement('option');
+                option.value = key;
+                
+                // Handle both old string format and new object format
+                if (typeof activeStudents[key] === 'string') {
+                    option.textContent = activeStudents[key]; // Legacy format
+                } else {
+                    option.textContent = `${activeStudents[key].id} - ${activeStudents[key].name}`;
+                }
+                
+                filterStudent.appendChild(option);
+            });
 
             // Restore previous selection if still valid
             if (currentValue && activeStudents[currentValue]) {
@@ -4930,15 +4024,9 @@
         function setupStudentManagementListeners() {
             // Manage students button - direct access, no password needed
             if (elements.manageStudentsBtn) {
-                console.log('✅ Manage students button found, adding event listener');
-                elements.manageStudentsBtn.addEventListener('click', (event) => {
-                    console.log('🔧 Manage students button clicked!');
-                    event.preventDefault();
-                    event.stopPropagation();
+                elements.manageStudentsBtn.addEventListener('click', () => {
                     toggleStudentManagementPanel();
                 });
-            } else {
-                console.error('❌ Manage students button not found!');
             }
 
             // Close panel button
@@ -4977,68 +4065,21 @@
             }
         }
 
-        // Prevent rapid toggling
-        let isToggling = false;
-        
         function toggleStudentManagementPanel() {
-            console.log('🔧 toggleStudentManagementPanel called');
-            
-            // Prevent rapid clicking
-            if (isToggling) {
-                console.log('⚠️ Still toggling, ignoring click');
-                return;
-            }
-            
-            isToggling = true;
-            
             const panel = elements.studentManagementPanel;
-            const button = document.querySelector('.manage-students-btn');
-            console.log('🔧 Panel element:', panel);
-            console.log('🔧 Button element:', button);
-            
-            if (!panel) {
-                console.error('❌ Student management panel not found!');
-                isToggling = false;
-                return;
-            }
+            if (!panel) return;
 
-            console.log('🔧 Panel current display:', panel.style.display);
-            
             if (panel.style.display === 'none' || panel.style.display === '') {
                 panel.style.display = 'block';
-                console.log('✅ Panel shown');
-                
-                // Update button appearance
-                if (button) {
-                    button.style.backgroundColor = '#0056b3';
-                    button.style.color = 'white';
-                    button.setAttribute('aria-expanded', 'true');
-                    button.title = 'Hide Student Management';
-                }
-                
                 updateStudentsList();
                 // Focus on the input
                 setTimeout(() => {
                     if (elements.newStudentName) {
                         elements.newStudentName.focus();
                     }
-                    isToggling = false; // Reset flag after animation
-                }, 300);
+                }, 100);
             } else {
                 panel.style.display = 'none';
-                console.log('✅ Panel hidden');
-                
-                // Reset button appearance
-                if (button) {
-                    button.style.backgroundColor = '';
-                    button.style.color = '';
-                    button.setAttribute('aria-expanded', 'false');
-                    button.title = 'Manage Students';
-                }
-                
-                setTimeout(() => {
-                    isToggling = false; // Reset flag after animation
-                }, 300);
             }
         }
 
@@ -6376,7 +5417,7 @@ ${tips.join('\n')}
                     color = 'var(--success-color)';
                     tips = 'Optimal accuracy achieved!';
                 } else if (accuracy <= 10) {
-                    icon = '�';
+                    icon = ' ';
                     description = 'Excellent - Perfect outdoor GPS signal';
                     color = 'var(--success-color)';
                     tips = 'Great accuracy for all uses';
@@ -6968,15 +6009,10 @@ ${tips.join('\n')}
             }
         }
 
-        let dateTimeUserEdited = false;
-        
         function updateDateTime() {
-            // Only auto-update if user hasn't manually edited the datetime
-            if (!dateTimeUserEdited) {
-                const now = new Date();
-                const isoString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
-                elements.dateTime.value = isoString.slice(0, 16);
-            }
+            const now = new Date();
+            const isoString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
+            elements.dateTime.value = isoString.slice(0, 16);
         }
 
         function updateNotesCounter() {
@@ -7013,105 +6049,63 @@ ${tips.join('\n')}
         async function handleFormSubmit(event) {
             event.preventDefault();
             
-            console.log('🚀 Form submission started');
-            
-            // Prevent multiple submissions
-            if (elements.form.classList.contains('submitting')) {
-                console.log('⚠️ Form already submitting, ignoring');
-                return;
-            }
-            
-            // Mark form as submitting
-            elements.form.classList.add('submitting');
-            
-            // Show loading with immediate timeout fallback
+            // Show loading first
             showLoading(true);
             
-            // Shorter timeout for safety
+            // Add timeout to force reset loading state after 10 seconds max
             const timeoutId = setTimeout(() => {
-                console.log('⏰ Submission timeout reached');
                 showLoading(false);
-                elements.form.classList.remove('submitting');
                 showMessage('⚠️ Request timed out - attendance saved locally', 'warning');
-            }, 5000); // Reduced to 5 seconds
+            }, 10000);
             
             try {
-                console.log('🔍 Validating form...');
-                
                 // Validate form
                 if (!validateForm()) {
-                    console.log('❌ Form validation failed');
                     clearTimeout(timeoutId);
                     showLoading(false);
-                    elements.form.classList.remove('submitting');
                     return;
                 }
                 
-                console.log('✅ Form validation passed');
-                
                 // Create attendance record
                 const record = createAttendanceRecord();
-                console.log('📝 Record created:', record);
                 
-                // Always save locally first (primary storage)
+                // Add to data array immediately
                 attendanceData.unshift(record);
-                console.log('💾 Saved to local array');
                 
-                // Save to localStorage immediately
-                try {
-                    let localData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-                    localData.unshift(record);
-                    localStorage.setItem('attendanceData', JSON.stringify(localData));
-                    console.log('💾 Saved to localStorage');
-                } catch (storageError) {
-                    console.error('❌ localStorage error:', storageError);
-                }
-                
-                // Try Firebase only if enabled and available
-                let firebaseSuccess = false;
-                if (window.firebase && navigator.onLine) {
-                    try {
-                        console.log('☁️ Attempting Firebase save...');
-                        await saveDataToFirestore(record);
-                        firebaseSuccess = true;
-                        console.log('☁️ Firebase save successful');
-                    } catch (firebaseError) {
-                        console.error('☁️ Firebase error:', firebaseError);
-                        // Firebase error already handled in saveDataToFirestore
-                    }
-                }
-                
-                // Show success message
+                // Show success immediately and reset form
                 const studentInfo = activeStudents[record.student];
-                let studentName = record.studentName;
+                let successMessage;
                 if (typeof studentInfo === 'object') {
-                    studentName = `${studentInfo.id} - ${studentInfo.name}`;
+                    successMessage = `✅ Attendance recorded for ${studentInfo.id} - ${studentInfo.name}!`;
+                } else {
+                    successMessage = `✅ Attendance recorded for ${record.studentName}!`;
                 }
                 
-                const storageType = firebaseSuccess ? 'Cloud & Local' : 'Local Storage';
-                showMessage(`✅ Attendance recorded for ${studentName} (${storageType})`, 'success');
-                console.log('✅ Success message shown');
-                
-                // Reset form
+                showMessage(successMessage, 'success');
                 resetForm();
-                console.log('🔄 Form reset');
+                
+                // Clear loading immediately after success
+                clearTimeout(timeoutId);
+                showLoading(false);
+                
+                // Save to localStorage for persistence
+                let localData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                localData.unshift(record);
+                localStorage.setItem('attendanceData', JSON.stringify(localData));
                 
                 // Update displays if records are visible
-                if (elements.recordsSection && elements.recordsSection.style.display !== 'none') {
+                if (elements.recordsSection.style.display !== 'none') {
                     displayRecords();
                     updateStatistics();
-                    console.log('📊 Displays updated');
                 }
                 
             } catch (error) {
-                console.error('❌ Submission error:', error);
-                showMessage(`❌ Error: ${error.message}`, 'error');
-            } finally {
-                // Always clear loading and submission state
                 clearTimeout(timeoutId);
                 showLoading(false);
-                elements.form.classList.remove('submitting');
-                console.log('🏁 Form submission completed');
+                showMessage(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                // Double safety - ensure loading is always cleared
+                showLoading(false);
             }
         }
 
@@ -7136,18 +6130,8 @@ ${tips.join('\n')}
         }
 
         function validateForm() {
-            console.log('🔍 Starting form validation');
-            
-            if (!elements.student || !elements.attendanceStatus) {
-                console.error('❌ Form elements not found');
-                showMessage('Form elements not properly loaded. Please refresh the page.', 'error');
-                return false;
-            }
-            
             const student = elements.student.value;
             const attendanceStatus = elements.attendanceStatus.value;
-            
-            console.log('📝 Form values:', { student, attendanceStatus });
             
             if (!student) {
                 showMessage('Please select a student', 'warning');
@@ -7165,7 +6149,6 @@ ${tips.join('\n')}
                 return false;
             }
             
-            console.log('✅ Form validation passed');
             return true;
         }
 
@@ -7512,11 +6495,7 @@ ${tips.join('\n')}
         }
 
         function displayRecords() {
-            console.log('Display records called');
-            
             let records = getFilteredRecords();
-            console.log('Filtered records count:', records.length);
-            
             records = sortRecords(records);
             
             elements.recordsTableBody.innerHTML = '';
@@ -7537,6 +6516,9 @@ ${tips.join('\n')}
                 const row = createRecordRow(record, index);
                 elements.recordsTableBody.appendChild(row);
             });
+            
+            // Update filter dropdowns
+            populateFilterDropdowns();
         }
 
         function createRecordRow(record, index) {
@@ -7627,189 +6609,8 @@ ${tips.join('\n')}
         }
 
         function deleteRecord(recordId) {
-            console.log('🗑️ Delete record called with ID:', recordId);
-            
-            // Find the record to get its details for the confirmation dialog
-            const record = attendanceData.find(r => r.id === recordId);
-            if (!record) {
-                console.error('❌ Record not found in attendanceData');
-                showMessage('Record not found', 'error');
-                return;
-            }
-            
-            // Create modern confirmation dialog
-            const confirmDialog = document.createElement('div');
-            confirmDialog.className = 'confirmation-overlay';
-            confirmDialog.innerHTML = `
-                <div class="confirmation-modal">
-                    <div class="confirmation-header" style="background: #e74c3c;">
-                        <h3><i class="fas fa-trash"></i> Delete Record</h3>
-                    </div>
-                    <div class="confirmation-body">
-                        <p><strong>Are you sure you want to delete this attendance record?</strong></p>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left;">
-                            <p style="margin: 5px 0;"><strong>Student:</strong> ${record.studentName} (${record.studentId})</p>
-                            <p style="margin: 5px 0;"><strong>Date:</strong> ${record.date}</p>
-                            <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: ${record.attendanceStatus === 'present' ? '#28a745' : '#dc3545'};">${record.attendanceStatus.toUpperCase()}</span></p>
-                            <p style="margin: 5px 0;"><strong>Time:</strong> ${record.time}</p>
-                        </div>
-                        <p style="color: #e74c3c; margin-top: 15px;"><i class="fas fa-warning"></i> This action cannot be undone!</p>
-                    </div>
-                    <div class="confirmation-actions">
-                        <button class="confirm-btn cancel-btn">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                        <button class="confirm-btn" style="background: #e74c3c;">
-                            <i class="fas fa-trash"></i> Yes, Delete
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(confirmDialog);
-            
-            const cancelBtn = confirmDialog.querySelector('.cancel-btn');
-            const confirmBtn = confirmDialog.querySelector('.confirm-btn:not(.cancel-btn)');
-            
-            const closeDialog = () => {
-                document.body.removeChild(confirmDialog);
-            };
-            
-            cancelBtn.addEventListener('click', () => {
-                console.log('🗑️ User cancelled deletion');
-                closeDialog();
-            });
-            
-            confirmBtn.addEventListener('click', () => {
-                console.log('🗑️ User confirmed deletion');
-                console.log('🗑️ About to call deleteRecordFromStorage with ID:', recordId);
-                console.log('🗑️ deleteRecordFromStorage function exists:', typeof deleteRecordFromStorage);
-                closeDialog();
-                try {
-                    deleteRecordFromStorage(recordId);
-                } catch (error) {
-                    console.error('🗑️ Error calling deleteRecordFromStorage:', error);
-                    showMessage('Error deleting record: ' + error.message, 'error');
-                }
-            });
-            
-            // Close on overlay click
-            confirmDialog.addEventListener('click', (e) => {
-                if (e.target === confirmDialog) {
-                    console.log('🗑️ User cancelled deletion (overlay click)');
-                    closeDialog();
-                }
-            });
-            
-            // Focus the confirm button after a short delay
-            setTimeout(() => confirmBtn.focus(), 100);
-        }
-
-        async function deleteRecordFromStorage(recordId) {
-            console.log('🗑️ deleteRecordFromStorage called with ID:', recordId);
-            
-            try {
-                showLoading(true);
-                showMessage('Deleting record...', 'info');
-                
-                // Find the record to get Firebase ID if it exists
-                const recordIndex = attendanceData.findIndex(record => record.id === recordId);
-                console.log('🗑️ Record index found:', recordIndex);
-                
-                if (recordIndex === -1) {
-                    console.error('❌ Record not found in attendanceData');
-                    showMessage('Record not found', 'error');
-                    showLoading(false);
-                    return;
-                }
-                
-                const record = attendanceData[recordIndex];
-                console.log('🗑️ Record to delete:', record);
-                
-                // Delete from Firebase if it has a Firebase ID and Firebase is enabled
-                let firebaseDeleteSuccess = false;
-                const firebaseRecordId = record.firebaseId || record.firestoreId || record.id;
-                
-                console.log('🗑️ Record structure:', {
-                    id: record.id,
-                    firebaseId: record.firebaseId,
-                    firestoreId: record.firestoreId,
-                    finalId: firebaseRecordId
-                });
-                
-                if (useFirebase && window.firebase && firebaseRecordId && navigator.onLine) {
-                    console.log('🗑️ Attempting Firebase deletion with ID:', firebaseRecordId);
-                    try {
-                        // Use the same method as clearAllData - find the document first
-                        const q = window.firebase.query(
-                            window.firebase.collection(window.firebase.db, 'attendance'),
-                            window.firebase.where('id', '==', record.id)
-                        );
-                        const querySnapshot = await window.firebase.getDocs(q);
-                        
-                        if (!querySnapshot.empty) {
-                            const docToDelete = querySnapshot.docs[0];
-                            console.log('🗑️ Found document to delete:', docToDelete.id);
-                            await window.firebase.deleteDoc(docToDelete.ref);
-                            console.log('🗑️ Document deleted successfully');
-                            firebaseDeleteSuccess = true;
-                            showMessage('✅ Record deleted from cloud and local storage', 'success');
-                        } else {
-                            console.log('🗑️ Document not found in Firestore');
-                            showMessage('⚠️ Record deleted locally (not found in cloud)', 'warning');
-                        }
-                    } catch (firebaseError) {
-                        console.error('Firebase delete error:', firebaseError);
-                        showMessage('⚠️ Record deleted locally (cloud sync failed: ' + firebaseError.message + ')', 'warning');
-                    }
-                } else {
-                    console.log('🗑️ Deleting locally only - Firebase not available or no ID');
-                    if (!firebaseRecordId) {
-                        console.log('🗑️ No Firebase ID found in record');
-                    }
-                    if (!useFirebase) {
-                        console.log('🗑️ Firebase disabled');
-                    }
-                    if (!window.firebase) {
-                        console.log('🗑️ Firebase not available');
-                    }
-                    if (!navigator.onLine) {
-                        console.log('🗑️ Device offline');
-                    }
-                    showMessage('✅ Record deleted from local storage', 'success');
-                }
-                
-                // Remove from local data
-                console.log('🗑️ Removing from local data...');
-                console.log('🗑️ attendanceData before deletion:', attendanceData.length, attendanceData);
-                console.log('🗑️ Removing record at index:', recordIndex);
-                attendanceData.splice(recordIndex, 1);
-                console.log('🗑️ attendanceData after deletion:', attendanceData.length, attendanceData);
-                console.log('🗑️ Updated attendanceData length:', attendanceData.length);
-                
-                // Update localStorage
-                localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
-                // Also remove from sync queue if it's there
-                const syncIndex = syncQueue.findIndex(record => record.id === recordId);
-                if (syncIndex !== -1) {
-                    console.log('🗑️ Removing from sync queue...');
-                    syncQueue.splice(syncIndex, 1);
-                    localStorage.setItem('attendanceSyncQueue', JSON.stringify(syncQueue));
-                }
-                
-                // Refresh displays
-                console.log('🗑️ Refreshing displays...');
-                displayRecords();
-                updateStatistics();
-                generateAnalytics();
-                
-                console.log('🗑️ Record deletion completed successfully');
-                
-            } catch (error) {
-                console.error('Error deleting record:', error);
-                showMessage('❌ Error deleting record: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
+            if (confirm('Are you sure you want to delete this record?')) {
+                deleteRecordFromStorage(recordId);
             }
         }
 
@@ -7833,7 +6634,12 @@ ${tips.join('\n')}
                     const label = (r.attendanceLabel || '').toLowerCase();
                     return status === 'absent' || label === 'absent';
                 }).length,
-                uniqueStudents: new Set(filteredRecords.map(r => r.studentId || r.employee)).size
+                uniqueStudents: Math.max(
+                    // Count unique students from filtered records
+                    new Set(filteredRecords.map(r => r.studentId || r.employee)).size,
+                    // Fallback to total active students count
+                    Object.keys(activeStudents).length
+                )
             };
             
             console.log('Calculated stats for filtered records:', stats);
@@ -7886,777 +6692,6 @@ ${tips.join('\n')}
             document.getElementById('statisticsSection').scrollIntoView({ 
                 behavior: 'smooth' 
             });
-        }
-
-        function parseTableData() {
-            const data = [];
-            const rows = document.querySelectorAll('#recordsTableBody tr');
-            
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length >= 4) {
-                    // Extract student info from second cell (index 1)
-                    const studentCell = cells[1].textContent.trim();
-                    let studentId = '';
-                    let studentName = '';
-                    
-                    // Parse formats like "STU002 - Yaman Takala"
-                    const match = studentCell.match(/^(STU\d+)\s*-\s*(.+)$/);
-                    if (match) {
-                        studentId = match[1];
-                        studentName = match[2];
-                    } else {
-                        studentName = studentCell;
-                        studentId = studentCell;
-                    }
-                    
-                    // Get status from third cell (index 2) - handle badge classes
-                    const statusCell = cells[2];
-                    let status = statusCell.textContent.trim();
-                    
-                    // Also check for badge classes to determine status
-                    if (statusCell.querySelector('.status-present') || status.toLowerCase().includes('present')) {
-                        status = 'Present';
-                    } else if (statusCell.querySelector('.status-absent') || status.toLowerCase().includes('absent')) {
-                        status = 'Absent';
-                    }
-                    
-                    // Get date from fourth cell (index 3)
-                    const dateText = cells[3].textContent.trim();
-                    
-                    // Get time from fifth cell (index 4) if it exists
-                    const timeText = cells.length > 4 ? cells[4].textContent.trim() : '';
-                    
-                    const record = {
-                        studentId: studentId,
-                        studentName: studentName,
-                        action: status,
-                        attendanceStatus: status.toLowerCase(),
-                        date: dateText,
-                        time: timeText,
-                        // Also include legacy format support
-                        actionType: status.toLowerCase() === 'present' ? 'check-in' : 'absence'
-                    };
-                    
-                    data.push(record);
-                }
-            });
-            
-            return data;
-        }
-
-        function parseRecordDate(dateString) {
-            // Handle various date formats
-            if (!dateString) return new Date();
-            
-            // Try to parse common formats
-            const date = new Date(dateString);
-            if (!isNaN(date.getTime())) {
-                return date;
-            }
-            
-            // If direct parsing fails, try manual parsing for formats like "8/30/2025"
-            const parts = dateString.match(/(\d+)\/(\d+)\/(\d+)/);
-            if (parts) {
-                const month = parseInt(parts[1]) - 1; // JS months are 0-indexed
-                const day = parseInt(parts[2]);
-                const year = parseInt(parts[3]);
-                return new Date(year, month, day);
-            }
-            
-            return new Date(); // fallback to current date
-        }
-
-        function generateAttendanceRateAnalytics(data) {
-            const studentStats = {};
-            
-            // Calculate stats for each student
-            data.forEach(record => {
-                // Handle both new format (studentId + studentName) and legacy formats
-                let studentKey, studentName;
-                
-                if (record.studentId && record.studentName) {
-                    studentKey = record.studentId;
-                    studentName = `${record.studentId} - ${record.studentName}`;
-                } else if (record.studentName) {
-                    studentKey = record.studentName;
-                    studentName = record.studentName;
-                } else if (record.employeeName) {
-                    studentKey = record.employeeName;
-                    studentName = record.employeeName;
-                } else {
-                    studentKey = 'Unknown';
-                    studentName = 'Unknown Student';
-                }
-                
-                if (!studentStats[studentKey]) {
-                    studentStats[studentKey] = {
-                        name: studentName,
-                        total: 0,
-                        present: 0,
-                        absent: 0
-                    };
-                }
-                
-                studentStats[studentKey].total++;
-                
-                // Check attendance status - handle both new and legacy formats
-                const isPresent = record.attendanceStatus === 'present' || 
-                                record.actionType === 'check-in' || 
-                                record.action === 'Present';
-                const isAbsent = record.attendanceStatus === 'absent' || 
-                               record.actionType === 'absence' || 
-                               record.action === 'Absent';
-                
-                if (isPresent) {
-                    studentStats[studentKey].present++;
-                } else if (isAbsent) {
-                    studentStats[studentKey].absent++;
-                }
-            });
-
-            // Calculate attendance rates and sort students
-            const studentRates = Object.keys(studentStats).map(key => {
-                const stats = studentStats[key];
-                const rate = stats.total > 0 ? (stats.present / stats.total) * 100 : 0;
-                return {
-                    name: stats.name,
-                    rate: rate.toFixed(1),
-                    total: stats.total,
-                    present: stats.present,
-                    absent: stats.absent
-                };
-            });
-
-            // Sort for highest (best attendance first)
-            const highest = [...studentRates].sort((a, b) => {
-                // First sort by rate, then by total records (more data = more reliable)
-                if (b.rate !== a.rate) return b.rate - a.rate;
-                return b.total - a.total;
-            }).slice(0, 5);
-
-            // Sort for lowest (worst attendance first, but exclude 0% with very few records)
-            const lowest = [...studentRates].sort((a, b) => {
-                // First sort by rate, then by total records
-                if (a.rate !== b.rate) return a.rate - b.rate;
-                return b.total - a.total;
-            }).slice(0, 5);
-
-            // Display highest attendance
-            const highestList = document.getElementById('highestAttendanceList');
-            if (highest.length > 0) {
-                highestList.innerHTML = highest.map(student => `
-                    <li class="student-stat-item ${getPerformanceClass(student.rate)}">
-                        <div>
-                            <div class="analytics-metric">${student.name}</div>
-                            <div class="stat-details">${student.present}P/${student.absent}A out of ${student.total} total</div>
-                        </div>
-                        <span class="analytics-percentage ${getPercentageClass(student.rate)}">${student.rate}%</span>
-                    </li>
-                `).join('');
-            } else {
-                highestList.innerHTML = '<li class="analytics-empty">No data available</li>';
-            }
-
-            // Display lowest attendance
-            const lowestList = document.getElementById('lowestAttendanceList');
-            if (lowest.length > 0) {
-                lowestList.innerHTML = lowest.map(student => `
-                    <li class="student-stat-item ${getPerformanceClass(student.rate)}">
-                        <div>
-                            <div class="analytics-metric">${student.name}</div>
-                            <div class="stat-details">${student.present}P/${student.absent}A out of ${student.total} total</div>
-                        </div>
-                        <span class="analytics-percentage ${getPercentageClass(student.rate)}">${student.rate}%</span>
-                    </li>
-                `).join('');
-            } else {
-                lowestList.innerHTML = '<li class="analytics-empty">No data available</li>';
-            }
-        }
-
-        function generateAbsenceAnalytics(data) {
-            const studentAbsences = {};
-            
-            data.forEach(record => {
-                const isAbsent = record.attendanceStatus === 'absent' || 
-                               record.actionType === 'absence' || 
-                               record.action === 'Absent';
-                
-                if (isAbsent) {
-                    let studentKey, studentName;
-                    
-                    if (record.studentId && record.studentName) {
-                        studentKey = record.studentId;
-                        studentName = `${record.studentId} - ${record.studentName}`;
-                    } else if (record.studentName) {
-                        studentKey = record.studentName;
-                        studentName = record.studentName;
-                    } else if (record.employeeName) {
-                        studentKey = record.employeeName;
-                        studentName = record.employeeName;
-                    } else {
-                        studentKey = 'Unknown';
-                        studentName = 'Unknown Student';
-                    }
-                    
-                    if (!studentAbsences[studentKey]) {
-                        studentAbsences[studentKey] = {
-                            name: studentName,
-                            count: 0,
-                            dates: []
-                        };
-                    }
-                    studentAbsences[studentKey].count++;
-                    studentAbsences[studentKey].dates.push(record.date);
-                }
-            });
-
-            const absenceList = Object.keys(studentAbsences)
-                .map(key => studentAbsences[key])
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10);
-
-            const absenceContainer = document.getElementById('individualAbsenceList');
-            if (absenceList.length > 0) {
-                absenceContainer.innerHTML = absenceList.map(student => `
-                    <li class="student-stat-item poor">
-                        <div>
-                            <div class="analytics-metric">${student.name}</div>
-                            <div class="stat-details">Absent on: ${student.dates.slice(0, 3).join(', ')}${student.dates.length > 3 ? '...' : ''}</div>
-                        </div>
-                        <span class="absence-badge">${student.count} absence${student.count > 1 ? 's' : ''}</span>
-                    </li>
-                `).join('');
-            } else {
-                absenceContainer.innerHTML = '<li class="analytics-empty">No absences recorded</li>';
-            }
-        }
-
-        function generateDateAnalytics(data) {
-            const dateAbsences = {};
-            
-            data.forEach(record => {
-                const isAbsent = record.attendanceStatus === 'absent' || 
-                               record.actionType === 'absence' || 
-                               record.action === 'Absent';
-                
-                if (isAbsent) {
-                    const date = record.date;
-                    if (!dateAbsences[date]) {
-                        dateAbsences[date] = {
-                            count: 0,
-                            students: []
-                        };
-                    }
-                    dateAbsences[date].count++;
-                    
-                    // Get student name
-                    let studentName;
-                    if (record.studentId && record.studentName) {
-                        studentName = `${record.studentId} - ${record.studentName}`;
-                    } else if (record.studentName) {
-                        studentName = record.studentName;
-                    } else if (record.employeeName) {
-                        studentName = record.employeeName;
-                    } else {
-                        studentName = 'Unknown';
-                    }
-                    
-                    dateAbsences[date].students.push(studentName);
-                }
-            });
-
-            const sortedDates = Object.keys(dateAbsences)
-                .map(date => ({
-                    date: date,
-                    count: dateAbsences[date].count,
-                    students: dateAbsences[date].students,
-                    formattedDate: formatDisplayDate(date)
-                }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10);
-
-            const timelineContainer = document.getElementById('absenceTimeline');
-            if (sortedDates.length > 0) {
-                timelineContainer.innerHTML = sortedDates.map(item => `
-                    <div class="timeline-item">
-                        <div>
-                            <div class="timeline-date">${item.formattedDate}</div>
-                            <div class="stat-details">${item.students.slice(0, 3).join(', ')}${item.students.length > 3 ? ` +${item.students.length - 3} more` : ''}</div>
-                        </div>
-                        <div class="timeline-count">${item.count} absence${item.count > 1 ? 's' : ''}</div>
-                    </div>
-                `).join('');
-            } else {
-                timelineContainer.innerHTML = '<div class="analytics-empty">No absence data available</div>';
-            }
-        }
-
-        function formatDisplayDate(dateString) {
-            try {
-                const date = parseRecordDate(dateString);
-                return date.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            } catch (e) {
-                return dateString; // fallback to original string
-            }
-        }
-
-        function generateDetailedStudentStats(data) {
-            const studentDetails = {};
-            
-            data.forEach(record => {
-                let studentKey, studentName;
-                
-                if (record.studentId && record.studentName) {
-                    studentKey = record.studentId;
-                    studentName = `${record.studentId} - ${record.studentName}`;
-                } else if (record.studentName) {
-                    studentKey = record.studentName;
-                    studentName = record.studentName;
-                } else if (record.employeeName) {
-                    studentKey = record.employeeName;
-                    studentName = record.employeeName;
-                } else {
-                    studentKey = 'Unknown';
-                    studentName = 'Unknown Student';
-                }
-                
-                if (!studentDetails[studentKey]) {
-                    studentDetails[studentKey] = {
-                        name: studentName,
-                        dates: new Set(),
-                        total: 0,
-                        present: 0,
-                        absent: 0
-                    };
-                }
-                
-                studentDetails[studentKey].dates.add(record.date);
-                studentDetails[studentKey].total++;
-                
-                const isPresent = record.attendanceStatus === 'present' || 
-                                record.actionType === 'check-in' || 
-                                record.action === 'Present';
-                const isAbsent = record.attendanceStatus === 'absent' || 
-                               record.actionType === 'absence' || 
-                               record.action === 'Absent';
-                
-                if (isPresent) {
-                    studentDetails[studentKey].present++;
-                } else if (isAbsent) {
-                    studentDetails[studentKey].absent++;
-                }
-            });
-
-            const detailedStats = Object.keys(studentDetails).map(key => {
-                const stats = studentDetails[key];
-                const rate = stats.total > 0 ? (stats.present / stats.total) * 100 : 0;
-                return {
-                    name: stats.name,
-                    uniqueDays: stats.dates.size,
-                    total: stats.total,
-                    present: stats.present,
-                    absent: stats.absent,
-                    rate: rate.toFixed(1)
-                };
-            }).sort((a, b) => b.rate - a.rate);
-
-            const detailsContainer = document.getElementById('detailedStudentStats');
-            if (detailedStats.length > 0) {
-                detailsContainer.innerHTML = detailedStats.map(student => `
-                    <div class="student-detail">
-                        <div>
-                            <div class="student-name">${student.name}</div>
-                            <div class="stat-details">
-                                ${student.total} records across ${student.uniqueDays} day${student.uniqueDays > 1 ? 's' : ''} | 
-                                Present: ${student.present} | Absent: ${student.absent}
-                            </div>
-                        </div>
-                        <span class="analytics-percentage ${getPercentageClass(student.rate)}">${student.rate}%</span>
-                    </div>
-                `).join('');
-            } else {
-                detailsContainer.innerHTML = '<div class="analytics-empty">No detailed statistics available</div>';
-            }
-        }
-
-        function getPercentageClass(rate) {
-            if (rate >= 80) return 'percentage-high';
-            if (rate >= 60) return 'percentage-medium';
-            return 'percentage-low';
-        }
-
-        function getPerformanceClass(rate) {
-            if (rate >= 90) return 'excellent';
-            if (rate >= 80) return 'good';
-            if (rate >= 60) return 'average';
-            return 'poor';
-        }
-
-        function showEmptyAnalytics() {
-            document.getElementById('highestAttendanceList').innerHTML = '<li class="analytics-empty">No data available for selected period</li>';
-            document.getElementById('lowestAttendanceList').innerHTML = '<li class="analytics-empty">No data available for selected period</li>';
-            document.getElementById('individualAbsenceList').innerHTML = '<li class="analytics-empty">No absence data available</li>';
-            document.getElementById('absenceTimeline').innerHTML = '<div class="analytics-empty">No absence data available</div>';
-            document.getElementById('detailedStudentStats').innerHTML = '<div class="analytics-empty">No detailed statistics available</div>';
-        }
-
-        // Analytics Functions
-        function toggleAnalyticsView() {
-            const isVisible = elements.analyticsSection.style.display !== 'none';
-            
-            if (isVisible) {
-                elements.viewAnalyticsBtn.innerHTML = '<i class="fas fa-chart-line"></i> View Analytics';
-                elements.analyticsSection.style.display = 'none';
-            } else {
-                elements.viewAnalyticsBtn.innerHTML = '<i class="fas fa-chart-line"></i> Hide Analytics';
-                elements.analyticsSection.style.display = 'block';
-                generateAnalytics();
-                
-                // Scroll to analytics section
-                elements.analyticsSection.scrollIntoView({ 
-                    behavior: 'smooth' 
-                });
-            }
-        }
-
-        function generateAnalytics() {
-            const filterPeriod = document.getElementById('analyticsFilter').value;
-            console.log('generateAnalytics called with filter:', filterPeriod);
-            
-            const filteredData = getAnalyticsData(filterPeriod);
-            
-            console.log('Filtered data results:', {
-                period: filterPeriod,
-                recordCount: filteredData.length
-            });
-            
-            if (filteredData.length === 0) {
-                console.log('No data available, showing empty analytics');
-                showEmptyAnalytics();
-                return;
-            }
-
-            // Generate all analytics
-            generateAttendanceRateAnalytics(filteredData);
-            generateAbsenceAnalytics(filteredData);
-            generateDateAnalytics(filteredData);
-            generateDetailedStudentStats(filteredData);
-        }
-
-        function getAnalyticsData(period) {
-            // First ensure we have data - if attendanceData is empty, try to load from table
-            let dataSource = attendanceData && attendanceData.length > 0 ? attendanceData : [];
-            
-            // If still no data, try to parse from the displayed table
-            if (dataSource.length === 0) {
-                const tableRows = document.querySelectorAll('#recordsTableBody tr');
-                tableRows.forEach(row => {
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 4) {
-                        const studentCell = cells[1].textContent.trim();
-                        const statusCell = cells[2].textContent.trim();
-                        const dateCell = cells[3].textContent.trim();
-                        
-                        // Extract student ID and name from format "STU001 - Baraa Takala"
-                        let studentId = '';
-                        let studentName = '';
-                        
-                        if (studentCell.includes(' - ')) {
-                            const parts = studentCell.split(' - ');
-                            studentId = parts[0].trim();
-                            studentName = parts[1].trim();
-                        } else {
-                            studentId = studentCell;
-                            studentName = studentCell;
-                        }
-                        
-                        dataSource.push({
-                            studentId: studentId,
-                            studentName: studentName,
-                            action: statusCell,
-                            attendanceStatus: statusCell.toLowerCase().trim(),
-                            date: dateCell
-                        });
-                    }
-                });
-            }
-            
-            console.log('Analytics Data Source:', {
-                period: period,
-                totalRecords: dataSource.length,
-                sampleRecord: dataSource[0],
-                uniqueStudents: [...new Set(dataSource.map(r => r.studentId || r.studentName))],
-                sampleStudentData: dataSource.slice(0, 3)
-            });
-            
-            const now = new Date();
-            let startDate = new Date(0); // Default to beginning of time
-            
-            switch(period) {
-                case 'last7days':
-                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                    break;
-                case 'last30days':
-                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                    break;
-                case 'thismonth':
-                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                    break;
-                case 'lastmonth':
-                    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                    return dataSource.filter(record => {
-                        const recordDate = new Date(record.date);
-                        return recordDate >= lastMonth && recordDate < thisMonth;
-                    });
-                case 'all':
-                default:
-                    return dataSource; // All time
-            }
-            
-            return dataSource.filter(record => {
-                const recordDate = new Date(record.date);
-                return recordDate >= startDate;
-            });
-        }
-
-        function generateAttendanceRateAnalytics(data) {
-            const studentStats = {};
-            
-            // Calculate attendance rates for each student
-            data.forEach(record => {
-                const studentKey = record.studentId || record.studentName || 'Unknown';
-                const studentName = record.studentName || studentKey;
-                
-                if (!studentStats[studentKey]) {
-                    studentStats[studentKey] = {
-                        name: studentName,
-                        total: 0,
-                        present: 0,
-                        absent: 0
-                    };
-                }
-                
-                studentStats[studentKey].total++;
-                
-                // Check for present status - handle multiple formats
-                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                if (status === 'present' || record.actionType === 'check-in' || status.includes('present')) {
-                    studentStats[studentKey].present++;
-                } else if (status === 'absent' || status.includes('absent')) {
-                    studentStats[studentKey].absent++;
-                }
-            });
-            
-            // Calculate percentages and sort
-            const studentsWithRates = Object.values(studentStats).map(student => {
-                const rate = student.total > 0 ? (student.present / student.total) * 100 : 0;
-                return {
-                    ...student,
-                    attendanceRate: rate.toFixed(1),
-                    numericRate: rate
-                };
-            });
-            
-            // Highest attendance rates (best to worst)
-            const highest = studentsWithRates
-                .sort((a, b) => b.numericRate - a.numericRate)
-                .slice(0, 5);
-            
-            // Lowest attendance rates (worst to best)
-            const lowest = studentsWithRates
-                .sort((a, b) => a.numericRate - b.numericRate)
-                .slice(0, 5);
-            
-            updateAttendanceRateDisplay(highest, lowest);
-        }
-
-        function updateAttendanceRateDisplay(highest, lowest) {
-            const highestList = document.getElementById('highestAttendanceList');
-            const lowestList = document.getElementById('lowestAttendanceList');
-            
-            // Highest attendance
-            if (highest.length > 0) {
-                highestList.innerHTML = highest.map(student => `
-                    <li>
-                        <span>${student.name}</span>
-                        <span class="analytics-percentage percentage-high">${student.attendanceRate}%</span>
-                    </li>
-                `).join('');
-            } else {
-                highestList.innerHTML = '<li class="analytics-empty">No data available</li>';
-            }
-            
-            // Lowest attendance
-            if (lowest.length > 0) {
-                lowestList.innerHTML = lowest.map(student => {
-                    const percentClass = student.attendanceRate >= 80 ? 'percentage-high' : 
-                                       student.attendanceRate >= 60 ? 'percentage-medium' : 'percentage-low';
-                    return `
-                        <li>
-                            <span>${student.name}</span>
-                            <span class="analytics-percentage ${percentClass}">${student.attendanceRate}%</span>
-                        </li>
-                    `;
-                }).join('');
-            } else {
-                lowestList.innerHTML = '<li class="analytics-empty">No data available</li>';
-            }
-        }
-
-        function generateAbsenceAnalytics(data) {
-            const studentAbsences = {};
-            
-            data.forEach(record => {
-                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                if (status === 'absent' || record.actionType === 'absent' || status.includes('absent')) {
-                    const studentKey = record.studentId || record.studentName || 'Unknown';
-                    const studentName = record.studentName || studentKey;
-                    
-                    if (!studentAbsences[studentKey]) {
-                        studentAbsences[studentKey] = {
-                            name: studentName,
-                            count: 0
-                        };
-                    }
-                    studentAbsences[studentKey].count++;
-                }
-            });
-            
-            const sortedAbsences = Object.values(studentAbsences)
-                .sort((a, b) => b.count - a.count);
-            
-            updateAbsenceDisplay(sortedAbsences);
-        }
-
-        function updateAbsenceDisplay(absences) {
-            const absenceList = document.getElementById('individualAbsenceList');
-            
-            if (absences.length > 0) {
-                absenceList.innerHTML = absences.map(student => `
-                    <li>
-                        <span>${student.name}</span>
-                        <span class="absence-badge">${student.count} absence${student.count !== 1 ? 's' : ''}</span>
-                    </li>
-                `).join('');
-            } else {
-                absenceList.innerHTML = '<li class="analytics-empty">No absences recorded</li>';
-            }
-        }
-
-        function generateDateAnalytics(data) {
-            const dateAbsences = {};
-            
-            data.forEach(record => {
-                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                if (status === 'absent' || record.actionType === 'absent' || status.includes('absent')) {
-                    const date = record.date;
-                    if (!dateAbsences[date]) {
-                        dateAbsences[date] = 0;
-                    }
-                    dateAbsences[date]++;
-                }
-            });
-            
-            const sortedDates = Object.entries(dateAbsences)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10); // Top 10 dates with most absences
-            
-            updateDateAnalyticsDisplay(sortedDates);
-        }
-
-        function updateDateAnalyticsDisplay(dates) {
-            const timeline = document.getElementById('absenceTimeline');
-            
-            if (dates.length > 0) {
-                timeline.innerHTML = dates.map(([date, count]) => `
-                    <div class="timeline-item">
-                        <span class="timeline-date">${new Date(date).toLocaleDateString()}</span>
-                        <span class="timeline-count">${count} absence${count !== 1 ? 's' : ''}</span>
-                    </div>
-                `).join('');
-            } else {
-                timeline.innerHTML = '<div class="analytics-empty">No absence data available</div>';
-            }
-        }
-
-        function generateDetailedStudentStats(data) {
-            const studentDetails = {};
-            
-            data.forEach(record => {
-                const studentKey = record.studentId || record.studentName || 'Unknown';
-                const studentName = record.studentName || studentKey;
-                
-                if (!studentDetails[studentKey]) {
-                    studentDetails[studentKey] = {
-                        name: studentName,
-                        totalRecords: 0,
-                        presentCount: 0,
-                        absentCount: 0,
-                        dates: new Set()
-                    };
-                }
-                
-                const student = studentDetails[studentKey];
-                student.totalRecords++;
-                student.dates.add(record.date);
-                
-                // Check for present/absent status - handle multiple formats
-                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                if (status === 'present' || record.actionType === 'check-in' || status.includes('present')) {
-                    student.presentCount++;
-                } else if (status === 'absent' || status.includes('absent')) {
-                    student.absentCount++;
-                }
-            });
-            
-            const detailedStats = Object.values(studentDetails).map(student => ({
-                ...student,
-                attendanceRate: student.totalRecords > 0 ? ((student.presentCount / student.totalRecords) * 100).toFixed(1) : '0.0',
-                uniqueDays: student.dates.size
-            })).sort((a, b) => b.totalRecords - a.totalRecords);
-            
-            updateDetailedStatsDisplay(detailedStats);
-        }
-
-        function updateDetailedStatsDisplay(stats) {
-            const container = document.getElementById('detailedStudentStats');
-            
-            if (stats.length > 0) {
-                container.innerHTML = stats.map(student => {
-                    const percentClass = student.attendanceRate >= 80 ? 'percentage-high' : 
-                                       student.attendanceRate >= 60 ? 'percentage-medium' : 'percentage-low';
-                    return `
-                        <div class="student-detail">
-                            <div>
-                                <div class="student-name">${student.name}</div>
-                                <small>${student.totalRecords} records across ${student.uniqueDays} days</small>
-                            </div>
-                            <div style="text-align: right;">
-                                <div class="analytics-percentage ${percentClass}">${student.attendanceRate}%</div>
-                                <small>P: ${student.presentCount} | A: ${student.absentCount}</small>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                container.innerHTML = '<div class="analytics-empty">No detailed statistics available</div>';
-            }
-        }
-
-        function showEmptyAnalytics() {
-            document.getElementById('highestAttendanceList').innerHTML = '<li class="analytics-empty">No data for selected period</li>';
-            document.getElementById('lowestAttendanceList').innerHTML = '<li class="analytics-empty">No data for selected period</li>';
-            document.getElementById('individualAbsenceList').innerHTML = '<li class="analytics-empty">No data for selected period</li>';
-            document.getElementById('absenceTimeline').innerHTML = '<div class="analytics-empty">No data for selected period</div>';
-            document.getElementById('detailedStudentStats').innerHTML = '<div class="analytics-empty">No data for selected period</div>';
         }
 
         function downloadExcel() {
@@ -8867,22 +6902,18 @@ ${tips.join('\n')}
                         fillColor: [245, 245, 245]
                     },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 10 },  // # (reduced from 12)
-                        1: { cellWidth: 35 },                    // Student Name (reduced from 45)
-                        2: { halign: 'center', cellWidth: 20 },  // Status (reduced from 25)
-                        3: { halign: 'center', cellWidth: 25 },  // Date (reduced from 30)
-                        4: { halign: 'center', cellWidth: 25 },  // Time (reduced from 30)
-                        5: { cellWidth: 40 }                     // Notes (reduced from 50)
+                        0: { halign: 'center', cellWidth: 12 },  // # (made smaller)
+                        1: { cellWidth: 45 },                    // Student Name (made smaller)
+                        2: { halign: 'center', cellWidth: 25 },  // Status (made smaller)
+                        3: { halign: 'center', cellWidth: 30 },  // Date (made smaller)
+                        4: { halign: 'center', cellWidth: 30 },  // Time (made smaller)  
+                        5: { cellWidth: 50 }                     // Notes (new column)
                     },
                     styles: {
-                        fontSize: 9,                             // Reduced from 10
-                        cellPadding: 3,                          // Reduced from 4
-                        overflow: 'linebreak',                   // Allow text wrapping
-                        cellWidth: 'wrap'                        // Auto-wrap long content
+                        fontSize: 10,
+                        cellPadding: 4
                     },
-                    margin: { top: 55, left: 14, right: 14 },
-                    tableWidth: 'auto',                          // Auto-adjust table width
-                    showHead: 'everyPage'                        // Show headers on every page
+                    margin: { top: 55, left: 14, right: 14 }
                 });
                 
                 // Add summary statistics at the bottom
@@ -9582,105 +7613,6 @@ ${insights}
             }
         }
 
-        function previewEmailReport() {
-            // This function shows a preview of the email report
-            try {
-                const recipientEmail = document.getElementById('recipientEmail')?.value || 'user@example.com';
-                const reportType = document.querySelector('input[name="reportType"]:checked')?.value || 'both';
-                const senderName = document.getElementById('senderName')?.value || 'System';
-                
-                const analytics = calculateEmailAnalytics(attendanceData);
-                const content = generateReportContent(analytics, reportType);
-                
-                const modal = document.getElementById('emailPreviewModal');
-                if (modal) {
-                    modal.innerHTML = `
-                        <div class="email-modal-content large">
-                            <div class="email-modal-header">
-                                <h3><i class="fas fa-eye"></i> Email Preview</h3>
-                                <button class="email-modal-close" onclick="closeEmailPreview()">&times;</button>
-                            </div>
-                            <div style="padding: 20px;">
-                                <h4>To: ${recipientEmail}</h4>
-                                <h4>Subject: Attendance Report - ${analytics.periodSummary}</h4>
-                                <div class="email-preview-content">
-                                    <pre>${content}</pre>
-                                </div>
-                                <div style="margin-top: 20px; text-align: center;">
-                                    <button class="email-btn primary" onclick="sendFinalEmail()">
-                                        <i class="fas fa-paper-plane"></i> Send Email
-                                    </button>
-                                    <button class="email-btn secondary" onclick="closeEmailPreview()">
-                                        <i class="fas fa-times"></i> Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    modal.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Preview error:', error);
-                showMessage('❌ Preview failed: ' + error.message, 'error');
-            }
-        }
-
-        function sendFinalEmail() {
-            try {
-                const recipientEmail = document.getElementById('recipientEmail')?.value || 'user@example.com';
-                const reportType = document.querySelector('input[name="reportType"]:checked')?.value || 'both';
-                
-                const analytics = calculateEmailAnalytics(attendanceData);
-                const content = generateReportContent(analytics, reportType);
-                const subject = `Attendance Report - ${analytics.periodSummary}`;
-                
-                const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(content)}`;
-                window.location.href = mailtoLink;
-                
-                closeEmailPreview();
-                closeEmailForm();
-                showMessage('📧 Email client opened successfully!', 'success');
-            } catch (error) {
-                console.error('Send email error:', error);
-                showMessage('❌ Failed to open email client', 'error');
-            }
-        }
-
-        function handleEmailFormSubmit(event) {
-            event.preventDefault();
-            console.log('📧 Email form submitted');
-            
-            try {
-                const formData = new FormData(event.target);
-                const emailData = {
-                    to: formData.get('email-to') || '',
-                    subject: formData.get('email-subject') || '',
-                    message: formData.get('email-message') || '',
-                    reportType: formData.get('report-type') || 'today'
-                };
-                
-                console.log('Email data:', emailData);
-                
-                // Validate required fields
-                if (!emailData.to) {
-                    showMessage('❌ Please enter recipient email', 'error');
-                    return;
-                }
-                
-                if (!emailData.subject) {
-                    showMessage('❌ Please enter email subject', 'error');
-                    return;
-                }
-                
-                // Generate and send the email
-                previewEmailReport();
-                
-            } catch (error) {
-                console.error('Email form submission error:', error);
-                showMessage('❌ Failed to process email form', 'error');
-            }
-        }
-
         function handleReportTypeChange() {
             const reportType = elements.reportType.value;
             const dateRangeSection = elements.dateRangeSection;
@@ -10235,266 +8167,10 @@ ${insights}
                 } else {
                     showMessage('📝 Ready to start recording attendance!', 'info');
                 }
-                
-                // Load sync queue
-                const syncQueueData = localStorage.getItem('attendanceSyncQueue');
-                if (syncQueueData) {
-                    try {
-                        syncQueue = JSON.parse(syncQueueData);
-                        console.log(`Loaded ${syncQueue.length} records in sync queue`);
-                    } catch (error) {
-                        console.error('Error parsing sync queue:', error);
-                        syncQueue = [];
-                    }
-                }
-                
-                // Load Firebase preference
-                const firebaseMode = localStorage.getItem('useFirebase');
-                if (firebaseMode !== null) {
-                    useFirebase = firebaseMode === 'true';
-                }
-                
-                // Try to load from Firebase if available and online
-                if (useFirebase && window.FirebaseHelper && navigator.onLine) {
-                    setTimeout(() => loadFromFirebase(), 1000); // Delay to ensure Firebase is ready
-                }
-                
             } catch (error) {
                 console.error('Error loading local data:', error);
                 showMessage('📝 Ready to start recording attendance!', 'info');
             }
-        }
-
-        // Firebase data loading function
-        async function loadFromFirebase() {
-            try {
-                showMessage('🔄 Syncing with cloud...', 'info');
-                const result = await window.FirebaseHelper.getAttendanceRecords();
-                
-                if (result.success) {
-                    // Merge Firebase data with local data (avoid duplicates)
-                    const firebaseData = result.data;
-                    const mergedData = mergeAttendanceData(attendanceData, firebaseData);
-                    
-                    if (mergedData.length !== attendanceData.length) {
-                        attendanceData = mergedData;
-                        saveDataToStorage(); // Update local storage
-                        showMessage(`✅ Synced ${firebaseData.length} records from cloud`, 'success');
-                        
-                        // Update displays if visible
-                        if (elements.recordsSection.style.display !== 'none') {
-                            displayRecords();
-                            updateStatistics();
-                            generateAnalytics();
-                        }
-                    }
-                    
-                    // Process sync queue if any
-                    if (syncQueue.length > 0) {
-                        await processSyncQueue();
-                    }
-                }
-            } catch (error) {
-                console.error('Firebase load error:', error);
-                showMessage('⚠️ Using offline data', 'warning');
-            }
-        }
-
-        // Merge attendance data avoiding duplicates
-        function mergeAttendanceData(localData, firebaseData) {
-            const merged = [...localData];
-            const localIds = new Set(localData.map(record => record.id));
-            
-            firebaseData.forEach(firebaseRecord => {
-                // Check if record already exists locally
-                if (!localIds.has(firebaseRecord.id)) {
-                    merged.push(firebaseRecord);
-                }
-            });
-            
-            // Sort by date (newest first)
-            return merged.sort((a, b) => new Date(b.date) - new Date(a.date));
-        }
-
-        // Process sync queue (upload pending records)
-        async function processSyncQueue() {
-            if (syncQueue.length === 0) return;
-            
-            try {
-                showMessage(`📤 Syncing ${syncQueue.length} pending records...`, 'info');
-                
-                let successCount = 0;
-                let errorCount = 0;
-                
-                for (let i = syncQueue.length - 1; i >= 0; i--) {
-                    const record = syncQueue[i];
-                    try {
-                        const result = await window.FirebaseHelper.addAttendanceRecord(record);
-                        if (result.success) {
-                            successCount++;
-                            // Update local record with Firebase ID
-                            const localRecord = attendanceData.find(r => r.id === record.id);
-                            if (localRecord) {
-                                localRecord.firebaseId = result.id;
-                            }
-                            // Remove from sync queue
-                            syncQueue.splice(i, 1);
-                        } else {
-                            errorCount++;
-                        }
-                    } catch (error) {
-                        console.error('Sync error for record:', error);
-                        errorCount++;
-                    }
-                }
-                
-                // Update sync queue in storage
-                localStorage.setItem('attendanceSyncQueue', JSON.stringify(syncQueue));
-                
-                if (successCount > 0) {
-                    showMessage(`✅ Synced ${successCount} records to cloud`, 'success');
-                    saveDataToStorage(); // Update local storage with Firebase IDs
-                }
-                
-                if (errorCount > 0) {
-                    showMessage(`⚠️ ${errorCount} records failed to sync`, 'warning');
-                }
-                
-            } catch (error) {
-                console.error('Sync queue processing error:', error);
-                showMessage('⚠️ Sync failed - records saved locally', 'warning');
-            }
-        }
-
-        // Manual sync function
-        async function syncWithFirebase() {
-            if (!useFirebase || !window.FirebaseHelper) {
-                showMessage('❌ Firebase not configured', 'error');
-                return;
-            }
-            
-            if (!navigator.onLine) {
-                showMessage('❌ No internet connection', 'error');
-                return;
-            }
-            
-            try {
-                showLoading(true);
-                await loadFromFirebase();
-                await processSyncQueue();
-                showMessage('🔄 Full sync completed!', 'success');
-            } catch (error) {
-                console.error('Manual sync error:', error);
-                showMessage('❌ Sync failed', 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // Toggle Firebase usage
-        function toggleFirebaseMode() {
-            useFirebase = !useFirebase;
-            localStorage.setItem('useFirebase', useFirebase.toString());
-            
-            if (useFirebase) {
-                showMessage('🔥 Firebase enabled - data will sync to cloud', 'success');
-                if (navigator.onLine && window.FirebaseHelper) {
-                    syncWithFirebase();
-                }
-            } else {
-                showMessage('💾 Local mode - data saved offline only', 'info');
-            }
-            
-            updateFirebaseUI();
-        }
-
-        // Update UI to show Firebase status
-        function updateFirebaseUI() {
-            const statusText = useFirebase ? '🔥 Cloud Sync' : '💾 Local Only';
-            const modeElement = document.getElementById('currentMode');
-            const buttonElement = document.getElementById('firebaseStatusText');
-            const toggleButton = document.getElementById('toggleFirebaseBtn');
-            
-            if (modeElement) modeElement.textContent = statusText;
-            if (buttonElement) buttonElement.textContent = useFirebase ? 'Disable Cloud' : 'Enable Cloud';
-            if (toggleButton) {
-                toggleButton.style.background = useFirebase ? '#f44336' : '#4CAF50';
-                toggleButton.innerHTML = useFirebase ? '<i class="fas fa-toggle-off"></i> Disable Cloud' : '<i class="fas fa-toggle-on"></i> Enable Cloud';
-            }
-            
-            updateSyncQueueUI();
-            updateConnectionStatus();
-        }
-
-        function updateSyncQueueUI() {
-            const queueElement = document.getElementById('syncQueueCount');
-            if (queueElement) {
-                queueElement.textContent = syncQueue.length;
-                queueElement.style.color = syncQueue.length > 0 ? '#ff9800' : '#4caf50';
-            }
-        }
-
-        function updateConnectionStatus() {
-            const statusElement = document.getElementById('connectionStatus');
-            if (statusElement) {
-                if (!navigator.onLine) {
-                    statusElement.textContent = 'Offline 🔴';
-                    statusElement.style.color = '#f44336';
-                } else if (!useFirebase || !window.FirebaseHelper) {
-                    statusElement.textContent = 'Local Mode 🟡';
-                    statusElement.style.color = '#ff9800';
-                } else {
-                    statusElement.textContent = 'Online 🟢';
-                    statusElement.style.color = '#4caf50';
-                }
-            }
-        }
-
-        function showFirebaseStatus() {
-            const status = `
-🔥 FIREBASE STATUS REPORT
-═══════════════════════════════════
-
-🔗 Connection: ${navigator.onLine ? 'Online' : 'Offline'}
-🔥 Firebase: ${useFirebase ? 'Enabled' : 'Disabled'}
-📊 Local Records: ${attendanceData.length}
-📤 Sync Queue: ${syncQueue.length} pending uploads
-� Storage Mode: ${useFirebase && navigator.onLine ? 'Cloud + Local' : 'Local Only'}
-
-� ACTIONS AVAILABLE:
-• ${useFirebase ? 'Disable' : 'Enable'} cloud sync
-• Manual sync with cloud
-• View sync queue status
-• Clear local data
-
-${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to upload them.' : '✅ All data is synced.'}
-            `;
-            
-            alert(status);
-        }
-
-        // Initialize Firebase UI when page loads
-        function initializeFirebaseUI() {
-            // Update UI periodically
-            updateFirebaseUI();
-            setInterval(() => {
-                updateConnectionStatus();
-                updateSyncQueueUI();
-            }, 5000); // Update every 5 seconds
-            
-            // Listen for online/offline events
-            window.addEventListener('online', () => {
-                updateConnectionStatus();
-                showMessage('🌐 Connection restored - syncing...', 'success');
-                if (useFirebase && window.FirebaseHelper) {
-                    setTimeout(() => syncWithFirebase(), 1000);
-                }
-            });
-            
-            window.addEventListener('offline', () => {
-                updateConnectionStatus();
-                showMessage('📱 Working offline - data saved locally', 'warning');
-            });
         }
 
         function saveDataToStorage() {
@@ -10507,26 +8183,45 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
             }
         }
 
+        function deleteRecordFromStorage(recordId) {
+            try {
+                showLoading(true);
+                showMessage('Deleting record...', 'info');
+                
+                // Remove from local array
+                attendanceData = attendanceData.filter(r => r.id !== recordId);
+                
+                // Save updated array to localStorage
+                saveDataToStorage();
+                
+                // Update displays
+                displayRecords();
+                updateStatistics();
+                
+                showMessage('Record deleted successfully', 'success');
+            } catch (error) {
+                console.error('Error deleting record: ', error);
+                showMessage('Error deleting record: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
         function clearAllData() {
             try {
                 showLoading(true);
                 showMessage('Clearing all data...', 'info');
                 
-                // Use Firebase clear function if available
-                if (window.firebase && navigator.onLine) {
-                    clearAllDataFromFirestore();
-                } else {
-                    // Clear local data only
-                    attendanceData = [];
-                    localStorage.removeItem('attendanceData');
-                    
-                    // Update displays
-                    displayRecords();
-                    updateStatistics();
-                    populateFilterDropdowns();
-                    
-                    showMessage('All local data cleared successfully', 'success');
-                }
+                // Clear local data
+                attendanceData = [];
+                localStorage.removeItem('attendanceData');
+                
+                // Update displays
+                displayRecords();
+                updateStatistics();
+                populateFilterDropdowns();
+                
+                showMessage('All data cleared successfully', 'success');
             } catch (error) {
                 console.error('Error clearing data: ', error);
                 showMessage('Error clearing data: ' + error.message, 'error');
@@ -10649,35 +8344,14 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
         }
 
         function showLoading(show) {
-            console.log('🔄 showLoading called with:', show);
+            elements.loadingOverlay.style.display = show ? 'flex' : 'none';
             
-            if (!elements.loadingOverlay) {
-                console.error('❌ Loading overlay element not found');
-                return;
+            // Disable/enable the attendance buttons during processing
+            if (elements.presentBtn) {
+                elements.presentBtn.disabled = show;
             }
-            
-            try {
-                elements.loadingOverlay.style.display = show ? 'flex' : 'none';
-                
-                // Disable/enable the attendance buttons during processing
-                if (elements.presentBtn) {
-                    elements.presentBtn.disabled = show;
-                }
-                if (elements.absentBtn) {
-                    elements.absentBtn.disabled = show;
-                }
-                
-                // Also disable the form submit to prevent multiple submissions
-                if (elements.form) {
-                    const submitButtons = elements.form.querySelectorAll('button[type="submit"], input[type="submit"]');
-                    submitButtons.forEach(btn => {
-                        btn.disabled = show;
-                    });
-                }
-                
-                console.log('✅ Loading state updated successfully');
-            } catch (error) {
-                console.error('❌ Error in showLoading:', error);
+            if (elements.absentBtn) {
+                elements.absentBtn.disabled = show;
             }
         }
 
@@ -10735,264 +8409,6 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
         window.testClearData = testClearData;
         window.addNewStudent = addNewStudent;
         window.exportFilteredRecordsToPdf = exportFilteredRecordsToPdf;
-        
-        // Simple Firebase Functions (Working version from index-clean.html)
-        async function saveDataToFirestore(record) {
-            try {
-                showMessage('Saving to cloud...', 'info');
-                const docRef = await window.firebase.addDoc(
-                    window.firebase.collection(window.firebase.db, 'attendance'), 
-                    record
-                );
-                console.log('Document written with ID: ', docRef.id);
-                showMessage('Attendance saved to cloud!', 'success');
-            } catch (error) {
-                console.error('Error adding document: ', error);
-                showMessage('Error saving to cloud: ' + error.message, 'error');
-                
-                // Fallback to localStorage if Firebase fails
-                try {
-                    let localData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-                    localData.unshift(record);
-                    localStorage.setItem('attendanceData', JSON.stringify(localData));
-                    showMessage('Saved locally instead', 'warning');
-                } catch (localError) {
-                    showMessage('Failed to save data', 'error');
-                }
-            }
-        }       
-
-        async function loadDataFromFirestore() {
-            try {
-                showMessage('Loading data from cloud...', 'info');
-                
-                // Add more detailed error logging
-                console.log('🔥 Attempting to load data from Firestore...');
-                console.log('🔥 Firebase app:', window.firebaseApp);
-                console.log('🔥 Firebase db:', window.firebase.db);
-                
-                const q = window.firebase.query(
-                    window.firebase.collection(window.firebase.db, 'attendance'),
-                    window.firebase.orderBy('timestamp', 'desc')
-                );
-                const querySnapshot = await window.firebase.getDocs(q);
-                
-                attendanceData = [];
-                querySnapshot.forEach((doc) => {
-                    attendanceData.push({
-                        firestoreId: doc.id,
-                        firebaseId: doc.id,  // Add this for consistency
-                        ...doc.data()
-                    });
-                });
-                
-                console.log(`🔥 Loaded ${attendanceData.length} records from Firestore`);
-                displayRecords();
-                updateStatistics();
-                populateFilterDropdowns();
-                showMessage('Data loaded from cloud!', 'success');
-            } catch (error) {
-                console.error('🔥 Firestore load error details:', error);
-                console.error('🔥 Error code:', error.code);
-                console.error('🔥 Error message:', error.message);
-                
-                // More specific error messages
-                let errorMessage = 'Cloud connection failed';
-                if (error.code === 'permission-denied') {
-                    errorMessage = 'Permission denied - check Firestore security rules';
-                } else if (error.code === 'not-found') {
-                    errorMessage = 'Firestore database not found - create database first';
-                } else if (error.code === 'unavailable') {
-                    errorMessage = 'Firestore service unavailable';
-                }
-                
-                showMessage(errorMessage + ', using local storage', 'warning');
-                
-                // Fallback to localStorage
-                try {
-                    const saved = localStorage.getItem('attendanceData');
-                    if (saved) {
-                        attendanceData = JSON.parse(saved);
-                        displayRecords();
-                        updateStatistics();
-                        populateFilterDropdowns();
-                        showMessage('Local data loaded', 'info');
-                    }
-                } catch (localError) {
-                    showMessage('No data found', 'info');
-                }
-            }
-        }
-
-        function setupRealtimeListener() {
-            try {
-                console.log('🔥 Setting up real-time listener...');
-                const q = window.firebase.query(
-                    window.firebase.collection(window.firebase.db, 'attendance'),
-                    window.firebase.orderBy('timestamp', 'desc')
-                );
-                
-                realtimeUnsubscribe = window.firebase.onSnapshot(q, (querySnapshot) => {
-                    console.log('🔥 Real-time update received - records count:', querySnapshot.size);
-                    attendanceData = [];
-                    querySnapshot.forEach((doc) => {
-                        attendanceData.push({
-                            firestoreId: doc.id,
-                            firebaseId: doc.id,  // Add this for consistency with manual loading
-                            ...doc.data()
-                        });
-                    });
-                    console.log('🔥 Real-time data updated - new length:', attendanceData.length);
-                    
-                    displayRecords();
-                    updateStatistics();
-                    populateFilterDropdowns();
-                }, (error) => {
-                    console.error('🔥 Real-time listener error details:', error);
-                    console.error('🔥 Error code:', error.code);
-                    console.error('🔥 Error message:', error.message);
-                    
-                    let errorMessage = 'Real-time sync disabled';
-                    if (error.code === 'permission-denied') {
-                        errorMessage = 'Real-time sync denied - check Firestore rules';
-                    } else if (error.code === 'not-found') {
-                        errorMessage = 'Firestore collection not found';
-                    }
-                    
-                    showMessage(errorMessage, 'warning');
-                });
-                
-                // Store unsubscribe function globally
-                window.realtimeUnsubscribe = realtimeUnsubscribe;
-                
-                console.log('🔥 Real-time listener setup complete');
-                showMessage('Real-time sync enabled!', 'info');
-            } catch (error) {
-                console.error('🔥 Error setting up real-time listener: ', error);
-                showMessage('Real-time sync failed: ' + error.message, 'warning');
-            }
-        }
-
-        async function deleteRecordFromFirestore(recordId) {
-            try {
-                showLoading(true);
-                showMessage('Deleting record...', 'info');
-                
-                // Find the record by its firestoreId
-                const record = attendanceData.find(r => r.firestoreId === recordId);
-                if (record && record.firestoreId) {
-                    await window.firebase.deleteDoc(window.firebase.doc(window.firebase.db, 'attendance', record.firestoreId));
-                    showMessage('Record deleted from cloud!', 'success');
-                }
-                
-                // Remove from local array
-                attendanceData = attendanceData.filter(r => r.firestoreId !== recordId);
-                
-                // Update displays
-                displayRecords();
-                updateStatistics();
-                populateFilterDropdowns();
-                
-            } catch (error) {
-                console.error('Error deleting record: ', error);
-                showMessage('Error deleting record: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        async function clearAllDataFromFirestore() {
-            try {
-                showLoading(true);
-                showMessage('Clearing all cloud data...', 'info');
-                
-                // Delete all records from Firestore
-                const q = window.firebase.query(window.firebase.collection(window.firebase.db, 'attendance'));
-                const querySnapshot = await window.firebase.getDocs(q);
-                
-                const deletePromises = [];
-                querySnapshot.forEach((doc) => {
-                    deletePromises.push(window.firebase.deleteDoc(doc.ref));
-                });
-                
-                await Promise.all(deletePromises);
-                
-                // Clear local data
-                attendanceData = [];
-                localStorage.removeItem('attendanceData');
-                
-                // Update displays
-                displayRecords();
-                updateStatistics();
-                populateFilterDropdowns();
-                
-                showMessage('All data cleared from cloud and local storage!', 'success');
-            } catch (error) {
-                console.error('Error clearing cloud data: ', error);
-                showMessage('Error clearing cloud data: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // Simple Firebase connection test
-        async function testFirebaseConnection() {
-            try {
-                showMessage('Testing Firebase connection...', 'info');
-                
-                // Try to read from the attendance collection (this will test connectivity)
-                const testQuery = window.firebase.query(
-                    window.firebase.collection(window.firebase.db, 'attendance'),
-                    window.firebase.limit(1)
-                );
-                await window.firebase.getDocs(testQuery);
-                
-                showMessage('✅ Firebase connection successful!', 'success');
-                return true;
-            } catch (error) {
-                console.error('Firebase connection test failed:', error);
-                showMessage('❌ Firebase connection failed: ' + error.message, 'error');
-                return false;
-            }
-        }
-
-        // Disable real-time listener (useful for troubleshooting)
-        function disableRealtimeSync() {
-            try {
-                if (window.realtimeUnsubscribe) {
-                    window.realtimeUnsubscribe();
-                    window.realtimeUnsubscribe = null;
-                    showMessage('Real-time sync disabled', 'info');
-                }
-            } catch (error) {
-                console.error('Error disabling real-time sync:', error);
-            }
-        }
-
-        // Store the unsubscribe function for the real-time listener
-        let realtimeUnsubscribe = null;
-
-        // Export simple Firebase functions for global access
-        window.saveDataToFirestore = saveDataToFirestore;
-        window.loadDataFromFirestore = loadDataFromFirestore;
-        window.setupRealtimeListener = setupRealtimeListener;
-        window.deleteRecordFromFirestore = deleteRecordFromFirestore;
-        window.clearAllDataFromFirestore = clearAllDataFromFirestore;
-        window.testFirebaseConnection = testFirebaseConnection;
-        window.disableRealtimeSync = disableRealtimeSync;
-        
-        // Firebase functions
-        window.toggleFirebaseMode = toggleFirebaseMode;
-        window.syncWithFirebase = syncWithFirebase;
-        window.showFirebaseStatus = showFirebaseStatus;
-        window.loadFromFirebase = loadFromFirebase;
-        window.processSyncQueue = processSyncQueue;
-        
-        // Error handling for missing functions
-        window.handleMissingFunction = function(functionName) {
-            console.error(`❌ Function ${functionName} not found or not properly defined`);
-            showMessage(`❌ Feature temporarily unavailable: ${functionName}`, 'error');
-        };
         
         // Test function for debugging
         window.testAddStudent = function() {
