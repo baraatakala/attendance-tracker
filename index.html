@@ -9,6 +9,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
+    <!-- Suppress Chrome Extension Errors -->
+    <script>
+        // Suppress Chrome extension listener errors
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && event.reason.message && 
+                event.reason.message.includes('message channel closed')) {
+                console.log('Suppressed Chrome extension error:', event.reason.message);
+                event.preventDefault();
+            }
+        });
+    </script>
+    
     <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs
@@ -1730,6 +1742,39 @@
             animation: spin 2s linear infinite;
         }
 
+        .export-pdf-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .export-pdf-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+            background: linear-gradient(45deg, #c0392b, #a93226);
+        }
+
+        .export-pdf-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .export-pdf-btn i {
+            font-size: 1.1em;
+        }
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -3346,8 +3391,8 @@
                     </div>
                     <div id="firebaseStatusInfo" style="font-size: 12px; color: #e8f4fd; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px;">
                         <div>🔗 Status: <span id="connectionStatus">Checking...</span></div>
-                        <div>📊 Sync Queue: <span id="syncQueueCount">0</span> pending</div>
-                        <div>🔥 Mode: <span id="currentMode">Local Only</span></div>
+                        <div>Sync Queue: <span id="syncQueueCount">0</span> pending</div>
+                        <div>Mode: <span id="currentMode">Local Only</span></div>
                     </div>
                 </div>
                 
@@ -3469,6 +3514,9 @@
                         </select>
                         <button class="refresh-analytics" onclick="generateAnalytics()">
                             <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button id="exportAnalyticsPdfBtn" class="export-pdf-btn" onclick="exportAnalyticsToPDF()">
+                            <i class="fas fa-file-pdf"></i> Export PDF
                         </button>
                     </div>
                 </div>
@@ -3689,15 +3737,15 @@
                                 <small>
                                     <i class="fas fa-lightbulb"></i> 
                                     <strong>Tips for better location accuracy:</strong><br>
-                                    📍 <strong>Permission:</strong> Enable location permission when prompted<br>
+                                    <strong>Permission:</strong> Enable location permission when prompted<br>
                                     � <strong>Indoor Use:</strong> System supports indoor tracking with network/WiFi location<br>
-                                    🌤️ <strong>Best Results:</strong> Near windows or outdoors for GPS signal<br>
-                                    📱 <strong>Device:</strong> Enable WiFi and mobile data for better indoor accuracy<br>
-                                    ⚙️ <strong>Settings:</strong> Location services must be enabled in device settings<br>
+                                    <strong>Best Results:</strong> Near windows or outdoors for GPS signal<br>
+                                    <strong>Device:</strong> Enable WiFi and mobile data for better indoor accuracy<br>
+                                    <strong>Settings:</strong> Location services must be enabled in device settings<br>
                                     � <strong>Indoor Mode:</strong> 1-5km accuracy is normal and acceptable for home/office use<br>
-                                    📶 <strong>Network:</strong> Strong WiFi connection helps with indoor positioning<br>
-                                    🎯 <strong>Outdoors:</strong> Move outside briefly for high-precision GPS if needed<br>
-                                    ⏱️ <strong>Patience:</strong> Allow 30-60 seconds for location services to initialize
+                                    <strong>Network:</strong> Strong WiFi connection helps with indoor positioning<br>
+                                    <strong>Outdoors:</strong> Move outside briefly for high-precision GPS if needed<br>
+                                    <strong>Patience:</strong> Allow 30-60 seconds for location services to initialize
                                 </small>
                             </div>
                             <div id="locationRecommendation" class="location-recommendation" style="display: none;">
@@ -4049,6 +4097,7 @@
             sendEmailBtn: document.getElementById('sendEmailBtn'),
             reportEmail: document.getElementById('reportEmail'),
             openEmailFormBtn: document.getElementById('openEmailFormBtn'),
+            exportAnalyticsPdfBtn: document.getElementById('exportAnalyticsPdfBtn'),
             
             // Email Form Elements
             emailFormModal: document.getElementById('emailFormModal'),
@@ -4363,6 +4412,14 @@
             
             if (elements.reportType) {
                 elements.reportType.addEventListener('change', handleReportTypeChange);
+            }
+            
+            // PDF Export button
+            if (elements.exportAnalyticsPdfBtn) {
+                elements.exportAnalyticsPdfBtn.addEventListener('click', exportAnalyticsToPDF);
+                console.log('✅ PDF export button event listener added');
+            } else {
+                console.warn('⚠️ PDF export button not found');
             }
             
             elements.clearBtn.addEventListener('click', () => {
@@ -8307,6 +8364,411 @@ ${tips.join('\n')}
             document.getElementById('detailedStudentStats').innerHTML = '<div class="analytics-empty">No detailed statistics available</div>';
         }
 
+        // Helper function to resolve student names for PDF export
+        function getStudentDisplayName(studentKey) {
+            // First try to get from activeStudents
+            if (activeStudents && activeStudents[studentKey]) {
+                const student = activeStudents[studentKey];
+                if (typeof student === 'object' && student.name) {
+                    return student.name;
+                } else if (typeof student === 'string') {
+                    return student;
+                }
+            }
+            
+            // Fallback to defaultStudentNames
+            if (defaultStudentNames && defaultStudentNames[studentKey]) {
+                const student = defaultStudentNames[studentKey];
+                if (typeof student === 'object' && student.name) {
+                    return student.name;
+                } else if (typeof student === 'string') {
+                    return student;
+                }
+            }
+            
+            // If it's already a display name (not an ID), return as is
+            if (studentKey && !studentKey.startsWith('STU')) {
+                return studentKey;
+            }
+            
+            // Last resort - return the key itself
+            return studentKey || 'Unknown Student';
+        }
+
+        // PDF Export Functions
+        function exportAnalyticsToPDF() {
+            try {
+                // Show loading state
+                const exportBtn = document.getElementById('exportAnalyticsPdfBtn');
+                const originalText = exportBtn.innerHTML;
+                exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+                exportBtn.disabled = true;
+
+                // Get current analytics data
+                const filterPeriod = document.getElementById('analyticsFilter').value;
+                let filteredData = getAnalyticsData(filterPeriod);
+                
+                console.log('PDF Export - Raw data from getAnalyticsData:', {
+                    length: filteredData.length,
+                    firstRecord: filteredData[0],
+                    sampleRecords: filteredData.slice(0, 3),
+                    globalAttendanceData: {
+                        length: attendanceData.length,
+                        sample: attendanceData.slice(0, 2)
+                    }
+                });
+                
+                // Validate and clean data
+                if (!filteredData || filteredData.length === 0) {
+                    showMessage('No data available to export', 'warning');
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.disabled = false;
+                    return;
+                }
+                
+                // Clean and validate each record
+                filteredData = filteredData.filter(record => {
+                    return record && 
+                           (record.student || record.studentId || record.studentName || record.name) && 
+                           (record.status === 'present' || record.status === 'absent' || 
+                            record.attendanceStatus === 'present' || record.attendanceStatus === 'absent' ||
+                            record.action === 'present' || record.action === 'absent');
+                }).map(record => ({
+                    student: record.student || record.studentName || record.studentId || record.name || 'Unknown Student',
+                    status: record.status || record.attendanceStatus || record.action || 'unknown',
+                    datetime: record.datetime || record.date || record.timestamp || new Date().toISOString(),
+                    notes: record.notes || '',
+                    location: record.location || ''
+                }));
+                
+                console.log('PDF Export - Cleaned data:', filteredData.slice(0, 3)); // Log first 3 records for debugging
+                
+                if (filteredData.length === 0) {
+                    showMessage('No valid attendance records found to export', 'warning');
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.disabled = false;
+                    return;
+                }
+
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Set up fonts and colors
+                const primaryColor = [52, 152, 219]; // Blue
+                const secondaryColor = [46, 204, 113]; // Green
+                const dangerColor = [231, 76, 60]; // Red
+                const textColor = [44, 62, 80]; // Dark blue-gray
+                
+                // Header
+                doc.setFillColor(...primaryColor);
+                doc.rect(0, 0, 210, 30, 'F');
+                
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(20);
+                doc.text('ATTENDANCE ANALYTICS REPORT', 20, 20);
+                
+                // Date and filter info
+                doc.setFontSize(10);
+                const currentDate = new Date().toLocaleDateString();
+                const filterText = getPeriodDisplayName(filterPeriod);
+                doc.text(`Generated on: ${currentDate} | Period: ${filterText}`, 20, 26);
+                
+                // Reset text color for body
+                doc.setTextColor(...textColor);
+                
+                let yPosition = 45;
+                
+                // Summary Statistics
+                const summaryStats = calculateSummaryStats(filteredData);
+                addSectionHeader(doc, 'SUMMARY STATISTICS', yPosition);
+                yPosition += 15;
+                
+                const summaryData = [
+                    ['Total Records', summaryStats.totalRecords.toString()],
+                    ['Total Students', summaryStats.totalStudents.toString()],
+                    ['Present Records', summaryStats.presentRecords.toString()],
+                    ['Absent Records', summaryStats.absentRecords.toString()],
+                    ['Overall Attendance Rate', `${summaryStats.overallAttendanceRate}%`],
+                    ['Days Covered', summaryStats.daysCovered.toString()]
+                ];
+                
+                addTable(doc, summaryData, yPosition, false);
+                yPosition += (summaryData.length * 8) + 20;
+                
+                // Check if we need a new page
+                if (yPosition > 250) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Attendance Rates by Student
+                addSectionHeader(doc, 'INDIVIDUAL ATTENDANCE RATES', yPosition);
+                yPosition += 15;
+                
+                const attendanceRates = calculateAttendanceRates(filteredData);
+                const attendanceTableData = attendanceRates.map(student => [
+                    student.name,
+                    student.present.toString(),
+                    student.absent.toString(),
+                    student.total.toString(),
+                    `${student.rate}%`
+                ]);
+                
+                addTable(doc, attendanceTableData, yPosition, true, 
+                    ['Student Name', 'Present', 'Absent', 'Total', 'Rate']);
+                yPosition += (attendanceTableData.length * 8) + 25;
+                
+                // Check if we need a new page
+                if (yPosition > 220) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Absence Analysis
+                addSectionHeader(doc, 'ABSENCE ANALYSIS', yPosition);
+                yPosition += 15;
+                
+                const absenceData = calculateAbsenceAnalysis(filteredData);
+                if (absenceData.length > 0) {
+                    const absenceTableData = absenceData.map(item => [
+                        item.name,
+                        item.count.toString(),
+                        `${item.percentage}%`
+                    ]);
+                    
+                    addTable(doc, absenceTableData, yPosition, true, 
+                        ['Student Name', 'Absent Days', 'Absence Rate']);
+                    yPosition += (absenceTableData.length * 8) + 20;
+                } else {
+                    doc.setFontSize(10);
+                    doc.text('No absence data available for the selected period.', 20, yPosition);
+                    yPosition += 20;
+                }
+                
+                // Footer
+                addFooter(doc);
+                
+                // Save the PDF
+                const fileName = `Attendance_Analytics_${filterText}_${currentDate.replace(/\//g, '-')}.pdf`;
+                doc.save(fileName);
+                
+                showMessage(`Analytics report exported successfully! 
+${filteredData.length} records processed.
+File: ${fileName}`, 'success');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showMessage('Error generating PDF report. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                const exportBtn = document.getElementById('exportAnalyticsPdfBtn');
+                exportBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF';
+                exportBtn.disabled = false;
+            }
+        }
+        
+        function addSectionHeader(doc, title, yPosition) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(52, 152, 219);
+            doc.text(title, 20, yPosition);
+            
+            // Add underline
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(52, 152, 219);
+            doc.line(20, yPosition + 2, 190, yPosition + 2);
+        }
+        
+        function addTable(doc, data, yPosition, hasHeaders = false, headers = []) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(44, 62, 80);
+            
+            let currentY = yPosition;
+            
+            // Add headers if provided
+            if (hasHeaders && headers.length > 0) {
+                doc.setFont('helvetica', 'bold');
+                doc.setFillColor(240, 240, 240);
+                doc.rect(20, currentY - 5, 170, 8, 'F');
+                
+                const colWidth = 170 / headers.length;
+                headers.forEach((header, index) => {
+                    doc.text(header, 25 + (index * colWidth), currentY);
+                });
+                currentY += 10;
+                doc.setFont('helvetica', 'normal');
+            }
+            
+            // Add data rows
+            data.forEach((row, index) => {
+                const colWidth = 170 / row.length;
+                
+                // Alternate row colors
+                if (index % 2 === 0) {
+                    doc.setFillColor(250, 250, 250);
+                    doc.rect(20, currentY - 5, 170, 8, 'F');
+                }
+                
+                row.forEach((cell, cellIndex) => {
+                    const text = cell.toString();
+                    const xPosition = 25 + (cellIndex * colWidth);
+                    
+                    // Color coding for rates
+                    if (text.includes('%') && cellIndex === row.length - 1) {
+                        const rate = parseFloat(text);
+                        if (rate >= 80) doc.setTextColor(46, 204, 113); // Green
+                        else if (rate >= 60) doc.setTextColor(243, 156, 18); // Orange
+                        else doc.setTextColor(231, 76, 60); // Red
+                    } else {
+                        doc.setTextColor(44, 62, 80);
+                    }
+                    
+                    doc.text(text, xPosition, currentY);
+                });
+                currentY += 8;
+            });
+        }
+        
+        function addFooter(doc) {
+            const pageCount = doc.internal.getNumberOfPages();
+            
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(128, 128, 128);
+                
+                // Footer line
+                doc.setLineWidth(0.5);
+                doc.setDrawColor(200, 200, 200);
+                doc.line(20, 285, 190, 285);
+                
+                // Footer text
+                doc.text(`Class Attendance System - Generated on ${new Date().toLocaleString()}`, 20, 290);
+                doc.text(`Page ${i} of ${pageCount}`, 170, 290);
+            }
+        }
+        
+        function calculateSummaryStats(data) {
+            const totalRecords = data.length;
+            
+            // Count unique students by their display names
+            const uniqueStudentKeys = new Set(data.map(record => record.student || record.name || 'Unknown'));
+            const uniqueStudentNames = new Set();
+            uniqueStudentKeys.forEach(key => {
+                if (key !== 'Unknown') {
+                    uniqueStudentNames.add(getStudentDisplayName(key));
+                }
+            });
+            
+            const presentRecords = data.filter(record => record.status === 'present').length;
+            const absentRecords = data.filter(record => record.status === 'absent').length;
+            const overallAttendanceRate = totalRecords > 0 ? ((presentRecords / totalRecords) * 100).toFixed(1) : '0.0';
+            
+            // Handle different datetime formats safely
+            const uniqueDays = new Set(data.map(record => {
+                let dateStr = record.datetime || record.date || record.timestamp || '';
+                if (typeof dateStr === 'string' && dateStr.includes(' ')) {
+                    return dateStr.split(' ')[0];
+                } else if (typeof dateStr === 'string') {
+                    return dateStr;
+                } else {
+                    return new Date().toISOString().split('T')[0]; // fallback to today
+                }
+            }).filter(date => date)).size;
+            
+            return {
+                totalRecords,
+                totalStudents: uniqueStudentNames.size,
+                presentRecords,
+                absentRecords,
+                overallAttendanceRate,
+                daysCovered: uniqueDays
+            };
+        }
+        
+        function calculateAttendanceRates(data) {
+            const studentStats = {};
+            
+            data.forEach(record => {
+                const studentKey = record.student || record.name || 'Unknown Student';
+                if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
+                
+                if (!studentStats[studentKey]) {
+                    studentStats[studentKey] = { present: 0, absent: 0, total: 0 };
+                }
+                
+                studentStats[studentKey].total++;
+                if (record.status === 'present') {
+                    studentStats[studentKey].present++;
+                } else if (record.status === 'absent') {
+                    studentStats[studentKey].absent++;
+                }
+            });
+            
+            return Object.keys(studentStats).map(studentKey => {
+                const stats = studentStats[studentKey];
+                const rate = stats.total > 0 ? ((stats.present / stats.total) * 100).toFixed(1) : '0.0';
+                const displayName = getStudentDisplayName(studentKey);
+                
+                return {
+                    name: displayName,
+                    present: stats.present,
+                    absent: stats.absent,
+                    total: stats.total,
+                    rate: parseFloat(rate)
+                };
+            }).sort((a, b) => b.rate - a.rate);
+        }
+        
+        function calculateAbsenceAnalysis(data) {
+            const studentAbsences = {};
+            const totalRecordsPerStudent = {};
+            
+            data.forEach(record => {
+                const studentKey = record.student || record.name || 'Unknown Student';
+                if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
+                
+                if (!totalRecordsPerStudent[studentKey]) {
+                    totalRecordsPerStudent[studentKey] = 0;
+                }
+                totalRecordsPerStudent[studentKey]++;
+                
+                if (record.status === 'absent') {
+                    if (!studentAbsences[studentKey]) {
+                        studentAbsences[studentKey] = 0;
+                    }
+                    studentAbsences[studentKey]++;
+                }
+            });
+            
+            return Object.keys(studentAbsences).map(studentKey => {
+                const absenceCount = studentAbsences[studentKey];
+                const totalRecords = totalRecordsPerStudent[studentKey];
+                const percentage = ((absenceCount / totalRecords) * 100).toFixed(1);
+                const displayName = getStudentDisplayName(studentKey);
+                
+                return {
+                    name: displayName,
+                    count: absenceCount,
+                    percentage: parseFloat(percentage)
+                };
+            }).sort((a, b) => b.count - a.count);
+        }
+        
+        function getPeriodDisplayName(period) {
+            const periodNames = {
+                'all': 'All Time',
+                'last7days': 'Last 7 Days',
+                'last30days': 'Last 30 Days',
+                'thismonth': 'This Month',
+                'lastmonth': 'Last Month'
+            };
+            return periodNames[period] || 'All Time';
+        }
+
         // Analytics Functions
         function toggleAnalyticsView() {
             const isVisible = elements.analyticsSection.style.display !== 'none';
@@ -8356,13 +8818,18 @@ ${tips.join('\n')}
             
             // If still no data, try to parse from the displayed table
             if (dataSource.length === 0) {
+                console.log('Parsing data from table...');
                 const tableRows = document.querySelectorAll('#recordsTableBody tr');
-                tableRows.forEach(row => {
+                console.log('Found table rows:', tableRows.length);
+                
+                tableRows.forEach((row, index) => {
                     const cells = row.querySelectorAll('td');
                     if (cells.length >= 4) {
                         const studentCell = cells[1].textContent.trim();
                         const statusCell = cells[2].textContent.trim();
                         const dateCell = cells[3].textContent.trim();
+                        
+                        console.log(`Row ${index}:`, { studentCell, statusCell, dateCell });
                         
                         // Extract student ID and name from format "STU001 - Baraa Takala"
                         let studentId = '';
@@ -8377,15 +8844,24 @@ ${tips.join('\n')}
                             studentName = studentCell;
                         }
                         
-                        dataSource.push({
-                            studentId: studentId,
-                            studentName: studentName,
-                            action: statusCell,
-                            attendanceStatus: statusCell.toLowerCase().trim(),
-                            date: dateCell
-                        });
+                        // Map status to proper format
+                        let mappedStatus = statusCell.toLowerCase().trim();
+                        if (mappedStatus === 'present' || mappedStatus === 'absent') {
+                            dataSource.push({
+                                student: studentName || studentId, // Use student name primarily
+                                studentId: studentId,
+                                studentName: studentName,
+                                status: mappedStatus, // Use the correct property name
+                                action: statusCell,
+                                attendanceStatus: mappedStatus,
+                                datetime: dateCell,
+                                date: dateCell
+                            });
+                        }
                     }
                 });
+                
+                console.log('Parsed data from table:', dataSource.length, 'records');
             }
             
             console.log('Analytics Data Source:', {
