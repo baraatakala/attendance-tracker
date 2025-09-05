@@ -2550,6 +2550,113 @@
             color: #2c3e50;
         }
 
+        .data-summary {
+            margin: 10px 0;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .pattern-alert {
+            margin: 8px 0;
+            padding: 6px 10px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #856404;
+        }
+
+        .pattern-alert i {
+            margin-right: 5px;
+            color: #ffc107;
+        }
+
+        .key-recommendation {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 0.85rem;
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .key-recommendation i {
+            margin-right: 6px;
+            color: #2196f3;
+        }
+
+        .additional-recommendations {
+            margin-top: 5px;
+            font-size: 0.75rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .risk-factors {
+            margin-top: 8px;
+            padding: 6px 10px;
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #c62828;
+        }
+
+        .goal-status.achieved {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .goal-status.achievable {
+            color: #007bff;
+            font-weight: 600;
+        }
+
+        .goal-status.long-term {
+            color: #ffc107;
+            font-weight: 600;
+        }
+
+        .goal-status.needs-intervention {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .goal-status.needs-help {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .goal-status.high-priority {
+            color: #dc3545;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .goal-status.insufficient-data {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .vacation-status {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            padding: 6px 10px;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #1565c0;
+        }
+
+        .vacation-status i {
+            margin-right: 5px;
+            color: #2196f3;
+        }
+
         .goal-status {
             font-weight: 600;
         }
@@ -5522,6 +5629,9 @@
                         <button class="refresh-analytics" onclick="generateAnalytics()">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
+                        <button class="refresh-analytics" onclick="debugDataStructure()" style="background-color: #ffc107; color: #000;">
+                            <i class="fas fa-bug"></i> Debug Data
+                        </button>
                         <button id="exportAnalyticsPdfBtn" class="export-pdf-btn" onclick="exportAnalyticsToPDF()">
                             <i class="fas fa-file-pdf"></i> Export PDF
                         </button>
@@ -6090,6 +6200,7 @@
         let attendanceData = [];
         let currentPosition = null;
         let watchId = null;
+        let locationWatchId = null;
         let lastKnownPosition = null;
         let locationPermissionStatus = 'unknown';
         let isHighAccuracyEnabled = true;
@@ -7099,27 +7210,31 @@
         
         // Cleanup function to prevent memory leaks
         function cleanupAppIntervals() {
-            if (window.appIntervals) {
-                Object.keys(window.appIntervals).forEach(key => {
-                    if (window.appIntervals[key]) {
-                        clearInterval(window.appIntervals[key]);
-                        window.appIntervals[key] = null;
-                    }
-                });
-            }
-            
-            // Clean location watchers
-            if (watchId) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-            }
-            if (locationWatchId) {
-                navigator.geolocation.clearWatch(locationWatchId);
-                locationWatchId = null;
-            }
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
+            try {
+                if (window.appIntervals) {
+                    Object.keys(window.appIntervals).forEach(key => {
+                        if (window.appIntervals[key]) {
+                            clearInterval(window.appIntervals[key]);
+                            window.appIntervals[key] = null;
+                        }
+                    });
+                }
+                
+                // Clean location watchers
+                if (typeof watchId !== 'undefined' && watchId) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+                if (typeof locationWatchId !== 'undefined' && locationWatchId) {
+                    navigator.geolocation.clearWatch(locationWatchId);
+                    locationWatchId = null;
+                }
+                if (typeof autoRefreshInterval !== 'undefined' && autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            } catch (error) {
+                console.warn('Cleanup function encountered an error:', error);
             }
         }
         
@@ -10923,6 +11038,9 @@ ${environment.tips.slice(0, 3).join('\n')}
         }
 
         function generateDetailedStudentStats(data) {
+            console.log('📊 generateDetailedStudentStats called with:', data.length, 'records');
+            console.log('📊 Sample data structure:', data.slice(0, 2));
+            
             const studentDetails = {};
             
             data.forEach(record => {
@@ -11448,22 +11566,29 @@ File: ${fileName}`, 'success');
 
         function generateAnalytics() {
             const filterPeriod = document.getElementById('analyticsFilter').value;
-            console.log('generateAnalytics called with filter:', filterPeriod);
+            console.log('🔄 IMPROVED ANALYTICS: Generating data-driven insights for period:', filterPeriod);
             
             const filteredData = getAnalyticsData(filterPeriod);
             
-            console.log('Filtered data results:', {
+            console.log('📊 Analytics Data Quality Check:', {
                 period: filterPeriod,
-                recordCount: filteredData.length
+                recordCount: filteredData.length,
+                uniqueStudents: [...new Set(filteredData.map(r => r.studentId || r.studentName))].length,
+                dataTypes: filteredData.slice(0, 3).map(r => ({
+                    student: r.studentId || r.studentName,
+                    status: r.attendanceStatus || r.action,
+                    date: r.date
+                }))
             });
             
             if (filteredData.length === 0) {
-                console.log('No data available, showing empty analytics');
+                console.log('❌ No data available for analysis - showing empty state');
                 showEmptyAnalytics();
                 return;
             }
 
-            // Generate all analytics
+            console.log('✅ Proceeding with improved analytics generation...');
+            // Generate all analytics with improved algorithms
             generateAttendanceRateAnalytics(filteredData);
             generateAbsenceAnalytics(filteredData);
             generateDateAnalytics(filteredData);
@@ -11850,18 +11975,17 @@ File: ${fileName}`, 'success');
                             const riskColor = student.riskLevel === 'HIGH' ? '#dc3545' : 
                                             student.riskLevel === 'MEDIUM' ? '#ffc107' : '#28a745';
                             
-                            // Determine simple trend indicator
-                            const trendText = student.trendDirection.includes('DECLINE') ? 'DECLINING' :
-                                            student.trendDirection === 'IMPROVING' ? 'IMPROVING' : 'STABLE';
-                            const trendIcon = student.trendDirection.includes('DECLINE') ? '📉' :
-                                            student.trendDirection === 'IMPROVING' ? '📈' : '➡️';
+                            // Use the new meaningful trend analysis
+                            const trendText = student.trendDirection || 'STABLE';
+                            const trendIcon = student.trendIcon || '➡️';
+                            const trendDetail = student.trendConfidence ? ` (${student.trendConfidence} confidence)` : '';
                             
                             return `
                                 <div class="simple-student-card">
                                     <div class="student-header-simple">
                                         <h5>${student.name}</h5>
                                         <span class="risk-badge" style="background-color: ${riskColor}">
-                                            ${student.riskLevel} Risk
+                                            ${student.riskLevel} RISK
                                         </span>
                                     </div>
                                     
@@ -11875,25 +11999,53 @@ File: ${fileName}`, 'success');
                                         
                                         <div class="trend-simple">
                                             <strong>Trend:</strong> ${trendText} ${trendIcon}
-                                            ${student.trendVelocity !== '0.0' ? `(${student.trendVelocity}%/week)` : ''}
+                                            ${student.trendVelocity !== '0.0' ? ` (${student.trendVelocity}%/week)` : ''}
+                                            ${trendDetail}
                                         </div>
                                         
                                         <div class="goal-simple">
-                                            <strong>Goal:</strong> 80% target → 
+                                            <strong>Goal:</strong> ${student.personalTarget || 80}% target → 
                                             <span class="goal-status ${student.goalAchievementClass}">
                                                 ${student.goalAchievement}
                                             </span>
+                                            ${student.timeToGoal && student.timeToGoal !== student.goalAchievement ? 
+                                                `<small>(${student.timeToGoal})</small>` : ''}
                                         </div>
                                         
                                         <div class="data-summary">
-                                            <small>${student.presentCount}P / ${student.absentCount}A over 4 weeks</small>
+                                            <small>
+                                                ${student.recordsAnalyzed || 0} records analyzed
+                                                ${student.dataQuality ? ` • ${student.dataQuality} data quality` : ''}
+                                                ${student.analysisTimespan ? ` • ${student.analysisTimespan} days tracked` : ''}
+                                            </small>
                                         </div>
+                                        
+                                        ${student.attendancePattern && student.attendancePattern !== 'Regular attendance pattern' ? 
+                                            `<div class="pattern-alert">
+                                                <i class="fas fa-info-circle"></i>
+                                                <small>${student.attendancePattern}</small>
+                                            </div>` : ''}
                                     </div>
                                     
                                     <div class="key-recommendation">
                                         <i class="fas fa-lightbulb"></i>
-                                        <span>${(student.recommendations && student.recommendations.length > 0) ? student.recommendations[0].text : 'Continue monitoring attendance pattern'}</span>
+                                        <span>${(student.recommendations && student.recommendations.length > 0) ? 
+                                            student.recommendations[0].text : 
+                                            'Continue monitoring attendance pattern'}</span>
+                                        ${student.recommendations && student.recommendations.length > 1 ? 
+                                            `<div class="additional-recommendations">
+                                                <small>+${student.recommendations.length - 1} more recommendations</small>
+                                            </div>` : ''}
                                     </div>
+                                    
+                                    ${student.riskFactors && student.riskFactors.length > 0 ? 
+                                        `<div class="risk-factors">
+                                            <small><strong>Risk factors:</strong> ${student.riskFactors.join(', ')}</small>
+                                            ${student.isOnVacation ? 
+                                                `<br><small><i class="fas fa-plane" style="color: #17a2b8;"></i> <strong>Status:</strong> On planned vacation</small>` : ''}
+                                            ${student.adjustedRate ? 
+                                                `<br><small><i class="fas fa-calculator" style="color: #28a745;"></i> <strong>Adjusted rate (excluding vacation):</strong> ${student.adjustedRate}</small>` : ''}
+                                        </div>` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -11939,176 +12091,915 @@ File: ${fileName}`, 'success');
             try {
                 const attendanceRate = parseFloat(student.attendanceRate);
                 
-                // Weekly attendance analysis (since attendance is taken weekly)
-                const weeklyData = generateWeeklyAttendanceData(student);
+                // Get actual stored data for this student
+                const studentRecords = getActualStudentRecords(student);
                 
-                // Calculate linear regression for weekly trend with safety checks
-                const regression = calculateLinearRegression(weeklyData);
+                // Calculate real trends based on actual data
+                const realTrendAnalysis = calculateRealTrend(studentRecords, attendanceRate);
+                
+                // Calculate meaningful risk assessment
+                const riskAnalysis = calculateActualRisk(student, studentRecords, attendanceRate);
+                
+                // Generate personalized goals based on actual performance
+                const goalAnalysis = calculatePersonalizedGoals(student, studentRecords, attendanceRate, realTrendAnalysis);
+                
+                // Calculate class comparative stats
+                const classStats = calculateClassComparativeStats(attendanceRate, allStudents);
+                
+                // Generate actionable recommendations
+                const recommendations = generateDataDrivenRecommendations(student, studentRecords, realTrendAnalysis, riskAnalysis, goalAnalysis);
+                
+                return {
+                    ...student,
+                    // Real trend data
+                    trendDirection: realTrendAnalysis.direction,
+                    trendIcon: realTrendAnalysis.icon,
+                    trendVelocity: realTrendAnalysis.velocity,
+                    trendConfidence: realTrendAnalysis.confidence,
+                    
+                    // Risk assessment
+                    riskLevel: riskAnalysis.level,
+                    riskScore: riskAnalysis.score,
+                    riskFactors: riskAnalysis.factors,
+                    
+                    // Goal setting
+                    goalAchievement: goalAnalysis.status,
+                    goalAchievementClass: goalAnalysis.cssClass,
+                    personalTarget: goalAnalysis.personalTarget,
+                    timeToGoal: goalAnalysis.timeframe,
+                    
+                    // Class comparison
+                    percentileRank: classStats.percentile,
+                    classRanking: classStats.ranking,
+                    
+                    // Data quality indicators
+                    dataQuality: studentRecords.dataQuality,
+                    recordsAnalyzed: studentRecords.totalRecords,
+                    analysisTimespan: studentRecords.timespan,
+                    
+                    // Actionable insights
+                    recommendations: recommendations,
+                    nextActions: recommendations.slice(0, 2), // Top 2 actions
+                    
+                    // Performance metrics
+                    consistencyScore: calculateConsistencyScore(studentRecords),
+                    improvementRate: realTrendAnalysis.monthlyImprovement,
+                    attendancePattern: analyzeAttendancePattern(studentRecords)
+                };
+            } catch (error) {
+                console.error('Error in calculateMathematicalInsights for student:', student.name, error);
+                return createSafeAnalyticsDefault(student);
+            }
+        }
+
+        function getActualStudentRecords(student) {
+            // Debug: Show what data we're working with
+            console.log('🔍 DEBUG: Analyzing student records for:', student.name);
+            console.log('🔍 Student object:', student);
+            console.log('🔍 attendanceData array:', attendanceData);
+            console.log('🔍 attendanceData length:', attendanceData?.length || 0);
             
-            // Safety checks for NaN values
-            const safeSlope = isNaN(regression.slope) || !isFinite(regression.slope) ? 0 : regression.slope;
-            const safeRSquared = isNaN(regression.rSquared) || !isFinite(regression.rSquared) ? '0.000' : regression.rSquared;
+            // Get all records for this specific student from attendanceData
+            const studentKey = student.studentId || student.name;
+            const allRecords = attendanceData || [];
             
-            // Weekly-specific trend analysis with enhanced sensitivity
-            const weeklyTrendVelocity = safeSlope.toFixed(1); // Per week (more meaningful for weekly data)
+            console.log('🔍 Looking for student key:', studentKey);
+            console.log('🔍 Sample record structure:', allRecords[0]);
             
-            // More sensitive trend detection for weekly data
-            let trendDirection, trendIcon;
-            if (safeSlope > 1) {
-                trendDirection = 'IMPROVING';
-                trendIcon = '📈';
-            } else if (safeSlope < -1) {
-                trendDirection = 'DECLINING'; 
-                trendIcon = '📉';
-            } else if (Math.abs(safeSlope) > 0.1) {
-                trendDirection = safeSlope > 0 ? 'SLIGHTLY UP' : 'SLIGHTLY DOWN';
-                trendIcon = safeSlope > 0 ? '�' : '📋';
-            } else {
-                trendDirection = 'STABLE';
-                trendIcon = '➡️';
+            // Try multiple ways to match student records
+            const studentRecords = allRecords.filter(record => {
+                // Check multiple possible field combinations
+                const recordStudentName = record.studentName || record.student || record.employeeName || record.employee;
+                const recordStudentId = record.studentId || record.id;
+                
+                // Match by ID if available
+                if (studentKey && recordStudentId && studentKey === recordStudentId) {
+                    console.log('✅ Matched by ID:', recordStudentId);
+                    return true;
+                }
+                
+                // Match by name
+                if (studentKey && recordStudentName) {
+                    // Exact match
+                    if (recordStudentName === studentKey || recordStudentName === student.name) {
+                        console.log('✅ Exact name match:', recordStudentName);
+                        return true;
+                    }
+                    
+                    // Handle "STU017 - Maleek Bitar" format specifically
+                    if (recordStudentName.includes(' - ')) {
+                        const parts = recordStudentName.split(' - ');
+                        if (parts.length === 2) {
+                            const recordId = parts[0].trim();
+                            const recordName = parts[1].trim();
+                            
+                            // Check if student.studentId matches the ID part (STU017)
+                            if (student.studentId && student.studentId === recordId) {
+                                console.log('✅ Matched by Student ID in combined format:', recordId, '=', student.studentId);
+                                return true;
+                            }
+                            
+                            // Check if student.name matches the name part
+                            if (student.name && student.name === recordName) {
+                                console.log('✅ Matched by name in combined format:', recordName, '=', student.name);
+                                return true;
+                            }
+                            
+                            // Also check if the student object name contains the ID (for reverse lookup)
+                            if (student.name && student.name.includes(recordId)) {
+                                console.log('✅ Matched by ID in student name:', student.name, 'contains', recordId);
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    // Check if student name is part of the record student name
+                    if (recordStudentName.toLowerCase().includes(student.name.toLowerCase()) || 
+                        student.name.toLowerCase().includes(recordStudentName.toLowerCase())) {
+                        console.log('✅ Partial name match:', recordStudentName, '<->', student.name);
+                        return true;
+                    }
+                }
+                
+                return false;
+            });
+            
+            console.log(`🔍 Found ${studentRecords.length} records for student:`, studentRecords);
+            
+            // If no records found in attendanceData, try parsing from table display
+            if (studentRecords.length === 0) {
+                console.log('🔍 No records in attendanceData, trying to parse from table...');
+                return parseRecordsFromTable(student);
             }
             
-            // For Baraa's case specifically, check if we can detect the recent absence pattern
-            if (weeklyData.length >= 4) {
-                const recentTrend = weeklyData[weeklyData.length-1].attendance - weeklyData[weeklyData.length-2].attendance;
-                if (recentTrend < -50) { // Big drop in recent week
-                    trendDirection = 'RECENT DECLINE';
-                    trendIcon = '⚠️';
+            // Sort by date to get chronological order
+            const sortedRecords = studentRecords.sort((a, b) => {
+                const dateA = new Date(a.dateTime || `${a.date} ${a.time}`);
+                const dateB = new Date(b.dateTime || `${b.date} ${b.time}`);
+                return dateA - dateB;
+            });
+            
+            // Calculate data quality metrics
+            const timespan = sortedRecords.length > 1 ? 
+                Math.ceil((new Date(sortedRecords[sortedRecords.length - 1].date) - new Date(sortedRecords[0].date)) / (1000 * 60 * 60 * 24)) : 0;
+            
+            const dataQuality = {
+                excellent: sortedRecords.length >= 8 && timespan >= 21, // 3+ weeks
+                good: sortedRecords.length >= 4 && timespan >= 14,      // 2+ weeks  
+                fair: sortedRecords.length >= 2 && timespan >= 7,       // 1+ week
+                poor: sortedRecords.length < 2 || timespan < 7          // Less than 1 week
+            };
+            
+            const result = {
+                records: sortedRecords,
+                totalRecords: sortedRecords.length,
+                timespan: timespan,
+                dataQuality: dataQuality.excellent ? 'Excellent' : 
+                           dataQuality.good ? 'Good' : 
+                           dataQuality.fair ? 'Fair' : 'Limited'
+            };
+            
+            console.log('🔍 Final result for', student.name, ':', result);
+            return result;
+        }
+
+        function checkStudentMatch(studentCell, student) {
+            // Multiple ways to check if a table row belongs to a student
+            
+            // Direct name match
+            if (studentCell.includes(student.name) || student.name.includes(studentCell)) {
+                return true;
+            }
+            
+            // Student ID match
+            if (student.studentId && studentCell.includes(student.studentId)) {
+                return true;
+            }
+            
+            // Handle "STU017 - Maleek Bitar" format
+            if (studentCell.includes(' - ')) {
+                const parts = studentCell.split(' - ');
+                if (parts.length === 2) {
+                    const cellId = parts[0].trim();
+                    const cellName = parts[1].trim();
+                    
+                    // Match by ID or name
+                    if ((student.studentId && student.studentId === cellId) || 
+                        (student.name && student.name === cellName)) {
+                        return true;
+                    }
                 }
             }
             
-            // Weekly-based predictions (more accurate for weekly attendance)
-            const predictedNextWeek = Math.max(0, Math.min(100, attendanceRate + safeSlope));
-            const predictedIn4Weeks = Math.max(0, Math.min(100, attendanceRate + (safeSlope * 4)));
-            
-            // Weekly attendance consistency analysis
-            const weeklyConsistency = calculateWeeklyConsistency(weeklyData);
-            
-            // Calculate statistical measures with safety checks
-            const attendanceRates = allStudents.map(s => parseFloat(s.attendanceRate)).filter(rate => !isNaN(rate));
-            const mean = attendanceRates.length > 0 ? attendanceRates.reduce((a, b) => a + b, 0) / attendanceRates.length : attendanceRate;
-            const variance = attendanceRates.length > 1 ? attendanceRates.reduce((sum, rate) => sum + Math.pow(rate - mean, 2), 0) / attendanceRates.length : 0;
-            const standardDeviation = Math.sqrt(variance).toFixed(1);
-            
-            // Calculate percentile rank with safety checks
-            const sorted = [...attendanceRates].sort((a, b) => a - b);
-            const rank = sorted.indexOf(attendanceRate);
-            const percentileRank = sorted.length > 0 ? Math.round((rank / sorted.length) * 100) : 50;
-            
-            // Weekly-specific risk assessment
-            const riskScore = calculateWeeklyRiskScore(attendanceRate, safeSlope, weeklyConsistency, student.absentCount || 0, student.notes || '');
-            const riskLevel = riskScore < 0.3 ? 'LOW' : riskScore < 0.7 ? 'MEDIUM' : 'HIGH';
-            
-            // Generate weekly-focused recommendations
-            let recommendations;
-            try {
-                recommendations = generateWeeklyRecommendations(attendanceRate, trendDirection, riskLevel, regression, student);
-            } catch (error) {
-                console.error('Error generating recommendations:', error);
-                recommendations = [{
-                    text: "Continue monitoring attendance pattern",
-                    priority: "low",
-                    icon: "fas fa-eye"
-                }];
+            // Handle case where student.name might contain the ID (like "STU017")
+            if (student.name && student.name.match(/^STU\d+$/) && studentCell.includes(student.name)) {
+                return true;
             }
             
-            // Ensure recommendations is always an array
-            if (!Array.isArray(recommendations) || recommendations.length === 0) {
-                recommendations = [{
-                    text: "Continue monitoring attendance pattern",
-                    priority: "low",
-                    icon: "fas fa-eye"
-                }];
-            }
+            return false;
+        }
+
+        function parseRecordsFromTable(student) {
+            console.log('🔍 Parsing records from table for:', student.name);
             
-            // Weekly performance equation with safe values
-            const performanceEquation = `${attendanceRate.toFixed(1)} + ${safeSlope.toFixed(2)}w`;
+            const tableRows = document.querySelectorAll('#recordsTableBody tr');
+            console.log('🔍 Found table rows:', tableRows.length);
             
-            // Confidence interval calculation (simplified for weekly data)
-            const confidenceInterval = Math.max(2, Math.min(15, parseFloat(standardDeviation) / 2)).toFixed(1);
+            const parsedRecords = [];
             
-            // Goal achievement (realistic and contextual)
-            const hasVacationNote = student.notes && student.notes.toLowerCase().includes('on vacation');
-            const allAbsent = student.presentCount === 0;
+            tableRows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 4) {
+                    const studentCell = cells[1]?.textContent?.trim() || '';
+                    const statusCell = cells[2]?.textContent?.trim() || '';
+                    const dateCell = cells[3]?.textContent?.trim() || '';
+                    const timeCell = cells[4]?.textContent?.trim() || '';
+                    
+                    console.log(`🔍 Row ${index}:`, { studentCell, statusCell, dateCell, timeCell });
+                    
+                    // Check if this row belongs to our student - improved matching
+                    const belongsToStudent = checkStudentMatch(studentCell, student);
+                    
+                    if (belongsToStudent) {
+                        console.log('✅ Table row matches student:', studentCell, '→', student.name);
+                        
+                        // Extract student ID and name from format "STU017 - Maleek Bitar"
+                        let studentId = '';
+                        let studentName = '';
+                        
+                        if (studentCell.includes(' - ')) {
+                            const parts = studentCell.split(' - ');
+                            studentId = parts[0].trim();
+                            studentName = parts[1].trim();
+                        } else {
+                            studentId = studentCell;
+                            studentName = studentCell;
+                        }
+                        
+                        // Clean and map status (remove icons, extra formatting)
+                        let mappedStatus = statusCell.toLowerCase().replace(/[^\w]/g, ''); // Remove icons/formatting
+                        if (mappedStatus.includes('present')) {
+                            mappedStatus = 'present';
+                        } else if (mappedStatus.includes('absent')) {
+                            mappedStatus = 'absent';
+                        }
+                        
+                        if (mappedStatus === 'present' || mappedStatus === 'absent') {
+                            parsedRecords.push({
+                                student: studentName || studentId,
+                                studentId: studentId,
+                                studentName: studentName,
+                                attendanceStatus: mappedStatus,
+                                action: statusCell,
+                                date: dateCell,
+                                time: timeCell,
+                                dateTime: `${dateCell} ${timeCell}`,
+                                parsedFromTable: true
+                            });
+                        }
+                    }
+                }
+            });
             
-            let goalAchievement, goalAchievementClass, weeksToGoal;
+            console.log(`🔍 Parsed ${parsedRecords.length} records from table:`, parsedRecords);
             
-            if (allAbsent && hasVacationNote) {
-                goalAchievement = 'ON VACATION';
-                goalAchievementClass = 'on-leave';
-                weeksToGoal = 0;
-            } else if (attendanceRate >= 80) {
-                goalAchievement = 'ACHIEVED';
-                goalAchievementClass = 'achieved';
-                weeksToGoal = 0;
-            } else if (safeSlope > 0) {
-                weeksToGoal = Math.ceil((80 - attendanceRate) / safeSlope);
-                goalAchievement = weeksToGoal <= 12 ? `${weeksToGoal} weeks` : 'LONG TERM';
-                goalAchievementClass = weeksToGoal <= 8 ? 'achievable' : 'difficult';
-            } else {
-                weeksToGoal = 99;
-                goalAchievement = 'NEEDS INTERVENTION';
-                goalAchievementClass = 'difficult';
-            }
+            // Sort by date
+            const sortedRecords = parsedRecords.sort((a, b) => {
+                const dateA = new Date(a.dateTime);
+                const dateB = new Date(b.dateTime);
+                return dateA - dateB;
+            });
             
-            // Weekly attendance streak and patterns
-            const attendanceStreak = calculateAttendanceStreak(weeklyData);
-            const attendancePattern = analyzeWeeklyPattern(weeklyData);
+            // Calculate timespan
+            const timespan = sortedRecords.length > 1 ? 
+                Math.ceil((new Date(sortedRecords[sortedRecords.length - 1].date) - new Date(sortedRecords[0].date)) / (1000 * 60 * 60 * 24)) : 0;
             
-            return {
-                ...student,
-                trendDirection,
-                trendIcon,
-                trendVelocity: weeklyTrendVelocity,
-                rSquared: safeRSquared,
-                predictedNextWeek: predictedNextWeek.toFixed(1),
-                predictedMonthEnd: predictedIn4Weeks.toFixed(1), // 4 weeks instead of 30 days
-                confidenceInterval: confidenceInterval,
-                standardDeviation,
-                percentileRank: percentileRank + 'th',
-                consistency: weeklyConsistency,
-                riskLevel,
-                improvementNeeded: Math.max(0, 80 - attendanceRate).toFixed(1),
-                recommendations,
-                performanceEquation,
-                goalAchievement,
-                goalAchievementClass,
-                attendanceStreak,
-                attendancePattern,
-                weeksActive: Math.ceil(student.uniqueDays / 7) || 1,
-                avgWeeklyAttendance: (attendanceRate).toFixed(1)
+            const dataQuality = {
+                excellent: sortedRecords.length >= 8 && timespan >= 21,
+                good: sortedRecords.length >= 4 && timespan >= 14,
+                fair: sortedRecords.length >= 2 && timespan >= 7,
+                poor: sortedRecords.length < 2 || timespan < 7
             };
-        } catch (error) {
-            console.error('Error in calculateMathematicalInsights for student:', student.name, error);
-            // Return fallback object with safe defaults
+            
             return {
-                ...student,
-                trendDirection: 'STABLE',
-                trendIcon: '➡️',
-                trendVelocity: '0.0',
-                rSquared: '0.000',
-                predictedNextWeek: student.attendanceRate,
-                predictedMonthEnd: student.attendanceRate,
-                confidenceInterval: '5.0',
-                standardDeviation: '0.0',
-                percentileRank: '50th',
-                consistency: '95',
-                riskLevel: 'MEDIUM',
-                improvementNeeded: Math.max(0, 80 - parseFloat(student.attendanceRate)).toFixed(1),
-                recommendations: [{
-                    text: "Error calculating recommendations - Manual review needed",
-                    priority: "medium",
-                    icon: "fas fa-exclamation-triangle"
-                }],
-                performanceEquation: `${student.attendanceRate} + 0.00w`,
-                goalAchievement: 'NEEDS REVIEW',
-                goalAchievementClass: 'difficult',
-                attendanceStreak: { current: 0, best: 0 },
-                attendancePattern: 'Unknown',
-                weeksActive: 1,
-                avgWeeklyAttendance: student.attendanceRate
+                records: sortedRecords,
+                totalRecords: sortedRecords.length,
+                timespan: timespan,
+                dataQuality: dataQuality.excellent ? 'Excellent' : 
+                           dataQuality.good ? 'Good' : 
+                           dataQuality.fair ? 'Fair' : 'Limited'
             };
         }
+
+        function calculateRealTrend(studentRecords, currentRate) {
+            const records = studentRecords.records;
+            
+            if (records.length < 2) {
+                return {
+                    direction: 'INSUFFICIENT DATA',
+                    icon: '❓',
+                    velocity: '0.0',
+                    confidence: 'Low',
+                    monthlyImprovement: '0.0',
+                    description: 'Need more attendance records to determine trend'
+                };
+            }
+            
+            // Group records by week to calculate weekly attendance rates
+            const weeklyRates = [];
+            const weeks = {};
+            
+            records.forEach(record => {
+                const date = new Date(record.date);
+                const weekKey = Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000)); // Week number
+                
+                if (!weeks[weekKey]) {
+                    weeks[weekKey] = { present: 0, total: 0, date: date };
+                }
+                
+                weeks[weekKey].total++;
+                const status = (record.attendanceStatus || record.action || '').toLowerCase();
+                if (status.includes('present') || status === 'p') {
+                    weeks[weekKey].present++;
+                }
+            });
+            
+            // Convert to weekly percentages
+            Object.keys(weeks).sort((a, b) => a - b).forEach(weekKey => {
+                const week = weeks[weekKey];
+                const rate = (week.present / week.total) * 100;
+                weeklyRates.push({ rate: rate, date: week.date });
+            });
+            
+            if (weeklyRates.length < 2) {
+                return {
+                    direction: 'STABLE',
+                    icon: '➡️',
+                    velocity: '0.0',
+                    confidence: 'Low',
+                    monthlyImprovement: '0.0',
+                    description: 'Single week data - trend unclear'
+                };
+            }
+            
+            // Calculate linear regression for trend
+            const regression = calculateSimpleLinearRegression(weeklyRates);
+            const slope = regression.slope; // Change per week
+            const monthlyChange = slope * 4.33; // Approximate weeks per month
+            
+            // Determine trend direction and confidence
+            let direction, icon, confidence;
+            
+            if (Math.abs(slope) < 2) {
+                direction = 'STABLE';
+                icon = '➡️';
+                confidence = 'High';
+            } else if (slope > 10) {
+                direction = 'STRONGLY IMPROVING';
+                icon = '📈';
+                confidence = 'High';
+            } else if (slope > 3) {
+                direction = 'IMPROVING';
+                icon = '📈';
+                confidence = 'High';
+            } else if (slope < -10) {
+                direction = 'STRONGLY DECLINING';
+                icon = '📉';
+                confidence = 'High';
+            } else if (slope < -3) {
+                direction = 'DECLINING';
+                icon = '📉';
+                confidence = 'High';
+            } else {
+                direction = slope > 0 ? 'SLIGHTLY IMPROVING' : 'SLIGHTLY DECLINING';
+                icon = slope > 0 ? '📈' : '📉';
+                confidence = 'Medium';
+            }
+            
+            return {
+                direction: direction,
+                icon: icon,
+                velocity: slope.toFixed(1),
+                confidence: confidence,
+                monthlyImprovement: monthlyChange.toFixed(1),
+                description: `${direction.toLowerCase()} at ${Math.abs(slope).toFixed(1)}% per week`
+            };
+        }
+
+        function calculateSimpleLinearRegression(weeklyRates) {
+            const n = weeklyRates.length;
+            if (n < 2) return { slope: 0, intercept: 0 };
+            
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            
+            weeklyRates.forEach((point, index) => {
+                sumX += index;
+                sumY += point.rate;
+                sumXY += index * point.rate;
+                sumXX += index * index;
+            });
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            return { slope: slope, intercept: intercept };
+        }
+
+        function calculateActualRisk(student, studentRecords, attendanceRate) {
+            let riskScore = 0;
+            const riskFactors = [];
+            const records = studentRecords.records;
+            
+            console.log('🎯 Risk assessment for:', student.name, 'Rate:', attendanceRate + '%');
+            
+            // Check for vacation status FIRST - this changes everything
+            const hasVacationNotes = checkForVacationNotes(student, records);
+            let vacationAbsences = 0;
+            let regularAbsences = 0;
+            
+            // Analyze absence types
+            records.forEach(record => {
+                const status = (record.attendanceStatus || record.action || '').toLowerCase();
+                const notes = (record.notes || '').toLowerCase();
+                
+                if (status.includes('absent')) {
+                    if (notes.includes('vacation') || notes.includes('holiday') || notes.includes('leave')) {
+                        vacationAbsences++;
+                    } else {
+                        regularAbsences++;
+                    }
+                }
+            });
+            
+            console.log('📊 Absence breakdown:', { vacationAbsences, regularAbsences, totalRecords: records.length });
+            
+            // Calculate adjusted attendance rate (excluding vacation absences)
+            const totalRecords = records.length;
+            const presentRecords = records.filter(r => {
+                const status = (r.attendanceStatus || r.action || '').toLowerCase();
+                return status.includes('present');
+            }).length;
+            
+            const adjustedAttendanceRate = totalRecords > vacationAbsences ? 
+                (presentRecords / (totalRecords - vacationAbsences)) * 100 : attendanceRate;
+            
+            console.log('📊 Adjusted rate (excluding vacation):', adjustedAttendanceRate.toFixed(1) + '%');
+            
+            // Special case: All absences are vacation
+            if (presentRecords === 0 && regularAbsences === 0 && vacationAbsences > 0) {
+                riskFactors.push('Student on vacation - all absences planned');
+                return {
+                    score: 0.1, // Very low risk
+                    level: 'LOW',
+                    factors: riskFactors,
+                    needsIntervention: false,
+                    isOnVacation: true,
+                    adjustedRate: 'N/A (On vacation)'
+                };
+            }
+            
+            // FACTOR 1: Current attendance rate (use adjusted rate for fair assessment)
+            const rateToUse = adjustedAttendanceRate > attendanceRate ? adjustedAttendanceRate : attendanceRate;
+            
+            if (rateToUse === 0) {
+                riskScore += 0.6; // Major risk for 0% attendance
+                riskFactors.push('Zero attendance rate');
+            } else if (rateToUse < 30) {
+                riskScore += 0.5;
+                riskFactors.push('Critically low attendance rate');
+            } else if (rateToUse < 50) {
+                riskScore += 0.4;
+                riskFactors.push('Very low attendance rate');
+            } else if (rateToUse < 70) {
+                riskScore += 0.25;
+                riskFactors.push('Below average attendance');
+            } else if (rateToUse < 80) {
+                riskScore += 0.1;
+                riskFactors.push('Slightly below target attendance');
+            }
+            
+            // FACTOR 2: Regular (non-vacation) absences are weighted heavily
+            if (regularAbsences > 0) {
+                const regularAbsenceRate = (regularAbsences / totalRecords) * 100;
+                if (regularAbsenceRate > 50) {
+                    riskScore += 0.4;
+                    riskFactors.push('High rate of unplanned absences');
+                } else if (regularAbsenceRate > 25) {
+                    riskScore += 0.25;
+                    riskFactors.push('Multiple unplanned absences');
+                } else if (regularAbsences >= 2) {
+                    riskScore += 0.15;
+                    riskFactors.push('Some unplanned absences');
+                }
+            }
+            
+            // FACTOR 3: Recent trend analysis
+            const trendAnalysis = calculateRealTrend(studentRecords, attendanceRate);
+            if (trendAnalysis.direction.includes('DECLINING') && regularAbsences > 0) {
+                riskScore += 0.2;
+                riskFactors.push('Declining attendance trend');
+            } else if (trendAnalysis.direction.includes('IMPROVING')) {
+                riskScore -= 0.1; // Improving trend reduces risk
+                riskFactors.push('Improving attendance trend');
+            }
+            
+            // FACTOR 4: Consecutive absence patterns (only for non-vacation)
+            const recentRegularAbsences = records.slice(-5).filter(r => {
+                const status = (r.attendanceStatus || r.action || '').toLowerCase();
+                const notes = (r.notes || '').toLowerCase();
+                return status.includes('absent') && !notes.includes('vacation') && !notes.includes('holiday');
+            }).length;
+            
+            if (recentRegularAbsences >= 3) {
+                riskScore += 0.25;
+                riskFactors.push('Multiple recent unplanned absences');
+            }
+            
+            // FACTOR 5: Data quality consideration
+            if (studentRecords.dataQuality === 'Limited' && records.length < 3) {
+                riskScore += 0.1;
+                riskFactors.push('Insufficient data for complete assessment');
+            }
+            
+            // FACTOR 6: Vacation planning reduces risk
+            if (vacationAbsences > 0) {
+                riskScore -= Math.min(0.3, vacationAbsences * 0.05); // Reduce risk for planned absences
+                riskFactors.push(`${vacationAbsences} planned vacation day(s)`);
+            }
+            
+            // Clamp risk score between 0 and 1
+            riskScore = Math.max(0, Math.min(1, riskScore));
+            
+            // More accurate risk level classification
+            let riskLevel;
+            if (riskScore < 0.2) {
+                riskLevel = 'LOW';
+            } else if (riskScore < 0.5) {
+                riskLevel = 'MEDIUM';  
+            } else {
+                riskLevel = 'HIGH';
+            }
+            
+            // Override: 0% attendance with no vacation excuse = HIGH risk
+            if (attendanceRate === 0 && vacationAbsences === 0) {
+                riskLevel = 'HIGH';
+                riskScore = Math.max(riskScore, 0.8);
+            }
+            
+            console.log('🎯 Final risk assessment:', { 
+                student: student.name,
+                riskLevel, 
+                riskScore: riskScore.toFixed(2),
+                factors: riskFactors 
+            });
+            
+            return {
+                score: riskScore,
+                level: riskLevel,
+                factors: riskFactors,
+                needsIntervention: riskScore > 0.5,
+                isOnVacation: vacationAbsences > 0 && regularAbsences === 0,
+                adjustedRate: vacationAbsences > 0 ? adjustedAttendanceRate.toFixed(1) + '%' : null,
+                vacationDays: vacationAbsences,
+                regularAbsences: regularAbsences
+            };
+        }
+
+        function checkForVacationNotes(student, records) {
+            // Check student-level notes
+            const studentNotes = (student.notes || '').toLowerCase();
+            if (studentNotes.includes('vacation') || studentNotes.includes('holiday') || studentNotes.includes('leave')) {
+                return true;
+            }
+            
+            // Check individual record notes
+            return records.some(record => {
+                const notes = (record.notes || '').toLowerCase();
+                return notes.includes('vacation') || notes.includes('holiday') || notes.includes('leave');
+            });
+        }
+
+        function calculatePersonalizedGoals(student, studentRecords, attendanceRate, trendAnalysis) {
+            const defaultTarget = 80; // Standard target
+            let personalTarget = defaultTarget;
+            let timeframe = 'Long term';
+            let status = 'NOT SET';
+            let cssClass = 'not-set';
+            
+            // Check if already meeting standard target
+            if (attendanceRate >= defaultTarget) {
+                status = 'ACHIEVED ✓';
+                cssClass = 'achieved';
+                personalTarget = Math.min(95, attendanceRate + 5); // Set stretch goal
+                timeframe = 'Maintain current performance';
+            } else {
+                const shortfall = defaultTarget - attendanceRate;
+                const weeklyImprovement = parseFloat(trendAnalysis.velocity);
+                
+                if (weeklyImprovement > 0) {
+                    // Improving trend - calculate realistic timeframe
+                    const weeksToGoal = Math.ceil(shortfall / weeklyImprovement);
+                    if (weeksToGoal <= 4) {
+                        timeframe = `${weeksToGoal} week${weeksToGoal > 1 ? 's' : ''}`;
+                        status = 'ACHIEVABLE';
+                        cssClass = 'achievable';
+                    } else if (weeksToGoal <= 12) {
+                        timeframe = `${weeksToGoal} weeks`;
+                        status = 'LONG TERM';
+                        cssClass = 'long-term';
+                    } else {
+                        timeframe = 'Needs intervention';
+                        status = 'NEEDS SUPPORT';
+                        cssClass = 'needs-help';
+                    }
+                } else {
+                    // Stable or declining trend
+                    if (attendanceRate >= 70) {
+                        status = 'NEEDS INTERVENTION';
+                        cssClass = 'needs-intervention';
+                        timeframe = 'Immediate support required';
+                    } else {
+                        status = 'HIGH PRIORITY';
+                        cssClass = 'high-priority';
+                        timeframe = 'Urgent intervention needed';
+                    }
+                }
+            }
+            
+            return {
+                personalTarget: personalTarget,
+                status: status,
+                cssClass: cssClass,
+                timeframe: timeframe,
+                isRealistic: status.includes('ACHIEVABLE') || status.includes('ACHIEVED')
+            };
+        }
+
+        function calculateClassComparativeStats(attendanceRate, allStudents) {
+            const rates = allStudents.map(s => parseFloat(s.attendanceRate)).sort((a, b) => a - b);
+            const studentRank = rates.indexOf(attendanceRate) + 1;
+            const percentile = Math.round((studentRank / rates.length) * 100);
+            
+            return {
+                percentile: `${percentile}th percentile`,
+                ranking: `${studentRank} of ${rates.length}`,
+                aboveAverage: attendanceRate > (rates.reduce((a, b) => a + b, 0) / rates.length)
+            };
+        }
+
+        function generateDataDrivenRecommendations(student, studentRecords, trendAnalysis, riskAnalysis, goalAnalysis) {
+            const recommendations = [];
+            const attendanceRate = parseFloat(student.attendanceRate);
+            
+            // High priority recommendations based on risk
+            if (riskAnalysis.level === 'HIGH') {
+                recommendations.push({
+                    text: "Schedule immediate meeting with student to discuss attendance patterns",
+                    priority: "urgent",
+                    icon: "fas fa-exclamation-triangle",
+                    action: "meeting"
+                });
+                
+                if (riskAnalysis.factors.includes('Multiple recent absences')) {
+                    recommendations.push({
+                        text: "Investigate potential barriers to attendance (health, transport, personal issues)",
+                        priority: "high",
+                        icon: "fas fa-search",
+                        action: "investigate"
+                    });
+                }
+            }
+            
+            // Trend-based recommendations
+            if (trendAnalysis.direction.includes('DECLINING')) {
+                recommendations.push({
+                    text: `Address declining trend - attendance dropping by ${Math.abs(parseFloat(trendAnalysis.velocity))}% per week`,
+                    priority: "high",
+                    icon: "fas fa-chart-line-down",
+                    action: "intervention"
+                });
+            } else if (trendAnalysis.direction.includes('IMPROVING')) {
+                recommendations.push({
+                    text: "Recognize and reinforce positive attendance improvement",
+                    priority: "medium",
+                    icon: "fas fa-award",
+                    action: "positive_reinforcement"
+                });
+            }
+            
+            // Goal-based recommendations
+            if (goalAnalysis.status === 'ACHIEVABLE') {
+                recommendations.push({
+                    text: `Goal is achievable in ${goalAnalysis.timeframe} - provide encouragement and track weekly progress`,
+                    priority: "medium",
+                    icon: "fas fa-target",
+                    action: "track_progress"
+                });
+            } else if (goalAnalysis.status === 'NEEDS SUPPORT') {
+                recommendations.push({
+                    text: "Consider modified goals and additional support structures",
+                    priority: "high",
+                    icon: "fas fa-hands-helping",
+                    action: "support_plan"
+                });
+            }
+            
+            // Data-driven specific recommendations
+            if (studentRecords.dataQuality === 'Limited') {
+                recommendations.push({
+                    text: "Collect more attendance data to improve analysis accuracy",
+                    priority: "low",
+                    icon: "fas fa-database",
+                    action: "data_collection"
+                });
+            }
+            
+            // Default recommendations if none generated
+            if (recommendations.length === 0) {
+                recommendations.push({
+                    text: "Continue monitoring attendance patterns",
+                    priority: "low",
+                    icon: "fas fa-eye",
+                    action: "monitor"
+                });
+            }
+            
+            return recommendations.slice(0, 4); // Return top 4 recommendations
+        }
+
+        function createSafeAnalyticsDefault(student) {
+            return {
+                ...student,
+                trendDirection: 'DATA INSUFFICIENT',
+                trendIcon: '❓',
+                trendVelocity: '0.0',
+                trendConfidence: 'Low',
+                riskLevel: 'MEDIUM',
+                riskScore: 0.5,
+                goalAchievement: 'NEEDS MORE DATA',
+                goalAchievementClass: 'insufficient-data',
+                personalTarget: 80,
+                dataQuality: 'Limited',
+                recommendations: [{
+                    text: "Collect more attendance data for accurate analysis",
+                    priority: "medium",
+                    icon: "fas fa-chart-bar"
+                }]
+            };
+        }
+
+        function calculateConsistencyScore(studentRecords) {
+            const records = studentRecords.records;
+            if (records.length < 2) return 50;
+            
+            const attendanceRates = [];
+            const weeks = {};
+            
+            // Calculate weekly attendance rates
+            records.forEach(record => {
+                const date = new Date(record.date);
+                const weekKey = Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000));
+                
+                if (!weeks[weekKey]) {
+                    weeks[weekKey] = { present: 0, total: 0 };
+                }
+                
+                weeks[weekKey].total++;
+                const status = (record.attendanceStatus || record.action || '').toLowerCase();
+                if (status.includes('present')) {
+                    weeks[weekKey].present++;
+                }
+            });
+            
+            Object.values(weeks).forEach(week => {
+                attendanceRates.push((week.present / week.total) * 100);
+            });
+            
+            if (attendanceRates.length < 2) return 75;
+            
+            // Calculate coefficient of variation (lower = more consistent)
+            const mean = attendanceRates.reduce((a, b) => a + b, 0) / attendanceRates.length;
+            const variance = attendanceRates.reduce((sum, rate) => sum + Math.pow(rate - mean, 2), 0) / attendanceRates.length;
+            const coeffVariation = Math.sqrt(variance) / mean * 100;
+            
+            // Convert to consistency score (100 - CV, clamped)
+            return Math.max(0, Math.min(100, 100 - coeffVariation)).toFixed(0);
+        }
+
+        function analyzeAttendancePattern(studentRecords) {
+            const records = studentRecords.records;
+            if (records.length < 3) return 'Insufficient data for pattern analysis';
+            
+            // Analyze day-of-week patterns, consecutive patterns, etc.
+            const dayPatterns = {};
+            const consecutiveAbsences = [];
+            let currentStreak = 0;
+            
+            records.forEach(record => {
+                const date = new Date(record.date);
+                const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+                const status = (record.attendanceStatus || record.action || '').toLowerCase();
+                
+                if (!dayPatterns[dayOfWeek]) dayPatterns[dayOfWeek] = { present: 0, total: 0 };
+                dayPatterns[dayOfWeek].total++;
+                
+                if (status.includes('present')) {
+                    dayPatterns[dayOfWeek].present++;
+                    if (currentStreak > 0) {
+                        consecutiveAbsences.push(currentStreak);
+                        currentStreak = 0;
+                    }
+                } else {
+                    currentStreak++;
+                }
+            });
+            
+            // Find patterns
+            const patterns = [];
+            Object.entries(dayPatterns).forEach(([day, stats]) => {
+                const rate = (stats.present / stats.total) * 100;
+                if (rate < 50 && stats.total >= 2) {
+                    patterns.push(`Lower attendance on ${day}s`);
+                }
+            });
+            
+            if (Math.max(...consecutiveAbsences) > 2) {
+                patterns.push(`Periods of consecutive absences (max: ${Math.max(...consecutiveAbsences)} days)`);
+            }
+            
+            return patterns.length > 0 ? patterns.join('; ') : 'Regular attendance pattern';
+        }
+
+        // DEBUG FUNCTION - Click "Debug Data" button in analytics to use this
+        function debugDataStructure() {
+            console.log('🐛 DEBUG: Data Structure Analysis');
+            console.log('==========================================');
+            
+            // 1. Check attendanceData array
+            console.log('📊 attendanceData array:', attendanceData);
+            console.log('📊 attendanceData length:', attendanceData?.length || 0);
+            
+            if (attendanceData && attendanceData.length > 0) {
+                console.log('📊 First 3 records structure:');
+                attendanceData.slice(0, 3).forEach((record, i) => {
+                    console.log(`Record ${i}:`, {
+                        student: record.student,
+                        studentId: record.studentId,
+                        studentName: record.studentName,
+                        action: record.action,
+                        attendanceStatus: record.attendanceStatus,
+                        date: record.date,
+                        dateTime: record.dateTime,
+                        allKeys: Object.keys(record)
+                    });
+                });
+                
+                // Show unique students in data
+                const uniqueStudents = [...new Set(attendanceData.map(r => r.student || r.studentId || r.studentName))];
+                console.log('📊 Unique students in data:', uniqueStudents);
+            }
+            
+            // 2. Check table data
+            const tableRows = document.querySelectorAll('#recordsTableBody tr');
+            console.log('📊 Table rows found:', tableRows.length);
+            
+            if (tableRows.length > 0) {
+                console.log('📊 First 3 table rows:');
+                for (let i = 0; i < Math.min(3, tableRows.length); i++) {
+                    const cells = tableRows[i].querySelectorAll('td');
+                    console.log(`Table row ${i}:`, {
+                        studentCell: cells[1]?.textContent?.trim(),
+                        statusCell: cells[2]?.textContent?.trim(),
+                        dateCell: cells[3]?.textContent?.trim(),
+                        timeCell: cells[4]?.textContent?.trim()
+                    });
+                }
+            }
+            
+            // 3. Check analytics processing
+            const analyticsData = getAnalyticsData('all');
+            console.log('📊 Analytics data processing result:', analyticsData.length, 'records');
+            
+            if (analyticsData.length > 0) {
+                console.log('📊 Processed analytics data sample:', analyticsData.slice(0, 3));
+                
+                // Test student record extraction
+                const uniqueAnalyticsStudents = [...new Set(analyticsData.map(r => r.studentId || r.studentName || r.student))];
+                console.log('📊 Unique students from analytics:', uniqueAnalyticsStudents);
+                
+                // Test actual record fetching for first student
+                if (uniqueAnalyticsStudents.length > 0) {
+                    const testStudent = { 
+                        name: uniqueAnalyticsStudents[0],
+                        studentId: uniqueAnalyticsStudents[0]
+                    };
+                    console.log('🧪 Testing record fetch for student:', testStudent);
+                    const studentRecords = getActualStudentRecords(testStudent);
+                    console.log('🧪 Student records result:', studentRecords);
+                }
+            }
+            
+            alert('🐛 Debug complete! Check the browser console (F12) for detailed data analysis.');
         }
 
         function generateWeeklyAttendanceData(student) {
@@ -13869,7 +14760,19 @@ ${analytics.quickInsights}
             // Open email with beautiful subject
             const subject = `📊 Attendance Report (${analytics.periodSummary}) - ${analytics.attendanceRate}% Rate`;
             const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
-            window.location.href = mailtoLink;
+            
+            // Use window.open instead of window.location.href to avoid triggering beforeunload
+            try {
+                window.open(mailtoLink, '_self');
+            } catch (error) {
+                // Fallback to creating a temporary link element
+                const tempLink = document.createElement('a');
+                tempLink.href = mailtoLink;
+                tempLink.target = '_blank';
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                document.body.removeChild(tempLink);
+            }
             
             alert(`📧 Beautiful email report ready!\n📊 ${recordsToInclude.length} records analyzed\n📈 ${analytics.attendanceRate}% attendance rate`);
             closeEmailForm();
