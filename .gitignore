@@ -15,6 +15,14 @@ yarn-error.log*
 firebase-config.js
 firebase.json
 .firebaserc
+firebase-secure-config.js
+firebase-config-production.js
+*-firebase-adminsdk-*.json
+
+# API Keys and Secrets
+api-keys.txt
+secrets.json
+credentials.json
 
 # Build outputs
 dist/

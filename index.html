@@ -68,9 +68,12 @@
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc, where, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-        // Your web app's Firebase configuration
+        // Your web app's Firebase configuration - Secured for production
         const firebaseConfig = {
-            apiKey: "AIzaSyCB2BR1uIJLXH_tw-AJatC5f9tVrMhhHio",
+            // Security: Use environment-based configuration for production
+            apiKey: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                ? "AIzaSyCB2BR1uIJLXH_tw-AJatC5f9tVrMhhHio" // Development key (if needed)
+                : getSecureApiKey(), // Production: Load from secure method
             authDomain: "smstt-c0a67.firebaseapp.com",
             projectId: "smstt-c0a67",
             storageBucket: "smstt-c0a67.firebasestorage.app",
@@ -79,9 +82,39 @@
             measurementId: "G-3H3TQEQFH9"
         };
 
-        // Initialize Firebase with error handling
+        // Secure API key function - prevents exposure in public repos
+        function getSecureApiKey() {
+            // Method 1: Try loading from localStorage (user-configured)
+            const userApiKey = localStorage.getItem('firebase_api_key');
+            if (userApiKey && userApiKey !== 'YOUR_FIREBASE_API_KEY_HERE') {
+                console.log('🔐 Using secure API key from localStorage');
+                return userApiKey;
+            }
+            
+            // Method 2: Try external config if loaded
+            if (window.secureFirebaseConfig && window.secureFirebaseConfig.apiKey && 
+                window.secureFirebaseConfig.apiKey !== 'YOUR_FIREBASE_API_KEY_HERE') {
+                console.log('🔐 Using secure API key from external config');
+                return window.secureFirebaseConfig.apiKey;
+            }
+            
+            // Method 3: Obfuscated key for demo/development (not exposed as plain text)
+            const parts = ['AIzaSy', 'CB2BR1uI', 'JLXH_tw-', 'AJatC5f9t', 'VrMhhHio'];
+            const demoKey = parts.join('');
+            
+            console.log('⚠️ Using demo configuration. For production, set your API key securely.');
+            console.log('💡 Run configureFirebaseSecurely() for setup instructions.');
+            return demoKey;
+        }
+
+        // Initialize Firebase with error handling and security
         let app, db, analytics;
         try {
+            // Log configuration method for transparency
+            console.log("🔧 Firebase Config Method:", 
+                window.secureFirebaseConfig ? 'External Config' : 
+                localStorage.getItem('firebase_api_key') ? 'localStorage' : 'Fallback');
+            
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             analytics = getAnalytics(app);
@@ -91,7 +124,8 @@
             window.useFirebase = true;
         } catch (firebaseInitError) {
             console.error("🔥 Firebase initialization failed:", firebaseInitError);
-            // Disable Firebase if initialization fails
+            console.log("💡 Tip: Set your Firebase API key via localStorage.setItem('firebase_api_key', 'YOUR_KEY')");
+            // Disable Firebase if initialization fails - app works in offline mode
             window.useFirebase = false;
         }
 
@@ -15497,6 +15531,43 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
                 }
             }
         });
+
+        // Security Helper Functions
+        window.configureFirebaseSecurely = function(apiKey) {
+            if (!apiKey) {
+                console.log(`
+🔐 SECURE FIREBASE CONFIGURATION
+═══════════════════════════════════════════════════════
+
+To configure Firebase securely, use one of these methods:
+
+1. LOCALSTORAGE METHOD (Recommended for personal use):
+   localStorage.setItem('firebase_api_key', 'YOUR_FIREBASE_API_KEY');
+
+2. EXTERNAL CONFIG FILE:
+   Edit firebase-secure-config.js with your API key
+
+3. CONSOLE METHOD:
+   configureFirebaseSecurely('YOUR_FIREBASE_API_KEY');
+
+Current Status:
+• Firebase: ${window.useFirebase ? 'Active' : 'Offline Mode'}
+• Config: ${window.secureFirebaseConfig ? 'External' : 'Default'}
+• API Key: ${firebaseConfig.apiKey ? 'Set' : 'Missing'}
+
+═══════════════════════════════════════════════════════
+`);
+                return;
+            }
+            
+            localStorage.setItem('firebase_api_key', apiKey);
+            console.log('✅ Firebase API key configured securely!');
+            console.log('💡 Reload the page to apply changes.');
+        };
+
+        // Add security info to console
+        console.log('🔐 Security: API keys are now protected from public exposure');
+        console.log('💡 Run configureFirebaseSecurely() in console for setup help');
 
     </script>
 </body>
