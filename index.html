@@ -14095,7 +14095,8 @@ File: ${fileName}`, 'success');
                         'Time': record.time,
                         'Latitude': record.latitude,
                         'Longitude': record.longitude,
-                        'Address': record.address
+                        'Address': record.address,
+                        'Notes': record.notes || ''
                     };
                 });
                 
@@ -14113,7 +14114,8 @@ File: ${fileName}`, 'success');
                     {wch: 12},  // Time
                     {wch: 12},  // Latitude
                     {wch: 12},  // Longitude
-                    {wch: 40}   // Address
+                    {wch: 40},  // Address
+                    {wch: 30}   // Notes
                 ];
                 ws['!cols'] = colWidths;
                 
