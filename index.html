@@ -5638,7 +5638,7 @@
                         <button class="refresh-analytics" onclick="debugDataStructure()" style="background-color: #ffc107; color: #000;">
                             <i class="fas fa-bug"></i> Debug Data
                         </button>
-                        <button id="exportAnalyticsPdfBtn" class="export-pdf-btn" onclick="exportAnalyticsToPDF()">
+                        <button id="exportAnalyticsPdfBtn" class="export-pdf-btn">
                             <i class="fas fa-file-pdf"></i> Export PDF
                         </button>
                         <button class="analytics-close-btn" onclick="toggleAnalyticsView()" title="Close Analytics">
@@ -15887,34 +15887,6 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
             } catch (error) {
                 console.error('Error saving to local storage:', error);
                 showMessage('Error saving data locally', 'error');
-            }
-        }
-
-        function clearAllData() {
-            try {
-                showLoading(true);
-                showMessage('Clearing all data...', 'info');
-                
-                // Use Firebase clear function if available
-                if (window.firebase && navigator.onLine) {
-                    clearAllDataFromFirestore();
-                } else {
-                    // Clear local data only
-                    attendanceData = [];
-                    localStorage.removeItem('attendanceData');
-                    
-                    // Update displays
-                    displayRecords();
-                    updateStatistics();
-                    populateFilterDropdowns();
-                    
-                    showMessage('All local data cleared successfully', 'success');
-                }
-            } catch (error) {
-                console.error('Error clearing data: ', error);
-                showMessage('Error clearing data: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
             }
         }
 
