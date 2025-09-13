@@ -5356,7 +5356,7 @@
                                         <label for="newStudentName" class="sr-only">Student Full Name</label>
                                         <input type="text" id="newStudentName" placeholder="Student Full Name (e.g., John Smith)" maxlength="100">
                                     </div>
-                                    <button type="button" id="addStudentBtn" class="add-student-btn" onclick="addNewStudent()">
+                                    <button type="button" id="addStudentBtn" class="add-student-btn">
                                         <i class="fas fa-plus"></i> Add Student
                                     </button>
                                 </div>
@@ -7144,7 +7144,6 @@
             // PDF Export button
             if (elements.exportAnalyticsPdfBtn) {
                 elements.exportAnalyticsPdfBtn.addEventListener('click', exportAnalyticsToPDF);
-                console.log('✅ PDF export button event listener added');
             } else {
                 console.warn('⚠️ PDF export button not found');
             }
@@ -10806,6 +10805,22 @@ ${environment.tips.slice(0, 3).join('\n')}
         function generateAttendanceRateAnalytics(data) {
             const studentStats = {};
             
+            // Calculate global days covered for the entire report period
+            const globalDates = new Set();
+            data.forEach(record => {
+                const recordDate = record.datetime || record.date || record.timestamp || '';
+                let dateStr = '';
+                if (typeof recordDate === 'string' && recordDate.includes(' ')) {
+                    dateStr = recordDate.split(' ')[0];
+                } else if (typeof recordDate === 'string') {
+                    dateStr = recordDate;
+                } else {
+                    dateStr = new Date().toISOString().split('T')[0]; // fallback to today
+                }
+                globalDates.add(dateStr);
+            });
+            const globalDaysCovered = globalDates.size;
+            
             // Calculate stats for each student
             data.forEach(record => {
                 // Handle both new format (studentId + studentName) and legacy formats
@@ -10851,16 +10866,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
             });
 
-            // Calculate attendance rates and sort students
+            // Calculate attendance rates using global days covered and sort students
             const studentRates = Object.keys(studentStats).map(key => {
                 const stats = studentStats[key];
-                const rate = stats.total > 0 ? (stats.present / stats.total) * 100 : 0;
+                // Calculate attendance rate as: (present records / global days covered) * 100
+                const rate = globalDaysCovered > 0 ? (stats.present / globalDaysCovered) * 100 : 0;
                 return {
                     name: stats.name,
                     rate: rate.toFixed(1),
                     total: stats.total,
                     present: stats.present,
-                    absent: stats.absent
+                    absent: stats.absent,
+                    daysCovered: globalDaysCovered
                 };
             });
 
@@ -10885,7 +10902,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                     <li class="student-stat-item ${getPerformanceClass(student.rate)}">
                         <div>
                             <div class="analytics-metric">${student.name}</div>
-                            <div class="stat-details">${student.present}P/${student.absent}A out of ${student.total} total</div>
+                            <div class="stat-details">${student.present}P/${student.absent}A (${student.present}/${student.daysCovered} total days)</div>
                         </div>
                         <span class="analytics-percentage ${getPercentageClass(student.rate)}">${student.rate}%</span>
                     </li>
@@ -10901,7 +10918,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                     <li class="student-stat-item ${getPerformanceClass(student.rate)}">
                         <div>
                             <div class="analytics-metric">${student.name}</div>
-                            <div class="stat-details">${student.present}P/${student.absent}A out of ${student.total} total</div>
+                            <div class="stat-details">${student.present}P/${student.absent}A (${student.present}/${student.daysCovered} total days)</div>
                         </div>
                         <span class="analytics-percentage ${getPercentageClass(student.rate)}">${student.rate}%</span>
                     </li>
@@ -11093,12 +11110,30 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
             });
 
+            // Calculate global days covered for the entire report period
+            const globalDates = new Set();
+            data.forEach(record => {
+                const recordDate = record.datetime || record.date || record.timestamp || '';
+                let dateStr = '';
+                if (typeof recordDate === 'string' && recordDate.includes(' ')) {
+                    dateStr = recordDate.split(' ')[0];
+                } else if (typeof recordDate === 'string') {
+                    dateStr = recordDate;
+                } else {
+                    dateStr = new Date().toISOString().split('T')[0]; // fallback to today
+                }
+                globalDates.add(dateStr);
+            });
+            const globalDaysCovered = globalDates.size;
+
             const detailedStats = Object.keys(studentDetails).map(key => {
                 const stats = studentDetails[key];
-                const rate = stats.total > 0 ? (stats.present / stats.total) * 100 : 0;
+                // Calculate attendance rate as: (present records / global days covered) * 100
+                const rate = globalDaysCovered > 0 ? (stats.present / globalDaysCovered) * 100 : 0;
                 return {
                     name: stats.name,
                     uniqueDays: stats.dates.size,
+                    globalDaysCovered: globalDaysCovered,
                     total: stats.total,
                     present: stats.present,
                     absent: stats.absent,
@@ -11114,7 +11149,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                             <div class="student-name">${student.name}</div>
                             <div class="stat-details">
                                 ${student.total} records across ${student.uniqueDays} day${student.uniqueDays > 1 ? 's' : ''} | 
-                                Present: ${student.present} | Absent: ${student.absent}
+                                Present: ${student.present} | Absent: ${student.absent} | Rate: ${student.rate}% (${student.present}/${student.globalDaysCovered} total days)
                             </div>
                         </div>
                         <span class="analytics-percentage ${getPercentageClass(student.rate)}">${student.rate}%</span>
@@ -11190,16 +11225,6 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const filterPeriod = document.getElementById('analyticsFilter').value;
                 let filteredData = getAnalyticsData(filterPeriod);
                 
-                console.log('PDF Export - Raw data from getAnalyticsData:', {
-                    length: filteredData.length,
-                    firstRecord: filteredData[0],
-                    sampleRecords: filteredData.slice(0, 3),
-                    globalAttendanceData: {
-                        length: attendanceData.length,
-                        sample: attendanceData.slice(0, 2)
-                    }
-                });
-                
                 // Validate and clean data
                 if (!filteredData || filteredData.length === 0) {
                     showMessage('No data available to export', 'warning');
@@ -11223,8 +11248,6 @@ ${environment.tips.slice(0, 3).join('\n')}
                     location: record.location || ''
                 }));
                 
-                console.log('PDF Export - Cleaned data:', filteredData.slice(0, 3)); // Log first 3 records for debugging
-                
                 if (filteredData.length === 0) {
                     showMessage('No valid attendance records found to export', 'warning');
                     exportBtn.innerHTML = originalText;
@@ -11242,9 +11265,9 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const dangerColor = [231, 76, 60]; // Red
                 const textColor = [44, 62, 80]; // Dark blue-gray
                 
-                // Header
+                // Header - Extended to accommodate both lines
                 doc.setFillColor(...primaryColor);
-                doc.rect(0, 0, 210, 30, 'F');
+                doc.rect(0, 0, 210, 38, 'F'); // Increased from 30 to 38
                 
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
@@ -11255,12 +11278,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                 doc.setFontSize(10);
                 const currentDate = new Date().toLocaleDateString();
                 const filterText = getPeriodDisplayName(filterPeriod);
+                const actualDateRange = getActualDateRange(filteredData);
                 doc.text(`Generated on: ${currentDate} | Period: ${filterText}`, 20, 26);
+                
+                // Add the actual date range with simple text (still in white text on blue background)
+                if (actualDateRange && actualDateRange !== 'No data') {
+                    doc.text(`Report Period: ${actualDateRange}`, 20, 32);
+                }
                 
                 // Reset text color for body
                 doc.setTextColor(...textColor);
                 
-                let yPosition = 45;
+                let yPosition = 55; // Increased to account for the taller header (38 + some spacing)
                 
                 // Summary Statistics
                 const summaryStats = calculateSummaryStats(filteredData);
@@ -11294,12 +11323,12 @@ ${environment.tips.slice(0, 3).join('\n')}
                     student.name,
                     student.present.toString(),
                     student.absent.toString(),
-                    student.total.toString(),
+                    student.daysCovered.toString(),
                     `${student.rate}%`
                 ]);
                 
                 addTable(doc, attendanceTableData, yPosition, true, 
-                    ['Student Name', 'Present', 'Absent', 'Total', 'Rate']);
+                    ['Student Name', 'Present', 'Absent', 'Days Covered', 'Rate']);
                 yPosition += (attendanceTableData.length * 8) + 25;
                 
                 // Check if we need a new page
@@ -11474,6 +11503,22 @@ File: ${fileName}`, 'success');
         function calculateAttendanceRates(data) {
             const studentStats = {};
             
+            // Calculate global days covered for the entire report period
+            const globalDates = new Set();
+            data.forEach(record => {
+                const recordDate = record.datetime || record.date || record.timestamp || '';
+                let dateStr = '';
+                if (typeof recordDate === 'string' && recordDate.includes(' ')) {
+                    dateStr = recordDate.split(' ')[0];
+                } else if (typeof recordDate === 'string') {
+                    dateStr = recordDate;
+                } else {
+                    dateStr = new Date().toISOString().split('T')[0]; // fallback to today
+                }
+                globalDates.add(dateStr);
+            });
+            const globalDaysCovered = globalDates.size;
+            
             data.forEach(record => {
                 const studentKey = record.student || record.name || 'Unknown Student';
                 if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
@@ -11492,7 +11537,8 @@ File: ${fileName}`, 'success');
             
             return Object.keys(studentStats).map(studentKey => {
                 const stats = studentStats[studentKey];
-                const rate = stats.total > 0 ? ((stats.present / stats.total) * 100).toFixed(1) : '0.0';
+                // Calculate attendance rate as: (present records / global days covered) * 100
+                const rate = globalDaysCovered > 0 ? ((stats.present / globalDaysCovered) * 100).toFixed(1) : '0.0';
                 const displayName = getStudentDisplayName(studentKey);
                 
                 return {
@@ -11500,6 +11546,7 @@ File: ${fileName}`, 'success');
                     present: stats.present,
                     absent: stats.absent,
                     total: stats.total,
+                    daysCovered: globalDaysCovered,
                     rate: parseFloat(rate)
                 };
             }).sort((a, b) => b.rate - a.rate);
@@ -11549,6 +11596,102 @@ File: ${fileName}`, 'success');
                 'lastmonth': 'Last Month'
             };
             return periodNames[period] || 'All Time';
+        }
+
+        function getActualDateRange(data) {
+            if (!data || data.length === 0) {
+                return 'No data';
+            }
+            
+            // Extract dates from the data and sort them
+            const dates = data.map(record => {
+                let dateStr = record.datetime || record.date || record.timestamp || '';
+                
+                // Handle different date formats
+                if (typeof dateStr === 'string') {
+                    // If it contains both date and time, extract just the date part
+                    if (dateStr.includes(' ')) {
+                        dateStr = dateStr.split(' ')[0];
+                    }
+                    // Convert to Date object
+                    const date = new Date(dateStr);
+                    return isNaN(date.getTime()) ? null : date;
+                }
+                return null;
+            }).filter(date => date !== null);
+            
+            if (dates.length === 0) {
+                return 'No valid dates';
+            }
+            
+            // Sort dates
+            dates.sort((a, b) => a.getTime() - b.getTime());
+            
+            const earliestDate = dates[0];
+            const latestDate = dates[dates.length - 1];
+            
+            // Format dates as MM/DD/YYYY
+            const formatDate = (date) => {
+                return date.toLocaleDateString('en-US', {
+                    month: 'numeric',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            };
+            
+            // If same day, show just that day
+            if (earliestDate.toDateString() === latestDate.toDateString()) {
+                return formatDate(earliestDate);
+            }
+            
+            // Otherwise show range with simple ASCII arrow
+            return `${formatDate(earliestDate)} - ${formatDate(latestDate)}`;
+        }
+
+        function getActualDateRangeFromTable(tableRows) {
+            if (!tableRows || tableRows.length === 0) {
+                return 'No data';
+            }
+            
+            // Extract dates from the table rows
+            const dates = [];
+            tableRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 4) {
+                    const dateStr = cells[3].textContent.trim(); // Date column
+                    const date = new Date(dateStr);
+                    if (!isNaN(date.getTime())) {
+                        dates.push(date);
+                    }
+                }
+            });
+            
+            if (dates.length === 0) {
+                return 'No valid dates';
+            }
+            
+            // Sort dates
+            dates.sort((a, b) => a.getTime() - b.getTime());
+            
+            const earliestDate = dates[0];
+            const latestDate = dates[dates.length - 1];
+            
+            // Format dates as MM/DD/YYYY
+            const formatDate = (date) => {
+                return date.toLocaleDateString('en-US', {
+                    month: 'numeric',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            };
+            
+            // If same day, show just that day
+            if (earliestDate.toDateString() === latestDate.toDateString()) {
+                return formatDate(earliestDate);
+            }
+            
+            // Otherwise show range with simple ASCII arrow
+            return `${formatDate(earliestDate)} - ${formatDate(latestDate)}`;
         }
 
         // Analytics Functions
@@ -11695,6 +11838,22 @@ File: ${fileName}`, 'success');
         function generateAttendanceRateAnalytics(data) {
             const studentStats = {};
             
+            // Calculate global days covered for the entire report period
+            const globalDates = new Set();
+            data.forEach(record => {
+                const recordDate = record.datetime || record.date || record.timestamp || '';
+                let dateStr = '';
+                if (typeof recordDate === 'string' && recordDate.includes(' ')) {
+                    dateStr = recordDate.split(' ')[0];
+                } else if (typeof recordDate === 'string') {
+                    dateStr = recordDate;
+                } else {
+                    dateStr = new Date().toISOString().split('T')[0]; // fallback to today
+                }
+                globalDates.add(dateStr);
+            });
+            const globalDaysCovered = globalDates.size;
+            
             // Calculate attendance rates for each student
             data.forEach(record => {
                 const studentKey = record.studentId || record.studentName || 'Unknown';
@@ -11720,13 +11879,15 @@ File: ${fileName}`, 'success');
                 }
             });
             
-            // Calculate percentages and sort
+            // Calculate percentages using global days covered and sort
             const studentsWithRates = Object.values(studentStats).map(student => {
-                const rate = student.total > 0 ? (student.present / student.total) * 100 : 0;
+                // Calculate attendance rate as: (present records / global days covered) * 100
+                const rate = globalDaysCovered > 0 ? (student.present / globalDaysCovered) * 100 : 0;
                 return {
                     ...student,
                     attendanceRate: rate.toFixed(1),
-                    numericRate: rate
+                    numericRate: rate,
+                    daysCovered: globalDaysCovered
                 };
             });
             
@@ -11914,6 +12075,22 @@ File: ${fileName}`, 'success');
         function generateDetailedStudentStats(data) {
             const studentDetails = {};
             
+            // Calculate global days covered for the entire report period
+            const globalDates = new Set();
+            data.forEach(record => {
+                const recordDate = record.datetime || record.date || record.timestamp || '';
+                let dateStr = '';
+                if (typeof recordDate === 'string' && recordDate.includes(' ')) {
+                    dateStr = recordDate.split(' ')[0];
+                } else if (typeof recordDate === 'string') {
+                    dateStr = recordDate;
+                } else {
+                    dateStr = new Date().toISOString().split('T')[0]; // fallback to today
+                }
+                globalDates.add(dateStr);
+            });
+            const globalDaysCovered = globalDates.size;
+            
             data.forEach(record => {
                 const studentKey = record.studentId || record.studentName || 'Unknown';
                 const studentName = record.studentName || studentKey;
@@ -11949,8 +12126,10 @@ File: ${fileName}`, 'success');
             
             const detailedStats = Object.values(studentDetails).map(student => ({
                 ...student,
-                attendanceRate: student.totalRecords > 0 ? ((student.presentCount / student.totalRecords) * 100).toFixed(1) : '0.0',
+                // Calculate attendance rate as: (present count / global days covered) * 100
+                attendanceRate: globalDaysCovered > 0 ? ((student.presentCount / globalDaysCovered) * 100).toFixed(1) : '0.0',
                 uniqueDays: student.dates.size,
+                globalDaysCovered: globalDaysCovered,
                 notes: student.notes.join(' | ') // Combine all notes for this student
             })).sort((a, b) => b.totalRecords - a.totalRecords);
             
@@ -14188,6 +14367,12 @@ File: ${fileName}`, 'success');
                 doc.setFontSize(10);
                 doc.text(filterInfo, 14, 48);
                 
+                // Calculate and display actual date range from the table data
+                const actualDateRange = getActualDateRangeFromTable(tableRows);
+                if (actualDateRange && actualDateRange !== 'No data') {
+                    doc.text(`Report Period: ${actualDateRange}`, 14, 56);
+                }
+                
                 // Extract data directly from table rows
                 const tableData = [];
                 let presentCount = 0;
@@ -14227,7 +14412,7 @@ File: ${fileName}`, 'success');
                 doc.autoTable({
                     head: headers,
                     body: tableData,
-                    startY: 55,
+                    startY: 63, // Increased from 55 to account for the additional line
                     theme: 'striped',
                     headStyles: {
                         fillColor: [52, 73, 94],
