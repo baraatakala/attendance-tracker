@@ -11323,14 +11323,20 @@ ${environment.tips.slice(0, 3).join('\n')}
                 yPosition += 10; // Reduced spacing from 15 to 10
                 
                 const attendanceRates = calculateAttendanceRates(filteredData);
-                const attendanceTableData = attendanceRates.map(student => [
-                    student.name,
-                    student.present.toString(),
-                    student.absent.toString(),
-                    student.vacation ? student.vacation.toString() : '0',
-                    student.effectiveDaysCovered ? student.effectiveDaysCovered.toString() : student.daysCovered.toString(),
-                    `${student.rate}%`
-                ]);
+                const attendanceTableData = attendanceRates.map(student => {
+                    // Calculate correct absent count: Effective Days - Present
+                    const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
+                    const calculatedAbsent = Math.max(0, effectiveDays - student.present);
+                    
+                    return [
+                        student.name,
+                        student.present.toString(),
+                        calculatedAbsent.toString(),
+                        student.vacation ? student.vacation.toString() : '0',
+                        effectiveDays.toString(),
+                        `${student.rate}%`
+                    ];
+                });
                 
                 addTable(doc, attendanceTableData, yPosition, true, 
                     ['Student Name', 'Present', 'Absent', 'Vacation', 'Effective Days', 'Rate']);
@@ -11574,39 +11580,42 @@ File: ${fileName}`, 'success');
         }
         
         function calculateAbsenceAnalysis(data) {
-            const studentAbsences = {};
-            const totalRecordsPerStudent = {};
+            const globalDaysCovered = parseInt(document.getElementById('daysCovered')?.value) || 1;
+            const studentStats = {};
             
             data.forEach(record => {
                 // Try multiple fields to get the student key - prioritize ID fields first
                 const studentKey = record.student || record.studentId || record.name || record.studentName || 'Unknown Student';
                 if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
                 
-                if (!totalRecordsPerStudent[studentKey]) {
-                    totalRecordsPerStudent[studentKey] = 0;
+                if (!studentStats[studentKey]) {
+                    studentStats[studentKey] = { present: 0, vacation: 0 };
                 }
-                totalRecordsPerStudent[studentKey]++;
                 
-                if (record.status === 'absent') {
-                    if (!studentAbsences[studentKey]) {
-                        studentAbsences[studentKey] = 0;
+                if (record.status === 'present') {
+                    studentStats[studentKey].present++;
+                } else if (record.status === 'absent') {
+                    // Check if this absence is due to vacation
+                    if (record.notes && record.notes.toLowerCase().includes('on vacation')) {
+                        studentStats[studentKey].vacation++;
                     }
-                    studentAbsences[studentKey]++;
                 }
             });
             
-            return Object.keys(studentAbsences).map(studentKey => {
-                const absenceCount = studentAbsences[studentKey];
-                const totalRecords = totalRecordsPerStudent[studentKey];
-                const percentage = ((absenceCount / totalRecords) * 100).toFixed(1);
+            return Object.keys(studentStats).map(studentKey => {
+                const stats = studentStats[studentKey];
+                const effectiveDaysCovered = globalDaysCovered - stats.vacation;
+                const absentDays = Math.max(0, effectiveDaysCovered - stats.present);
+                const absenceRate = effectiveDaysCovered > 0 ? (absentDays / effectiveDaysCovered) * 100 : 0;
                 const displayName = getStudentDisplayName(studentKey);
                 
                 return {
                     name: displayName,
-                    count: absenceCount,
-                    percentage: parseFloat(percentage)
+                    count: absentDays,
+                    percentage: parseFloat(absenceRate.toFixed(1))
                 };
-            }).sort((a, b) => b.count - a.count);
+            }).filter(item => item.count > 0) // Only show students with absences
+              .sort((a, b) => b.count - a.count);
         }
         
         function getPeriodDisplayName(period) {
