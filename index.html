@@ -11184,9 +11184,12 @@ ${environment.tips.slice(0, 3).join('\n')}
 
         // Helper function to resolve student names for PDF export
         function getStudentDisplayName(studentKey) {
+            console.log('🔍 Looking up student name for key:', studentKey);
+            
             // First try to get from activeStudents
             if (activeStudents && activeStudents[studentKey]) {
                 const student = activeStudents[studentKey];
+                console.log('📁 Found in activeStudents:', student);
                 if (typeof student === 'object' && student.name) {
                     return student.name;
                 } else if (typeof student === 'string') {
@@ -11197,6 +11200,7 @@ ${environment.tips.slice(0, 3).join('\n')}
             // Fallback to defaultStudentNames
             if (defaultStudentNames && defaultStudentNames[studentKey]) {
                 const student = defaultStudentNames[studentKey];
+                console.log('📁 Found in defaultStudentNames:', student);
                 if (typeof student === 'object' && student.name) {
                     return student.name;
                 } else if (typeof student === 'string') {
@@ -11206,10 +11210,12 @@ ${environment.tips.slice(0, 3).join('\n')}
             
             // If it's already a display name (not an ID), return as is
             if (studentKey && !studentKey.startsWith('STU')) {
+                console.log('📝 Returning as display name:', studentKey);
                 return studentKey;
             }
             
             // Last resort - return the key itself
+            console.log('❌ No name found, returning key:', studentKey);
             return studentKey || 'Unknown Student';
         }
 
@@ -11521,7 +11527,8 @@ File: ${fileName}`, 'success');
             const globalDaysCovered = globalDates.size;
             
             data.forEach(record => {
-                const studentKey = record.student || record.name || 'Unknown Student';
+                // Try multiple fields to get the student key - prioritize ID fields first
+                const studentKey = record.student || record.studentId || record.name || record.studentName || 'Unknown Student';
                 if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
                 
                 if (!studentStats[studentKey]) {
@@ -11558,7 +11565,8 @@ File: ${fileName}`, 'success');
             const totalRecordsPerStudent = {};
             
             data.forEach(record => {
-                const studentKey = record.student || record.name || 'Unknown Student';
+                // Try multiple fields to get the student key - prioritize ID fields first
+                const studentKey = record.student || record.studentId || record.name || record.studentName || 'Unknown Student';
                 if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
                 
                 if (!totalRecordsPerStudent[studentKey]) {
