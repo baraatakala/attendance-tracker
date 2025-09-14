@@ -11483,7 +11483,6 @@ File: ${fileName}`, 'success');
             
             const presentRecords = data.filter(record => record.status === 'present').length;
             const absentRecords = data.filter(record => record.status === 'absent').length;
-            const overallAttendanceRate = totalRecords > 0 ? ((presentRecords / totalRecords) * 100).toFixed(1) : '0.0';
             
             // Handle different datetime formats safely
             const uniqueDays = new Set(data.map(record => {
@@ -11496,6 +11495,10 @@ File: ${fileName}`, 'success');
                     return new Date().toISOString().split('T')[0]; // fallback to today
                 }
             }).filter(date => date)).size;
+            
+            // Calculate overall attendance rate as: (Present Records / (Days Covered × Total Students)) × 100
+            const expectedTotalAttendance = uniqueDays * uniqueStudentNames.size;
+            const overallAttendanceRate = expectedTotalAttendance > 0 ? ((presentRecords / expectedTotalAttendance) * 100).toFixed(1) : '0.0';
             
             return {
                 totalRecords,
@@ -14386,6 +14389,8 @@ File: ${fileName}`, 'success');
                 const tableData = [];
                 let presentCount = 0;
                 let absentCount = 0;
+                const uniqueStudents = new Set();
+                const uniqueDays = new Set();
                 
                 tableRows.forEach((row, index) => {
                     const cells = row.querySelectorAll('td');
@@ -14395,6 +14400,10 @@ File: ${fileName}`, 'success');
                         const date = cells[3].textContent.trim(); // Date column
                         const time = cells[4].textContent.trim(); // Time column
                         const notes = cells[6] ? cells[6].textContent.trim() : ''; // Notes column (index 6, location is 5)
+                        
+                        // Track unique students and days
+                        uniqueStudents.add(studentName);
+                        uniqueDays.add(date);
                         
                         // Count status for statistics
                         if (status.toLowerCase().includes('present')) {
@@ -14453,9 +14462,12 @@ File: ${fileName}`, 'success');
                 // Add summary statistics at the bottom
                 const finalY = doc.lastAutoTable.finalY + 15;
                 
-                // Calculate attendance rate from table data (already counted above)
-                const attendanceRate = tableData.length > 0 ? 
-                    Math.round((presentCount / tableData.length) * 100) : 0;
+                // Calculate attendance rate using new formula: (Present Records / (Days Covered × Total Students)) × 100
+                const totalStudents = uniqueStudents.size;
+                const daysCovered = uniqueDays.size;
+                const expectedTotalAttendance = daysCovered * totalStudents;
+                const attendanceRate = expectedTotalAttendance > 0 ? 
+                    Math.round((presentCount / expectedTotalAttendance) * 100) : 0;
                 
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
@@ -14465,7 +14477,9 @@ File: ${fileName}`, 'success');
                 doc.setFontSize(10);
                 doc.text('Present: ' + presentCount + ' records', 14, finalY + 10);
                 doc.text('Absent: ' + absentCount + ' records', 14, finalY + 18);
-                doc.text('Attendance Rate: ' + attendanceRate + '%', 14, finalY + 26);
+                doc.text('Total Students: ' + totalStudents, 14, finalY + 26);
+                doc.text('Days Covered: ' + daysCovered, 14, finalY + 34);
+                doc.text('Attendance Rate: ' + attendanceRate + '%', 14, finalY + 42);
                 
                 // Add footer
                 const pageCount = doc.internal.getNumberOfPages();
