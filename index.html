@@ -10132,8 +10132,9 @@ ${environment.tips.slice(0, 3).join('\n')}
             elements.singleDateFilter.style.display = 'block';
             elements.dateRangeFilter.style.display = 'none';
             
-            // Refresh the display
+            // Refresh the display and statistics
             displayRecords();
+            updateStatistics();
             showMessage('🔄 Filters cleared - showing all records', 'info');
         }
 
