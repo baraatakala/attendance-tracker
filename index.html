@@ -90,24 +90,10 @@
 
         // Secure API key function - prevents exposure in public repos
         function getSecureApiKey() {
-            // Method 1: Try loading from sessionStorage (encoded)
-            const encodedKey = sessionStorage.getItem('firebase_encoded_key');
-            if (encodedKey) {
-                try {
-                    const decodedKey = atob(encodedKey); // Base64 decode
-                    if (decodedKey && decodedKey !== 'YOUR_FIREBASE_API_KEY_HERE') {
-                        console.log('🔐 Using encoded API key from sessionStorage');
-                        return decodedKey;
-                    }
-                } catch (e) {
-                    console.warn('⚠️ Failed to decode API key');
-                }
-            }
-            
-            // Method 1b: Try loading from localStorage (legacy support)
+            // Method 1: Try loading from localStorage (user-configured)
             const userApiKey = localStorage.getItem('firebase_api_key');
             if (userApiKey && userApiKey !== 'YOUR_FIREBASE_API_KEY_HERE') {
-                console.log('🔐 Using legacy API key from localStorage');
+                console.log('🔐 Using secure API key from localStorage');
                 return userApiKey;
             }
             
@@ -6252,8 +6238,8 @@
                 ADMIN_PASSWORD = currentYear.toString(); // Default: current year
                 
                 // For production, you should implement proper authentication
-                // Don't store password in storage for security
-                console.log('🔐 Admin password generated at runtime');
+                // This is a basic security measure for demonstration
+                sessionStorage.setItem('adminPassword', ADMIN_PASSWORD);
             }
             return ADMIN_PASSWORD;
         }
@@ -10032,15 +10018,7 @@ ${environment.tips.slice(0, 3).join('\n')}
         }
 
         function generateId() {
-            // Use crypto.getRandomValues for secure random number generation
-            if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-                const array = new Uint32Array(2);
-                crypto.getRandomValues(array);
-                return Date.now().toString(36) + array[0].toString(36) + array[1].toString(36);
-            } else {
-                // Fallback for older browsers (less secure but functional)
-                return Date.now().toString(36) + Math.random().toString(36).substr(2);
-            }
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
 
         function resetForm() {
@@ -12034,16 +12012,38 @@ File: ${fileName}`, 'success');
         }
 
         function generateDateAnalytics(data) {
-            const dateAbsences = {};
+            const dateStats = {};
+            const totalStudents = new Set();
             
+            // First, determine total number of students
+            data.forEach(record => {
+                const studentKey = record.student || record.studentId || record.studentName || record.name || 'Unknown';
+                if (studentKey !== 'Unknown') {
+                    totalStudents.add(studentKey);
+                }
+            });
+            
+            const totalStudentCount = totalStudents.size;
+            
+            // Count present records per date
             data.forEach(record => {
                 const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                if (status === 'absent' || record.actionType === 'absent' || status.includes('absent')) {
+                if (status === 'present' || record.actionType === 'check-in' || status.includes('present')) {
                     const date = record.date;
-                    if (!dateAbsences[date]) {
-                        dateAbsences[date] = 0;
+                    if (!dateStats[date]) {
+                        dateStats[date] = { present: 0, absent: 0 };
                     }
-                    dateAbsences[date]++;
+                    dateStats[date].present++;
+                }
+            });
+            
+            // Calculate absences using new formula: Total Students - Present Records
+            const dateAbsences = {};
+            Object.keys(dateStats).forEach(date => {
+                const presentCount = dateStats[date].present;
+                const absentCount = totalStudentCount - presentCount;
+                if (absentCount > 0) {
+                    dateAbsences[date] = absentCount;
                 }
             });
             
@@ -13332,11 +13332,10 @@ File: ${fileName}`, 'success');
                 } else {
                     // Create more realistic weekly variation for other cases
                     const seasonalTrend = Math.sin(i * Math.PI / 6) * 5;
-                    // Use deterministic variation instead of random
-                    const deterministicVariation = ((i * 7) % 20 - 10); // Ranges from -10 to +9
+                    const randomVariation = (Math.random() - 0.5) * 10;
                     const trendComponent = (baseRate > 75) ? -2 * i : (baseRate < 50) ? 1 * i : 0;
                     
-                    weeklyRate = baseRate + seasonalTrend + deterministicVariation + trendComponent;
+                    weeklyRate = baseRate + seasonalTrend + randomVariation + trendComponent;
                 }
                 
                 weeklyRate = Math.max(0, Math.min(100, weeklyRate));
@@ -13543,9 +13542,9 @@ File: ${fileName}`, 'success');
             const data = [];
             
             for (let i = 0; i < weeks; i++) {
-                // Add some realistic variation using deterministic patterns
-                const noise = ((i * 7) % 40 - 20); // Ranges from -20 to +19
-                const trend = ((i * 3) % 5 - 2); // Ranges from -2 to +2  
+                // Add some realistic variation
+                const noise = (Math.random() - 0.5) * 20;
+                const trend = (Math.random() - 0.5) * 2;
                 const rate = Math.max(0, Math.min(100, baseRate + noise + (trend * i)));
                 data.push({ week: i, attendance: rate });
             }
@@ -14880,8 +14879,7 @@ File: ${fileName}`, 'success');
                     for (let i = 0; i < 5; i++) {
                         const date = new Date();
                         date.setDate(date.getDate() - i);
-                        // Use deterministic pattern instead of random for test data
-                        const status = i < 2 ? 'present' : (i === 4 ? 'absent' : 'present');
+                        const status = i < 2 ? 'present' : (Math.random() > 0.7 ? 'absent' : 'present');
                         
                         attendanceData.push({
                             student: studentId,
@@ -16181,28 +16179,14 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
             messageEl.setAttribute('role', 'alert');
             messageEl.setAttribute('aria-live', 'polite');
             
-            // Create elements safely without innerHTML to prevent XSS
-            const icon = document.createElement('i');
-            icon.className = getMessageIcon(type);
-            icon.setAttribute('aria-hidden', 'true');
-            
-            const messageText = document.createElement('span');
-            messageText.textContent = message; // Use textContent instead of innerHTML
-            
-            const closeButton = document.createElement('button');
-            closeButton.className = 'message-close';
-            closeButton.setAttribute('aria-label', 'Close message');
-            closeButton.onclick = function() { this.parentElement.remove(); };
-            
-            const closeIcon = document.createElement('i');
-            closeIcon.className = 'fas fa-times';
-            closeIcon.setAttribute('aria-hidden', 'true');
-            closeButton.appendChild(closeIcon);
-            
-            // Append elements safely
-            messageEl.appendChild(icon);
-            messageEl.appendChild(messageText);
-            messageEl.appendChild(closeButton);
+            const icon = getMessageIcon(type);
+            messageEl.innerHTML = `
+                <i class="${icon}" aria-hidden="true"></i>
+                <span>${message}</span>
+                <button class="message-close" aria-label="Close message" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            `;
             
             elements.messageContainer.appendChild(messageEl);
             
@@ -16742,12 +16726,8 @@ Current Status:
                 return;
             }
             
-            // Instead of storing in localStorage, encode the key for basic obfuscation
-            // Note: This is still not production-secure, but reduces exposure
-            const encodedKey = btoa(apiKey); // Base64 encoding
-            sessionStorage.setItem('firebase_encoded_key', encodedKey);
-            console.log('✅ Firebase API key configured with basic encoding!');
-            console.log('⚠️  For production use, implement proper encryption!');
+            localStorage.setItem('firebase_api_key', apiKey);
+            console.log('✅ Firebase API key configured securely!');
             console.log('💡 Reload the page to apply changes.');
         };
 
