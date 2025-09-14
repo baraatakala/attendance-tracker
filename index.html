@@ -11330,12 +11330,13 @@ ${environment.tips.slice(0, 3).join('\n')}
                     student.name,
                     student.present.toString(),
                     student.absent.toString(),
-                    student.daysCovered.toString(),
+                    student.vacation ? student.vacation.toString() : '0',
+                    student.effectiveDaysCovered ? student.effectiveDaysCovered.toString() : student.daysCovered.toString(),
                     `${student.rate}%`
                 ]);
                 
                 addTable(doc, attendanceTableData, yPosition, true, 
-                    ['Student Name', 'Present', 'Absent', 'Days Covered', 'Rate']);
+                    ['Student Name', 'Present', 'Absent', 'Vacation', 'Effective Days', 'Rate']);
                 yPosition += (attendanceTableData.length * 8) + 25;
                 
                 // Check if we need a new page
@@ -11535,7 +11536,7 @@ File: ${fileName}`, 'success');
                 if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
                 
                 if (!studentStats[studentKey]) {
-                    studentStats[studentKey] = { present: 0, absent: 0, total: 0 };
+                    studentStats[studentKey] = { present: 0, absent: 0, vacation: 0, total: 0 };
                 }
                 
                 studentStats[studentKey].total++;
@@ -11543,21 +11544,33 @@ File: ${fileName}`, 'success');
                     studentStats[studentKey].present++;
                 } else if (record.status === 'absent') {
                     studentStats[studentKey].absent++;
+                    // Check if this absence is due to vacation
+                    if (record.notes && record.notes.toLowerCase().includes('on vacation')) {
+                        studentStats[studentKey].vacation++;
+                    }
                 }
             });
             
             return Object.keys(studentStats).map(studentKey => {
                 const stats = studentStats[studentKey];
-                // Calculate attendance rate as: (present records / global days covered) * 100
-                const rate = globalDaysCovered > 0 ? ((stats.present / globalDaysCovered) * 100).toFixed(1) : '0.0';
+                
+                // Calculate effective days covered (exclude vacation days for this student)
+                const effectiveDaysCovered = globalDaysCovered - stats.vacation;
+                
+                // Calculate attendance rate based on effective days covered
+                // If student has vacation days: (present / (daysCovered - vacationDays)) * 100
+                // If no vacation days: (present / daysCovered) * 100
+                const rate = effectiveDaysCovered > 0 ? ((stats.present / effectiveDaysCovered) * 100).toFixed(1) : '0.0';
                 const displayName = getStudentDisplayName(studentKey);
                 
                 return {
                     name: displayName,
                     present: stats.present,
                     absent: stats.absent,
+                    vacation: stats.vacation,
                     total: stats.total,
                     daysCovered: globalDaysCovered,
+                    effectiveDaysCovered: effectiveDaysCovered,
                     rate: parseFloat(rate)
                 };
             }).sort((a, b) => b.rate - a.rate);
@@ -11876,7 +11889,8 @@ File: ${fileName}`, 'success');
                         name: studentName,
                         total: 0,
                         present: 0,
-                        absent: 0
+                        absent: 0,
+                        vacation: 0
                     };
                 }
                 
@@ -11888,18 +11902,29 @@ File: ${fileName}`, 'success');
                     studentStats[studentKey].present++;
                 } else if (status === 'absent' || status.includes('absent')) {
                     studentStats[studentKey].absent++;
+                    // Check if this absence is due to vacation
+                    if (record.notes && record.notes.toLowerCase().includes('on vacation')) {
+                        studentStats[studentKey].vacation++;
+                    }
                 }
             });
             
-            // Calculate percentages using global days covered and sort
+            // Calculate percentages using effective days covered and sort
             const studentsWithRates = Object.values(studentStats).map(student => {
-                // Calculate attendance rate as: (present records / global days covered) * 100
-                const rate = globalDaysCovered > 0 ? (student.present / globalDaysCovered) * 100 : 0;
+                // Calculate effective days covered (excluding vacation days)
+                const effectiveDaysCovered = globalDaysCovered - student.vacation;
+                
+                // Calculate attendance rate using effective days covered
+                // If student has vacation days: (present / (daysCovered - vacationDays)) * 100
+                // If no vacation days: (present / daysCovered) * 100
+                const rate = effectiveDaysCovered > 0 ? (student.present / effectiveDaysCovered) * 100 : 0;
+                
                 return {
                     ...student,
                     attendanceRate: rate.toFixed(1),
                     numericRate: rate,
-                    daysCovered: globalDaysCovered
+                    daysCovered: globalDaysCovered,
+                    effectiveDaysCovered: effectiveDaysCovered
                 };
             });
             
@@ -12113,6 +12138,7 @@ File: ${fileName}`, 'success');
                         totalRecords: 0,
                         presentCount: 0,
                         absentCount: 0,
+                        vacationCount: 0,
                         dates: new Set(),
                         notes: [] // Collect all notes for this student
                     };
@@ -12133,17 +12159,32 @@ File: ${fileName}`, 'success');
                     student.presentCount++;
                 } else if (status === 'absent' || status.includes('absent')) {
                     student.absentCount++;
+                    // Check if this absence is due to vacation
+                    if (record.notes && record.notes.toLowerCase().includes('on vacation')) {
+                        student.vacationCount++;
+                    }
                 }
             });
             
-            const detailedStats = Object.values(studentDetails).map(student => ({
-                ...student,
-                // Calculate attendance rate as: (present count / global days covered) * 100
-                attendanceRate: globalDaysCovered > 0 ? ((student.presentCount / globalDaysCovered) * 100).toFixed(1) : '0.0',
-                uniqueDays: student.dates.size,
-                globalDaysCovered: globalDaysCovered,
-                notes: student.notes.join(' | ') // Combine all notes for this student
-            })).sort((a, b) => b.totalRecords - a.totalRecords);
+            const detailedStats = Object.values(studentDetails).map(student => {
+                // Calculate effective days covered (excluding vacation days)
+                const effectiveDaysCovered = globalDaysCovered - student.vacationCount;
+                
+                // Calculate attendance rate using effective days covered
+                // If student has vacation days: (present / (daysCovered - vacationDays)) * 100
+                // If no vacation days: (present / daysCovered) * 100
+                const attendanceRate = effectiveDaysCovered > 0 ? 
+                    ((student.presentCount / effectiveDaysCovered) * 100).toFixed(1) : '0.0';
+                
+                return {
+                    ...student,
+                    attendanceRate: attendanceRate,
+                    effectiveDaysCovered: effectiveDaysCovered,
+                    uniqueDays: student.dates.size,
+                    globalDaysCovered: globalDaysCovered,
+                    notes: student.notes.join(' | ') // Combine all notes for this student
+                };
+            }).sort((a, b) => b.totalRecords - a.totalRecords);
             
             updateDetailedStatsDisplay(detailedStats);
             updateChartsDisplay(detailedStats);
@@ -12725,27 +12766,34 @@ File: ${fileName}`, 'success');
             // Calculate missing days (Days Covered - Present Records)
             const missingDays = daysCovered - presentRecords;
             
-            // Check for vacation notes in present records (vacation days should be noted)
+            // Count vacation days from absent records with "on vacation" notes
             let vacationDays = 0;
-            let regularMissingDays = missingDays; // Assume all missing days are regular absences unless noted
-            
-            // Check student-level vacation notes
-            const studentNotes = (student.notes || '').toLowerCase();
-            if (studentNotes.includes('vacation') || studentNotes.includes('holiday') || studentNotes.includes('leave')) {
-                // If student has vacation notes, try to estimate vacation days
-                const vacationMatch = studentNotes.match(/(\d+)\s*(day|week)/);
-                if (vacationMatch) {
-                    vacationDays = vacationMatch[2] === 'week' ? parseInt(vacationMatch[1]) * 5 : parseInt(vacationMatch[1]);
-                    regularMissingDays = Math.max(0, missingDays - vacationDays);
+            records.forEach(record => {
+                const status = (record.attendanceStatus || record.action || '').toLowerCase();
+                const notes = (record.notes || '').toLowerCase();
+                if (status.includes('absent') && notes.includes('on vacation')) {
+                    vacationDays++;
                 }
-            }
+            });
+            
+            // Calculate effective days covered (excluding vacation days)
+            const effectiveDaysCovered = daysCovered - vacationDays;
+            
+            // Calculate regular missing days (missing days that are not vacation)
+            const regularMissingDays = Math.max(0, missingDays - vacationDays);
+            
+            // Recalculate attendance rate using effective days covered
+            const effectiveAttendanceRate = effectiveDaysCovered > 0 ? 
+                (presentRecords / effectiveDaysCovered) * 100 : 0;
             
             console.log('📊 Missing days analysis:', { 
                 daysCovered, 
                 presentRecords, 
                 missingDays, 
                 vacationDays, 
-                regularMissingDays 
+                regularMissingDays,
+                effectiveDaysCovered,
+                effectiveAttendanceRate 
             });
             
             // Special case: All missing days are vacation
@@ -12757,24 +12805,26 @@ File: ${fileName}`, 'success');
                     factors: riskFactors,
                     needsIntervention: false,
                     isOnVacation: true,
-                    adjustedRate: 'N/A (On vacation)'
+                    adjustedRate: effectiveAttendanceRate.toFixed(1) + '% (Vacation excluded)'
                 };
             }
             
-            // FACTOR 1: Current attendance rate (already calculated using Days Covered)
-            if (attendanceRate === 0) {
+            // FACTOR 1: Use effective attendance rate (excluding vacation days)
+            const rateToUse = vacationDays > 0 ? effectiveAttendanceRate : attendanceRate;
+            
+            if (rateToUse === 0) {
                 riskScore += 0.6; // Major risk for 0% attendance
                 riskFactors.push('Zero attendance rate');
-            } else if (attendanceRate < 30) {
+            } else if (rateToUse < 30) {
                 riskScore += 0.5;
                 riskFactors.push('Critically low attendance rate');
-            } else if (attendanceRate < 50) {
+            } else if (rateToUse < 50) {
                 riskScore += 0.4;
                 riskFactors.push('Very low attendance rate');
-            } else if (attendanceRate < 70) {
+            } else if (rateToUse < 70) {
                 riskScore += 0.25;
                 riskFactors.push('Below average attendance');
-            } else if (attendanceRate < 80) {
+            } else if (rateToUse < 80) {
                 riskScore += 0.1;
                 riskFactors.push('Slightly below target attendance');
             }
