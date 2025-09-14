@@ -3,6 +3,25 @@
 ## Overview
 The Chart Views section uses sophisticated algorithms to assess student attendance risk, analyze trends, and set personalized goals. Here are the detailed formulas and logic behind each calculation.
 
+## 🔄 ATTENDANCE RATE CALCULATION CHANGES (v3.2)
+
+### NEW CALCULATION METHOD:
+The system now uses **Days Covered** as the baseline instead of individual student records, providing more accurate and fair attendance rates.
+
+#### **Individual Student Rates:**
+- **Old Formula**: `(Present Records / Total Student Records) × 100`
+- **New Formula**: `(Present Records / Days Covered) × 100`
+
+#### **Overall Class Rate:**
+- **Old Formula**: `(Total Present Records / Total Records) × 100`
+- **New Formula**: `(Total Present Records / (Days Covered × Total Students)) × 100`
+
+#### **Why This Change Matters:**
+- **Fairness**: Students with fewer total records aren't penalized
+- **Accuracy**: Rates reflect actual attendance vs. expected attendance
+- **Consistency**: All students measured against the same timeframe baseline
+- **Example Impact**: A student with 1 present day out of 6 possible days now shows 16.7% instead of 100%
+
 ---
 
 ## 🎯 RISK ASSESSMENT ALGORITHM
@@ -170,10 +189,29 @@ Regular Absence = Record with status "absent" AND
                  (notes does NOT contain vacation keywords)
 ```
 
-### Adjusted Attendance Rate:
+### Individual Attendance Rate Calculation (NEW FORMULA):
+```
+Individual Rate = (Present Records / Days Covered) × 100
+
+Where:
+- Present Records = Count of student's present attendance records
+- Days Covered = Total unique dates in the reporting period
+```
+
+### Overall Attendance Rate Calculation (NEW FORMULA):
+```
+Overall Rate = (Total Present Records / (Days Covered × Total Students)) × 100
+
+Where:
+- Total Present Records = Sum of all present records for all students
+- Days Covered = Total unique dates in the reporting period  
+- Total Students = Count of unique students in the system
+```
+
+### Adjusted Attendance Rate (for vacation days):
 ```
 For students with vacation days:
-Adjusted Rate = (Present Days / (Total Days - Vacation Days)) × 100
+Adjusted Rate = (Present Days / (Days Covered - Vacation Days)) × 100
 ```
 
 ### Data Quality Classification:
@@ -187,9 +225,15 @@ IF total_records ≥ 3:       "Good data quality"
 ## 📋 EXAMPLE CALCULATION
 
 **Student: Abdul Aziz Alzaubi**
-- Attendance Rate: 100.0%
-- Records: 6 total, all present
-- Days Tracked: 35 days
+- Present Records: 6 (all attendance records are present)
+- Days Covered: 6 (unique dates in reporting period)
+- Individual Attendance Rate: (6/6) × 100 = 100.0%
+
+**Overall Class Statistics:**
+- Total Present Records: 59 (all students combined)
+- Total Students: 17
+- Days Covered: 6
+- Overall Attendance Rate: (59/(6×17)) × 100 = (59/102) × 100 = 57.8%
 
 ### Risk Assessment:
 ```
@@ -223,7 +267,7 @@ LOW RISK
 100.0%
 Trend: STABLE ➡️ (High confidence)
 Goal: 95% target → ACHIEVED ✓ (Maintain current performance)
-6 records analyzed • Good data quality • 35 days tracked
+6 records analyzed • Good data quality • 6 days tracked
 Continue monitoring attendance patterns
 ```
 

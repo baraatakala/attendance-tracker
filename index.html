@@ -11183,44 +11183,10 @@ ${environment.tips.slice(0, 3).join('\n')}
         }
 
         // Helper function to resolve student names for PDF export
-        function getStudentDisplayName(studentKey, attendanceData = null) {
+        function getStudentDisplayName(studentKey) {
             console.log('🔍 Looking up student name for key:', studentKey);
             
-            // FIRST: If we have attendance data, try to extract name from records
-            if (attendanceData && Array.isArray(attendanceData)) {
-                console.log('📋 Searching in', attendanceData.length, 'attendance records');
-                
-                // Look for a record with this student key that has both ID and name
-                for (let i = 0; i < attendanceData.length; i++) {
-                    const record = attendanceData[i];
-                    console.log(`📋 Record ${i}:`, {
-                        student: record.student,
-                        studentId: record.studentId, 
-                        studentName: record.studentName,
-                        name: record.name
-                    });
-                    
-                    // Check multiple matching conditions
-                    const matchesStudent = record.student === studentKey;
-                    const matchesStudentId = record.studentId === studentKey;
-                    const hasStudentName = record.studentName && record.studentName !== studentKey;
-                    
-                    console.log(`📋 Matching for "${studentKey}":`, {
-                        matchesStudent,
-                        matchesStudentId, 
-                        hasStudentName,
-                        studentName: record.studentName
-                    });
-                    
-                    if ((matchesStudent || matchesStudentId) && hasStudentName) {
-                        console.log('✅ Found name in attendance data:', record.studentName);
-                        return record.studentName;
-                    }
-                }
-                console.log('❌ No matching record found in attendance data');
-            }
-            
-            // SECOND: Try to get from activeStudents
+            // First try to get from activeStudents
             if (activeStudents && activeStudents[studentKey]) {
                 const student = activeStudents[studentKey];
                 console.log('📁 Found in activeStudents:', student);
@@ -11231,7 +11197,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
             }
             
-            // THIRD: Fallback to defaultStudentNames
+            // Fallback to defaultStudentNames
             if (defaultStudentNames && defaultStudentNames[studentKey]) {
                 const student = defaultStudentNames[studentKey];
                 console.log('📁 Found in defaultStudentNames:', student);
@@ -11242,7 +11208,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
             }
             
-            // FOURTH: If it's already a display name (not an ID), return as is
+            // If it's already a display name (not an ID), return as is
             if (studentKey && !studentKey.startsWith('STU')) {
                 console.log('📝 Returning as display name:', studentKey);
                 return studentKey;
@@ -11511,24 +11477,7 @@ File: ${fileName}`, 'success');
             const uniqueStudentNames = new Set();
             uniqueStudentKeys.forEach(key => {
                 if (key !== 'Unknown') {
-                    // Get display name using same logic as View Records section
-                    const firstRecord = data.find(record => 
-                        (record.student === key || record.studentId === key)
-                    );
-                    
-                    let displayName;
-                    if (firstRecord && firstRecord.studentId && firstRecord.studentName) {
-                        // New format with ID and name - show just the name
-                        displayName = firstRecord.studentName;
-                    } else if (firstRecord && (firstRecord.studentName || firstRecord.employeeName)) {
-                        // Has name but no ID
-                        displayName = firstRecord.studentName || firstRecord.employeeName;
-                    } else {
-                        // Fallback to getStudentDisplayName
-                        displayName = getStudentDisplayName(key, data);
-                    }
-                    
-                    uniqueStudentNames.add(displayName);
+                    uniqueStudentNames.add(getStudentDisplayName(key));
                 }
             });
             
@@ -11581,54 +11530,30 @@ File: ${fileName}`, 'success');
             const globalDaysCovered = globalDates.size;
             
             data.forEach(record => {
-                // Debug the record structure
-                console.log('Processing record:', {
-                    studentId: record.studentId,
-                    studentName: record.studentName,
-                    student: record.student,
-                    fullRecord: record
-                });
+                // Try multiple fields to get the student key - prioritize ID fields first
+                const studentKey = record.student || record.studentId || record.name || record.studentName || 'Unknown Student';
+                if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
                 
-                // Get display name using same logic as View Records
-                let displayName;
-                if (record.studentId && record.studentName) {
-                    displayName = record.studentName; // Use just the name part
-                    console.log('Case 1: Using studentName:', displayName);
-                } else if (record.studentName) {
-                    displayName = record.studentName;
-                    console.log('Case 2: Using studentName:', displayName);
-                } else if (record.student) {
-                    // Try to get name from activeStudents if it's an ID
-                    displayName = getStudentDisplayName(record.student, data);
-                    console.log('Case 3: Using getStudentDisplayName for student:', record.student, '→', displayName);
-                } else {
-                    displayName = 'Unknown Student';
-                    console.log('Case 4: Unknown student');
+                if (!studentStats[studentKey]) {
+                    studentStats[studentKey] = { present: 0, absent: 0, total: 0 };
                 }
                 
-                console.log('Final displayName:', displayName);
-                
-                if (!displayName || displayName === 'Unknown Student') return; // Skip invalid records
-                
-                if (!studentStats[displayName]) {
-                    studentStats[displayName] = { present: 0, absent: 0, total: 0 };
-                }
-                
-                studentStats[displayName].total++;
+                studentStats[studentKey].total++;
                 if (record.status === 'present') {
-                    studentStats[displayName].present++;
+                    studentStats[studentKey].present++;
                 } else if (record.status === 'absent') {
-                    studentStats[displayName].absent++;
+                    studentStats[studentKey].absent++;
                 }
             });
             
-            return Object.keys(studentStats).map(displayName => {
-                const stats = studentStats[displayName];
+            return Object.keys(studentStats).map(studentKey => {
+                const stats = studentStats[studentKey];
                 // Calculate attendance rate as: (present records / global days covered) * 100
                 const rate = globalDaysCovered > 0 ? ((stats.present / globalDaysCovered) * 100).toFixed(1) : '0.0';
+                const displayName = getStudentDisplayName(studentKey);
                 
                 return {
-                    name: displayName, // Use displayName directly
+                    name: displayName,
                     present: stats.present,
                     absent: stats.absent,
                     total: stats.total,
@@ -11643,38 +11568,28 @@ File: ${fileName}`, 'success');
             const totalRecordsPerStudent = {};
             
             data.forEach(record => {
-                // Get display name using same logic as View Records section
-                let displayName;
-                if (record.studentId && record.studentName) {
-                    // New format with ID and name - use just the name for PDF
-                    displayName = record.studentName;
-                } else if (record.studentName || record.employeeName) {
-                    // Has name but no ID
-                    displayName = record.studentName || record.employeeName;
-                } else {
-                    // Fallback to ID or other fields
-                    displayName = record.student || record.studentId || record.name || 'Unknown Student';
-                }
+                // Try multiple fields to get the student key - prioritize ID fields first
+                const studentKey = record.student || record.studentId || record.name || record.studentName || 'Unknown Student';
+                if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
                 
-                if (!displayName || displayName === 'Unknown Student') return; // Skip invalid records
-                
-                if (!totalRecordsPerStudent[displayName]) {
-                    totalRecordsPerStudent[displayName] = 0;
+                if (!totalRecordsPerStudent[studentKey]) {
+                    totalRecordsPerStudent[studentKey] = 0;
                 }
-                totalRecordsPerStudent[displayName]++;
+                totalRecordsPerStudent[studentKey]++;
                 
                 if (record.status === 'absent') {
-                    if (!studentAbsences[displayName]) {
-                        studentAbsences[displayName] = 0;
+                    if (!studentAbsences[studentKey]) {
+                        studentAbsences[studentKey] = 0;
                     }
-                    studentAbsences[displayName]++;
+                    studentAbsences[studentKey]++;
                 }
             });
             
-            return Object.keys(studentAbsences).map(displayName => {
-                const absenceCount = studentAbsences[displayName];
-                const totalRecords = totalRecordsPerStudent[displayName];
+            return Object.keys(studentAbsences).map(studentKey => {
+                const absenceCount = studentAbsences[studentKey];
+                const totalRecords = totalRecordsPerStudent[studentKey];
                 const percentage = ((absenceCount / totalRecords) * 100).toFixed(1);
+                const displayName = getStudentDisplayName(studentKey);
                 
                 return {
                     name: displayName,
@@ -12532,10 +12447,14 @@ File: ${fileName}`, 'success');
                 poor: sortedRecords.length < 2 || timespan < 7          // Less than 1 week
             };
             
+            // Get global Days Covered for risk calculations
+            const daysCovered = parseInt(document.getElementById('daysCovered')?.value) || 1;
+            
             const result = {
                 records: sortedRecords,
                 totalRecords: sortedRecords.length,
                 timespan: timespan,
+                daysCovered: daysCovered,
                 dataQuality: dataQuality.excellent ? 'Excellent' : 
                            dataQuality.good ? 'Good' : 
                            dataQuality.fair ? 'Fair' : 'Limited'
@@ -12794,41 +12713,43 @@ File: ${fileName}`, 'success');
             
             console.log('🎯 Risk assessment for:', student.name, 'Rate:', attendanceRate + '%');
             
-            // Check for vacation status FIRST - this changes everything
-            const hasVacationNotes = checkForVacationNotes(student, records);
-            let vacationAbsences = 0;
-            let regularAbsences = 0;
+            // Get Days Covered from global data (this should be passed or calculated globally)
+            const daysCovered = studentRecords.daysCovered || 6; // Fallback to 6 if not provided
             
-            // Analyze absence types
-            records.forEach(record => {
-                const status = (record.attendanceStatus || record.action || '').toLowerCase();
-                const notes = (record.notes || '').toLowerCase();
-                
-                if (status.includes('absent')) {
-                    if (notes.includes('vacation') || notes.includes('holiday') || notes.includes('leave')) {
-                        vacationAbsences++;
-                    } else {
-                        regularAbsences++;
-                    }
-                }
-            });
-            
-            console.log('📊 Absence breakdown:', { vacationAbsences, regularAbsences, totalRecords: records.length });
-            
-            // Calculate adjusted attendance rate (excluding vacation absences)
-            const totalRecords = records.length;
+            // Count present records
             const presentRecords = records.filter(r => {
                 const status = (r.attendanceStatus || r.action || '').toLowerCase();
                 return status.includes('present');
             }).length;
             
-            const adjustedAttendanceRate = totalRecords > vacationAbsences ? 
-                (presentRecords / (totalRecords - vacationAbsences)) * 100 : attendanceRate;
+            // Calculate missing days (Days Covered - Present Records)
+            const missingDays = daysCovered - presentRecords;
             
-            console.log('📊 Adjusted rate (excluding vacation):', adjustedAttendanceRate.toFixed(1) + '%');
+            // Check for vacation notes in present records (vacation days should be noted)
+            let vacationDays = 0;
+            let regularMissingDays = missingDays; // Assume all missing days are regular absences unless noted
             
-            // Special case: All absences are vacation
-            if (presentRecords === 0 && regularAbsences === 0 && vacationAbsences > 0) {
+            // Check student-level vacation notes
+            const studentNotes = (student.notes || '').toLowerCase();
+            if (studentNotes.includes('vacation') || studentNotes.includes('holiday') || studentNotes.includes('leave')) {
+                // If student has vacation notes, try to estimate vacation days
+                const vacationMatch = studentNotes.match(/(\d+)\s*(day|week)/);
+                if (vacationMatch) {
+                    vacationDays = vacationMatch[2] === 'week' ? parseInt(vacationMatch[1]) * 5 : parseInt(vacationMatch[1]);
+                    regularMissingDays = Math.max(0, missingDays - vacationDays);
+                }
+            }
+            
+            console.log('📊 Missing days analysis:', { 
+                daysCovered, 
+                presentRecords, 
+                missingDays, 
+                vacationDays, 
+                regularMissingDays 
+            });
+            
+            // Special case: All missing days are vacation
+            if (missingDays > 0 && regularMissingDays === 0 && vacationDays > 0) {
                 riskFactors.push('Student on vacation - all absences planned');
                 return {
                     score: 0.1, // Very low risk
@@ -12840,44 +12761,49 @@ File: ${fileName}`, 'success');
                 };
             }
             
-            // FACTOR 1: Current attendance rate (use adjusted rate for fair assessment)
-            const rateToUse = adjustedAttendanceRate > attendanceRate ? adjustedAttendanceRate : attendanceRate;
-            
-            if (rateToUse === 0) {
+            // FACTOR 1: Current attendance rate (already calculated using Days Covered)
+            if (attendanceRate === 0) {
                 riskScore += 0.6; // Major risk for 0% attendance
                 riskFactors.push('Zero attendance rate');
-            } else if (rateToUse < 30) {
+            } else if (attendanceRate < 30) {
                 riskScore += 0.5;
                 riskFactors.push('Critically low attendance rate');
-            } else if (rateToUse < 50) {
+            } else if (attendanceRate < 50) {
                 riskScore += 0.4;
                 riskFactors.push('Very low attendance rate');
-            } else if (rateToUse < 70) {
+            } else if (attendanceRate < 70) {
                 riskScore += 0.25;
                 riskFactors.push('Below average attendance');
-            } else if (rateToUse < 80) {
+            } else if (attendanceRate < 80) {
                 riskScore += 0.1;
                 riskFactors.push('Slightly below target attendance');
             }
             
-            // FACTOR 2: Regular (non-vacation) absences are weighted heavily
-            if (regularAbsences > 0) {
-                const regularAbsenceRate = (regularAbsences / totalRecords) * 100;
-                if (regularAbsenceRate > 50) {
+            // FACTOR 2: Regular missing days (non-vacation) weighted against Days Covered
+            if (regularMissingDays > 0) {
+                const regularMissingRate = (regularMissingDays / daysCovered) * 100;
+                
+                if (regularMissingRate > 50) {
                     riskScore += 0.4;
                     riskFactors.push('High rate of unplanned absences');
-                } else if (regularAbsenceRate > 25) {
+                } else if (regularMissingRate > 25) {
                     riskScore += 0.25;
                     riskFactors.push('Multiple unplanned absences');
-                } else if (regularAbsences >= 2) {
+                } else if (regularMissingDays >= 2) {
                     riskScore += 0.15;
                     riskFactors.push('Some unplanned absences');
                 }
+                
+                console.log('📊 Regular missing days analysis:', { 
+                    regularMissingDays, 
+                    daysCovered, 
+                    regularMissingRate: regularMissingRate.toFixed(1) + '%' 
+                });
             }
             
             // FACTOR 3: Recent trend analysis
             const trendAnalysis = calculateRealTrend(studentRecords, attendanceRate);
-            if (trendAnalysis.direction.includes('DECLINING') && regularAbsences > 0) {
+            if (trendAnalysis.direction.includes('DECLINING') && regularMissingDays > 0) {
                 riskScore += 0.2;
                 riskFactors.push('Declining attendance trend');
             } else if (trendAnalysis.direction.includes('IMPROVING')) {
@@ -12885,28 +12811,23 @@ File: ${fileName}`, 'success');
                 riskFactors.push('Improving attendance trend');
             }
             
-            // FACTOR 4: Consecutive absence patterns (only for non-vacation)
-            const recentRegularAbsences = records.slice(-5).filter(r => {
-                const status = (r.attendanceStatus || r.action || '').toLowerCase();
-                const notes = (r.notes || '').toLowerCase();
-                return status.includes('absent') && !notes.includes('vacation') && !notes.includes('holiday');
-            }).length;
-            
-            if (recentRegularAbsences >= 3) {
-                riskScore += 0.25;
-                riskFactors.push('Multiple recent unplanned absences');
+            // FACTOR 4: Consecutive missing pattern (recent performance)
+            // Look at attendance pattern in recent periods
+            if (presentRecords < daysCovered * 0.6) { // If less than 60% attendance
+                riskScore += 0.15;
+                riskFactors.push('Consistently low attendance pattern');
             }
             
             // FACTOR 5: Data quality consideration
-            if (studentRecords.dataQuality === 'Limited' && records.length < 3) {
+            if (studentRecords.dataQuality === 'Limited' && presentRecords < 3) {
                 riskScore += 0.1;
                 riskFactors.push('Insufficient data for complete assessment');
             }
             
             // FACTOR 6: Vacation planning reduces risk
-            if (vacationAbsences > 0) {
-                riskScore -= Math.min(0.3, vacationAbsences * 0.05); // Reduce risk for planned absences
-                riskFactors.push(`${vacationAbsences} planned vacation day(s)`);
+            if (vacationDays > 0) {
+                riskScore -= Math.min(0.3, vacationDays * 0.05); // Reduce risk for planned absences
+                riskFactors.push(`${vacationDays} planned vacation day(s)`);
             }
             
             // Clamp risk score between 0 and 1
@@ -12923,7 +12844,7 @@ File: ${fileName}`, 'success');
             }
             
             // Override: 0% attendance with no vacation excuse = HIGH risk
-            if (attendanceRate === 0 && vacationAbsences === 0) {
+            if (attendanceRate === 0 && vacationDays === 0) {
                 riskLevel = 'HIGH';
                 riskScore = Math.max(riskScore, 0.8);
             }
@@ -12940,10 +12861,10 @@ File: ${fileName}`, 'success');
                 level: riskLevel,
                 factors: riskFactors,
                 needsIntervention: riskScore > 0.5,
-                isOnVacation: vacationAbsences > 0 && regularAbsences === 0,
-                adjustedRate: vacationAbsences > 0 ? adjustedAttendanceRate.toFixed(1) + '%' : null,
-                vacationDays: vacationAbsences,
-                regularAbsences: regularAbsences
+                isOnVacation: vacationDays > 0 && regularMissingDays === 0,
+                adjustedRate: vacationDays > 0 ? ((presentRecords / (daysCovered - vacationDays)) * 100).toFixed(1) + '%' : null,
+                vacationDays: vacationDays,
+                regularMissingDays: regularMissingDays
             };
         }
 
