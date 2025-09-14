@@ -11290,12 +11290,12 @@ ${environment.tips.slice(0, 3).join('\n')}
                 // Reset text color for body
                 doc.setTextColor(...textColor);
                 
-                let yPosition = 55; // Increased to account for the taller header (38 + some spacing)
+                let yPosition = 50; // Reduced from 55 to 50 for better spacing
                 
                 // Summary Statistics
                 const summaryStats = calculateSummaryStats(filteredData);
                 addSectionHeader(doc, 'SUMMARY STATISTICS', yPosition);
-                yPosition += 15;
+                yPosition += 12; // Reduced from 15 to 12
                 
                 const summaryData = [
                     ['Total Records', summaryStats.totalRecords.toString()],
@@ -11307,7 +11307,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 ];
                 
                 addTable(doc, summaryData, yPosition, false);
-                yPosition += (summaryData.length * 8) + 20;
+                yPosition += (summaryData.length * 8) + 10; // Reduced spacing from 20 to 10
                 
                 // Check if we need a new page
                 if (yPosition > 250) {
@@ -11317,7 +11317,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 // Attendance Rates by Student
                 addSectionHeader(doc, 'INDIVIDUAL ATTENDANCE RATES', yPosition);
-                yPosition += 15;
+                yPosition += 10; // Reduced spacing from 15 to 10
                 
                 const attendanceRates = calculateAttendanceRates(filteredData);
                 const attendanceTableData = attendanceRates.map(student => [
