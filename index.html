@@ -11188,17 +11188,36 @@ ${environment.tips.slice(0, 3).join('\n')}
             
             // FIRST: If we have attendance data, try to extract name from records
             if (attendanceData && Array.isArray(attendanceData)) {
-                // Look for a record with this student key that has both ID and name
-                const recordWithName = attendanceData.find(record => {
-                    return (record.student === studentKey || record.studentId === studentKey) && 
-                           record.studentName && 
-                           record.studentName !== studentKey;
-                });
+                console.log('📋 Searching in', attendanceData.length, 'attendance records');
                 
-                if (recordWithName && recordWithName.studentName) {
-                    console.log('📋 Found name in attendance data:', recordWithName.studentName);
-                    return recordWithName.studentName;
+                // Look for a record with this student key that has both ID and name
+                for (let i = 0; i < attendanceData.length; i++) {
+                    const record = attendanceData[i];
+                    console.log(`📋 Record ${i}:`, {
+                        student: record.student,
+                        studentId: record.studentId, 
+                        studentName: record.studentName,
+                        name: record.name
+                    });
+                    
+                    // Check multiple matching conditions
+                    const matchesStudent = record.student === studentKey;
+                    const matchesStudentId = record.studentId === studentKey;
+                    const hasStudentName = record.studentName && record.studentName !== studentKey;
+                    
+                    console.log(`📋 Matching for "${studentKey}":`, {
+                        matchesStudent,
+                        matchesStudentId, 
+                        hasStudentName,
+                        studentName: record.studentName
+                    });
+                    
+                    if ((matchesStudent || matchesStudentId) && hasStudentName) {
+                        console.log('✅ Found name in attendance data:', record.studentName);
+                        return record.studentName;
+                    }
                 }
+                console.log('❌ No matching record found in attendance data');
             }
             
             // SECOND: Try to get from activeStudents
@@ -11492,7 +11511,24 @@ File: ${fileName}`, 'success');
             const uniqueStudentNames = new Set();
             uniqueStudentKeys.forEach(key => {
                 if (key !== 'Unknown') {
-                    uniqueStudentNames.add(getStudentDisplayName(key, data)); // Pass attendance data
+                    // Get display name using same logic as View Records section
+                    const firstRecord = data.find(record => 
+                        (record.student === key || record.studentId === key)
+                    );
+                    
+                    let displayName;
+                    if (firstRecord && firstRecord.studentId && firstRecord.studentName) {
+                        // New format with ID and name - show just the name
+                        displayName = firstRecord.studentName;
+                    } else if (firstRecord && (firstRecord.studentName || firstRecord.employeeName)) {
+                        // Has name but no ID
+                        displayName = firstRecord.studentName || firstRecord.employeeName;
+                    } else {
+                        // Fallback to getStudentDisplayName
+                        displayName = getStudentDisplayName(key, data);
+                    }
+                    
+                    uniqueStudentNames.add(displayName);
                 }
             });
             
@@ -11545,30 +11581,54 @@ File: ${fileName}`, 'success');
             const globalDaysCovered = globalDates.size;
             
             data.forEach(record => {
-                // Try multiple fields to get the student key - prioritize ID fields first
-                const studentKey = record.student || record.studentId || record.name || record.studentName || 'Unknown Student';
-                if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
+                // Debug the record structure
+                console.log('Processing record:', {
+                    studentId: record.studentId,
+                    studentName: record.studentName,
+                    student: record.student,
+                    fullRecord: record
+                });
                 
-                if (!studentStats[studentKey]) {
-                    studentStats[studentKey] = { present: 0, absent: 0, total: 0 };
+                // Get display name using same logic as View Records
+                let displayName;
+                if (record.studentId && record.studentName) {
+                    displayName = record.studentName; // Use just the name part
+                    console.log('Case 1: Using studentName:', displayName);
+                } else if (record.studentName) {
+                    displayName = record.studentName;
+                    console.log('Case 2: Using studentName:', displayName);
+                } else if (record.student) {
+                    // Try to get name from activeStudents if it's an ID
+                    displayName = getStudentDisplayName(record.student, data);
+                    console.log('Case 3: Using getStudentDisplayName for student:', record.student, '→', displayName);
+                } else {
+                    displayName = 'Unknown Student';
+                    console.log('Case 4: Unknown student');
                 }
                 
-                studentStats[studentKey].total++;
+                console.log('Final displayName:', displayName);
+                
+                if (!displayName || displayName === 'Unknown Student') return; // Skip invalid records
+                
+                if (!studentStats[displayName]) {
+                    studentStats[displayName] = { present: 0, absent: 0, total: 0 };
+                }
+                
+                studentStats[displayName].total++;
                 if (record.status === 'present') {
-                    studentStats[studentKey].present++;
+                    studentStats[displayName].present++;
                 } else if (record.status === 'absent') {
-                    studentStats[studentKey].absent++;
+                    studentStats[displayName].absent++;
                 }
             });
             
-            return Object.keys(studentStats).map(studentKey => {
-                const stats = studentStats[studentKey];
+            return Object.keys(studentStats).map(displayName => {
+                const stats = studentStats[displayName];
                 // Calculate attendance rate as: (present records / global days covered) * 100
                 const rate = globalDaysCovered > 0 ? ((stats.present / globalDaysCovered) * 100).toFixed(1) : '0.0';
-                const displayName = getStudentDisplayName(studentKey, data); // Pass attendance data
                 
                 return {
-                    name: displayName,
+                    name: displayName, // Use displayName directly
                     present: stats.present,
                     absent: stats.absent,
                     total: stats.total,
@@ -11583,28 +11643,38 @@ File: ${fileName}`, 'success');
             const totalRecordsPerStudent = {};
             
             data.forEach(record => {
-                // Try multiple fields to get the student key - prioritize ID fields first
-                const studentKey = record.student || record.studentId || record.name || record.studentName || 'Unknown Student';
-                if (!studentKey || studentKey === 'Unknown Student') return; // Skip invalid records
-                
-                if (!totalRecordsPerStudent[studentKey]) {
-                    totalRecordsPerStudent[studentKey] = 0;
+                // Get display name using same logic as View Records section
+                let displayName;
+                if (record.studentId && record.studentName) {
+                    // New format with ID and name - use just the name for PDF
+                    displayName = record.studentName;
+                } else if (record.studentName || record.employeeName) {
+                    // Has name but no ID
+                    displayName = record.studentName || record.employeeName;
+                } else {
+                    // Fallback to ID or other fields
+                    displayName = record.student || record.studentId || record.name || 'Unknown Student';
                 }
-                totalRecordsPerStudent[studentKey]++;
+                
+                if (!displayName || displayName === 'Unknown Student') return; // Skip invalid records
+                
+                if (!totalRecordsPerStudent[displayName]) {
+                    totalRecordsPerStudent[displayName] = 0;
+                }
+                totalRecordsPerStudent[displayName]++;
                 
                 if (record.status === 'absent') {
-                    if (!studentAbsences[studentKey]) {
-                        studentAbsences[studentKey] = 0;
+                    if (!studentAbsences[displayName]) {
+                        studentAbsences[displayName] = 0;
                     }
-                    studentAbsences[studentKey]++;
+                    studentAbsences[displayName]++;
                 }
             });
             
-            return Object.keys(studentAbsences).map(studentKey => {
-                const absenceCount = studentAbsences[studentKey];
-                const totalRecords = totalRecordsPerStudent[studentKey];
+            return Object.keys(studentAbsences).map(displayName => {
+                const absenceCount = studentAbsences[displayName];
+                const totalRecords = totalRecordsPerStudent[displayName];
                 const percentage = ((absenceCount / totalRecords) * 100).toFixed(1);
-                const displayName = getStudentDisplayName(studentKey, data); // Pass attendance data
                 
                 return {
                     name: displayName,
