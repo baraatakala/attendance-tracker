@@ -5667,14 +5667,6 @@
                             <li class="analytics-empty">No data available</li>
                         </ul>
                     </div>
-
-                    <!-- Individual Absence Count -->
-                    <div class="analytics-card">
-                        <h4><i class="fas fa-user-times"></i> Individual Absence Count</h4>
-                        <ul id="individualAbsenceList" class="analytics-list">
-                            <li class="analytics-empty">No data available</li>
-                        </ul>
-                    </div>
                 </div>
 
                 <!-- Dates with Highest Absences -->
@@ -5690,48 +5682,33 @@
                     </div>
                 </div>
 
-                <!-- Detailed Student Statistics -->
+                <!-- Charts Section -->
                 <div class="individual-stats">
-                    <div class="analytics-tabs">
-                        <div class="analytics-tab active" onclick="switchTab(this, 'detailsTab')">
-                            <i class="fas fa-users"></i> Student Details
-                        </div>
-                        <div class="analytics-tab" onclick="switchTab(this, 'chartsTab')">
-                            <i class="fas fa-chart-bar"></i> Charts View
-                        </div>
-                    </div>
-                    <div id="detailsTab" class="tab-content active">
-                        <div id="detailedStudentStats" class="analytics-chart">
-                            <div class="analytics-empty">No detailed statistics available</div>
-                        </div>
-                    </div>
-                    <div id="chartsTab" class="tab-content">
-                        <div class="charts-filter-section">
-                            <div class="charts-filter-container">
-                                <div class="filter-input-group">
-                                    <i class="fas fa-user filter-icon"></i>
-                                    <select id="chartStudentFilter" 
-                                            class="chart-student-filter" 
-                                            aria-label="Filter students in charts view">
-                                        <option value="">All Students</option>
-                                    </select>
-                                    <button type="button" 
-                                            id="clearChartStudentFilter" 
-                                            class="clear-filter-btn" 
-                                            onclick="clearChartStudentFilter()" 
-                                            title="Clear student filter"
-                                            style="display: none;">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="filter-results-info">
-                                    <span id="chartFilterResults" class="filter-results-text"></span>
-                                </div>
+                    <div class="charts-filter-section">
+                        <div class="charts-filter-container">
+                            <div class="filter-input-group">
+                                <i class="fas fa-user filter-icon"></i>
+                                <select id="chartStudentFilter" 
+                                        class="chart-student-filter" 
+                                        aria-label="Filter students in charts view">
+                                    <option value="">All Students</option>
+                                </select>
+                                <button type="button" 
+                                        id="clearChartStudentFilter" 
+                                        class="clear-filter-btn" 
+                                        onclick="clearChartStudentFilter()" 
+                                        title="Clear student filter"
+                                        style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="filter-results-info">
+                                <span id="chartFilterResults" class="filter-results-text"></span>
                             </div>
                         </div>
-                        <div id="studentChartsContainer" class="charts-container">
-                            <div class="analytics-empty">Select "Refresh Analytics" to generate charts</div>
-                        </div>
+                    </div>
+                    <div id="studentChartsContainer" class="charts-container">
+                        <div class="analytics-empty">Select "Refresh Analytics" to generate charts</div>
                     </div>
                 </div>
             </section>
@@ -10896,64 +10873,6 @@ ${environment.tips.slice(0, 3).join('\n')}
             }
         }
 
-        function generateAbsenceAnalytics(data) {
-            const studentAbsences = {};
-            
-            data.forEach(record => {
-                const isAbsent = record.attendanceStatus === 'absent' || 
-                               record.actionType === 'absence' || 
-                               record.action === 'Absent';
-                
-                if (isAbsent) {
-                    let studentKey, studentName;
-                    
-                    if (record.studentId && record.studentName) {
-                        studentKey = record.studentId;
-                        studentName = `${record.studentId} - ${record.studentName}`;
-                    } else if (record.studentName) {
-                        studentKey = record.studentName;
-                        studentName = record.studentName;
-                    } else if (record.employeeName) {
-                        studentKey = record.employeeName;
-                        studentName = record.employeeName;
-                    } else {
-                        studentKey = 'Unknown';
-                        studentName = 'Unknown Student';
-                    }
-                    
-                    if (!studentAbsences[studentKey]) {
-                        studentAbsences[studentKey] = {
-                            name: studentName,
-                            count: 0,
-                            dates: []
-                        };
-                    }
-                    studentAbsences[studentKey].count++;
-                    studentAbsences[studentKey].dates.push(record.date);
-                }
-            });
-
-            const absenceList = Object.keys(studentAbsences)
-                .map(key => studentAbsences[key])
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10);
-
-            const absenceContainer = document.getElementById('individualAbsenceList');
-            if (absenceList.length > 0) {
-                absenceContainer.innerHTML = absenceList.map(student => `
-                    <li class="student-stat-item poor">
-                        <div>
-                            <div class="analytics-metric">${student.name}</div>
-                            <div class="stat-details">Absent on: ${student.dates.slice(0, 3).join(', ')}${student.dates.length > 3 ? '...' : ''}</div>
-                        </div>
-                        <span class="absence-badge">${student.count} absence${student.count > 1 ? 's' : ''}</span>
-                    </li>
-                `).join('');
-            } else {
-                absenceContainer.innerHTML = '<li class="analytics-empty">No absences recorded</li>';
-            }
-        }
-
         function generateDateAnalytics(data) {
             const dateAbsences = {};
             
@@ -11028,106 +10947,6 @@ ${environment.tips.slice(0, 3).join('\n')}
             }
         }
 
-        function generateDetailedStudentStats(data) {
-            console.log('📊 generateDetailedStudentStats called with:', data.length, 'records');
-            console.log('📊 Sample data structure:', data.slice(0, 2));
-            
-            const studentDetails = {};
-            
-            data.forEach(record => {
-                let studentKey, studentName;
-                
-                if (record.studentId && record.studentName) {
-                    studentKey = record.studentId;
-                    studentName = `${record.studentId} - ${record.studentName}`;
-                } else if (record.studentName) {
-                    studentKey = record.studentName;
-                    studentName = record.studentName;
-                } else if (record.employeeName) {
-                    studentKey = record.employeeName;
-                    studentName = record.employeeName;
-                } else {
-                    studentKey = 'Unknown';
-                    studentName = 'Unknown Student';
-                }
-                
-                if (!studentDetails[studentKey]) {
-                    studentDetails[studentKey] = {
-                        name: studentName,
-                        dates: new Set(),
-                        total: 0,
-                        present: 0,
-                        absent: 0
-                    };
-                }
-                
-                studentDetails[studentKey].dates.add(record.date);
-                studentDetails[studentKey].total++;
-                
-                const isPresent = record.attendanceStatus === 'present' || 
-                                record.actionType === 'check-in' || 
-                                record.action === 'Present';
-                const isAbsent = record.attendanceStatus === 'absent' || 
-                               record.actionType === 'absence' || 
-                               record.action === 'Absent';
-                
-                if (isPresent) {
-                    studentDetails[studentKey].present++;
-                } else if (isAbsent) {
-                    studentDetails[studentKey].absent++;
-                }
-            });
-
-            // Calculate global days covered for the entire report period
-            const globalDates = new Set();
-            data.forEach(record => {
-                const recordDate = record.datetime || record.date || record.timestamp || '';
-                let dateStr = '';
-                if (typeof recordDate === 'string' && recordDate.includes(' ')) {
-                    dateStr = recordDate.split(' ')[0];
-                } else if (typeof recordDate === 'string') {
-                    dateStr = recordDate;
-                } else {
-                    dateStr = new Date().toISOString().split('T')[0]; // fallback to today
-                }
-                globalDates.add(dateStr);
-            });
-            const globalDaysCovered = globalDates.size;
-
-            const detailedStats = Object.keys(studentDetails).map(key => {
-                const stats = studentDetails[key];
-                // Calculate attendance rate as: (present records / global days covered) * 100
-                const rate = globalDaysCovered > 0 ? (stats.present / globalDaysCovered) * 100 : 0;
-                return {
-                    name: stats.name,
-                    uniqueDays: stats.dates.size,
-                    globalDaysCovered: globalDaysCovered,
-                    total: stats.total,
-                    present: stats.present,
-                    absent: stats.absent,
-                    rate: rate.toFixed(1)
-                };
-            }).sort((a, b) => b.rate - a.rate);
-
-            const detailsContainer = document.getElementById('detailedStudentStats');
-            if (detailedStats.length > 0) {
-                detailsContainer.innerHTML = detailedStats.map(student => `
-                    <div class="student-detail">
-                        <div>
-                            <div class="student-name">${student.name}</div>
-                            <div class="stat-details">
-                                ${student.total} records across ${student.uniqueDays} day${student.uniqueDays > 1 ? 's' : ''} | 
-                                Present: ${student.present} | Absent: ${student.absent} | Rate: ${student.rate}% (${student.present}/${student.globalDaysCovered} total days)
-                            </div>
-                        </div>
-                        <span class="analytics-percentage ${getPercentageClass(student.rate)}">${student.rate}%</span>
-                    </div>
-                `).join('');
-            } else {
-                detailsContainer.innerHTML = '<div class="analytics-empty">No detailed statistics available</div>';
-            }
-        }
-
         function getPercentageClass(rate) {
             if (rate >= 80) return 'percentage-high';
             if (rate >= 60) return 'percentage-medium';
@@ -11144,9 +10963,7 @@ ${environment.tips.slice(0, 3).join('\n')}
         function showEmptyAnalytics() {
             document.getElementById('highestAttendanceList').innerHTML = '<li class="analytics-empty">No data available for selected period</li>';
             document.getElementById('lowestAttendanceList').innerHTML = '<li class="analytics-empty">No data available for selected period</li>';
-            document.getElementById('individualAbsenceList').innerHTML = '<li class="analytics-empty">No absence data available</li>';
             document.getElementById('absenceTimeline').innerHTML = '<div class="analytics-empty">No absence data available</div>';
-            document.getElementById('detailedStudentStats').innerHTML = '<div class="analytics-empty">No detailed statistics available</div>';
         }
 
         // Helper function to resolve student names for PDF export
@@ -11730,7 +11547,6 @@ File: ${fileName}`, 'success');
             console.log('✅ Proceeding with improved analytics generation...');
             // Generate all analytics with improved algorithms
             generateAttendanceRateAnalytics(filteredData);
-            generateAbsenceAnalytics(filteredData);
             generateDateAnalytics(filteredData);
             generateDetailedStudentStats(filteredData);
         }
@@ -11940,46 +11756,6 @@ File: ${fileName}`, 'success');
             }
         }
 
-        function generateAbsenceAnalytics(data) {
-            const studentAbsences = {};
-            
-            data.forEach(record => {
-                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                if (status === 'absent' || record.actionType === 'absent' || status.includes('absent')) {
-                    const studentKey = record.studentId || record.studentName || 'Unknown';
-                    const studentName = record.studentName || studentKey;
-                    
-                    if (!studentAbsences[studentKey]) {
-                        studentAbsences[studentKey] = {
-                            name: studentName,
-                            count: 0
-                        };
-                    }
-                    studentAbsences[studentKey].count++;
-                }
-            });
-            
-            const sortedAbsences = Object.values(studentAbsences)
-                .sort((a, b) => b.count - a.count);
-            
-            updateAbsenceDisplay(sortedAbsences);
-        }
-
-        function updateAbsenceDisplay(absences) {
-            const absenceList = document.getElementById('individualAbsenceList');
-            
-            if (absences.length > 0) {
-                absenceList.innerHTML = absences.map(student => `
-                    <li>
-                        <span>${student.name}</span>
-                        <span class="absence-badge">${student.count} absence${student.count !== 1 ? 's' : ''}</span>
-                    </li>
-                `).join('');
-            } else {
-                absenceList.innerHTML = '<li class="analytics-empty">No absences recorded</li>';
-            }
-        }
-
         function generateDateAnalytics(data) {
             const dateStats = {};
             const totalStudents = new Set();
@@ -12066,20 +11842,6 @@ File: ${fileName}`, 'success');
             } catch (error) {
                 console.error('Error in toggleSection:', error);
             }
-        }
-
-        function switchTab(tabElement, tabId) {
-            // Remove active from all tabs
-            const tabs = tabElement.parentElement.querySelectorAll('.analytics-tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            
-            // Remove active from all tab contents
-            const contents = tabElement.closest('.individual-stats').querySelectorAll('.tab-content');
-            contents.forEach(content => content.classList.remove('active'));
-            
-            // Activate selected tab and content
-            tabElement.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
         }
 
         function updateDateAnalyticsDisplay(dates) {
@@ -12174,7 +11936,6 @@ File: ${fileName}`, 'success');
                 };
             }).sort((a, b) => b.totalRecords - a.totalRecords);
             
-            updateDetailedStatsDisplay(detailedStats);
             updateChartsDisplay(detailedStats);
         }
 
@@ -13682,44 +13443,10 @@ File: ${fileName}`, 'success');
             `;
         }
 
-        function updateDetailedStatsDisplay(stats) {
-            const container = document.getElementById('detailedStudentStats');
-            
-            if (stats.length > 0) {
-                container.innerHTML = `
-                    <div class="students-grid">
-                        ${stats.map(student => {
-                            const percentClass = student.attendanceRate >= 80 ? 'percentage-high' : 
-                                               student.attendanceRate >= 60 ? 'percentage-medium' : 'percentage-low';
-                            return `
-                                <div class="chart-item">
-                                    <h5>${student.name}</h5>
-                                    <div class="student-stats-info">
-                                        <div class="attendance-rate">
-                                            <span class="analytics-percentage ${percentClass}">${student.attendanceRate}%</span>
-                                        </div>
-                                        <div class="stats-details">
-                                            <small style="color: #2ecc71; font-weight: 600;">✓ Present: ${student.presentCount}</small>
-                                            <small style="color: #e74c3c; font-weight: 600;">✗ Absent: ${student.absentCount}</small>
-                                            <small style="color: #7f8c8d;">📅 ${student.uniqueDays} days active</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-            } else {
-                container.innerHTML = '<div class="analytics-empty">No detailed statistics available</div>';
-            }
-        }
-
         function showEmptyAnalytics() {
             document.getElementById('highestAttendanceList').innerHTML = '<li class="analytics-empty">No data for selected period</li>';
             document.getElementById('lowestAttendanceList').innerHTML = '<li class="analytics-empty">No data for selected period</li>';
-            document.getElementById('individualAbsenceList').innerHTML = '<li class="analytics-empty">No data for selected period</li>';
             document.getElementById('absenceTimeline').innerHTML = '<div class="analytics-empty">No data for selected period</div>';
-            document.getElementById('detailedStudentStats').innerHTML = '<div class="analytics-empty">No data for selected period</div>';
             document.getElementById('studentChartsContainer').innerHTML = '<div class="analytics-empty">No chart data for selected period</div>';
         }
 
@@ -16301,7 +16028,6 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
         window.restoreDefaultStudents = restoreDefaultStudents;
         window.closeStudentManagementPanel = closeStudentManagementPanel;
         window.toggleSection = toggleSection;
-        window.switchTab = switchTab;
         window.openEmailForm = openEmailForm;
         window.closeEmailForm = closeEmailForm;
         window.closeEmailPreview = closeEmailPreview;
