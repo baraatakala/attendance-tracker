@@ -5421,13 +5421,17 @@
 
                         <!-- Notes -->
                         <div class="form-group">
-                            <label for="notes"><i class="fas fa-sticky-note"></i> Notes (Optional):</label>
-                            <textarea id="notes" name="notes" rows="3" 
-                                      placeholder="Add any additional notes..." 
-                                      aria-describedby="notes-help" 
-                                      aria-label="Optional notes for attendance record"
-                                      maxlength="500"></textarea>
-                            <small id="notes-help" class="form-help">Optional additional information (max 500 characters)</small>
+                            <label for="notes"><i class="fas fa-sticky-note"></i> Excuse Reason (Optional):</label>
+                            <select id="notes" name="notes" 
+                                    aria-describedby="notes-help" 
+                                    aria-label="Optional excuse reason for attendance record">
+                                <option value="">-- Select excuse reason --</option>
+                                <option value="Abroad-excused">Abroad-excused</option>
+                                <option value="Medical excuse">Medical excuse</option>
+                                <option value="Family emergency">Family emergency</option>
+                                <option value="Other">Other excuse</option>
+                            </select>
+                            <small id="notes-help" class="form-help">Select excuse reason (will exclude from attendance calculation if applicable)</small>
                         </div>
 
                         <!-- Fraud Protection Status (Hidden) -->
@@ -7183,12 +7187,9 @@
             }
             
             // Character counter for notes
+            // Notes field is now a dropdown, no character counter needed
             const notesField = document.getElementById('notes');
-            if (notesField) {
-                notesField.addEventListener('input', updateNotesCounter);
-                // Initialize counter
-                updateNotesCounter.call(notesField);
-            }
+            // No event listener needed for dropdown
             
             // Anti-fraud monitoring
             setupAntiFraudMonitoring();
@@ -9736,37 +9737,6 @@ ${environment.tips.slice(0, 3).join('\n')}
             }
         }
 
-        function updateNotesCounter() {
-            const maxLength = 500;
-            const currentLength = this.value.length;
-            const remaining = maxLength - currentLength;
-            
-            // Find or create counter element
-            let counter = document.getElementById('notes-counter');
-            if (!counter) {
-                counter = document.createElement('small');
-                counter.id = 'notes-counter';
-                counter.className = 'form-help notes-counter';
-                counter.style.cssText = 'float: right; margin-top: 2px;';
-                
-                const helpElement = document.getElementById('notes-help');
-                if (helpElement) {
-                    helpElement.parentNode.insertBefore(counter, helpElement.nextSibling);
-                }
-            }
-            
-            counter.textContent = `${currentLength}/${maxLength} characters`;
-            
-            // Color code based on remaining characters
-            if (remaining < 50) {
-                counter.style.color = '#e74c3c'; // Red
-            } else if (remaining < 100) {
-                counter.style.color = '#f39c12'; // Orange  
-            } else {
-                counter.style.color = 'var(--text-secondary)'; // Normal
-            }
-        }
-
         async function handleFormSubmit(event) {
             event.preventDefault();
             
@@ -11339,7 +11309,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 });
                 
                 addTable(doc, attendanceTableData, yPosition, true, 
-                    ['Student Name', 'Present', 'Absent', 'Vacation', 'Effective Days', 'Rate']);
+                    ['Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate']);
                 yPosition += (attendanceTableData.length * 8) + 25;
                 
                 // Check if we need a new page
@@ -11514,6 +11484,15 @@ File: ${fileName}`, 'success');
             };
         }
         
+        // Helper function to check if an absence is excused (vacation/abroad)
+        function isExcusedAbsence(notes) {
+            if (!notes) return false;
+            const notesLower = notes.toLowerCase();
+            return notesLower.includes('on vacation') || 
+                   notesLower.includes('abroad-excused') ||
+                   notes === 'Abroad-excused'; // Exact match for dropdown selection
+        }
+        
         function calculateAttendanceRates(data) {
             const studentStats = {};
             
@@ -11547,8 +11526,8 @@ File: ${fileName}`, 'success');
                     studentStats[studentKey].present++;
                 } else if (record.status === 'absent') {
                     studentStats[studentKey].absent++;
-                    // Check if this absence is due to vacation
-                    if (record.notes && record.notes.toLowerCase().includes('on vacation')) {
+                    // Check if this absence is excused (vacation/abroad)
+                    if (isExcusedAbsence(record.notes)) {
                         studentStats[studentKey].vacation++;
                     }
                 }
@@ -11889,8 +11868,8 @@ File: ${fileName}`, 'success');
                     studentStats[studentKey].present++;
                 } else if (status === 'absent' || status.includes('absent')) {
                     studentStats[studentKey].absent++;
-                    // Check if this absence is due to vacation
-                    if (record.notes && record.notes.toLowerCase().includes('on vacation')) {
+                    // Check if this absence is excused (vacation/abroad)
+                    if (isExcusedAbsence(record.notes)) {
                         studentStats[studentKey].vacation++;
                     }
                 }
@@ -12168,8 +12147,8 @@ File: ${fileName}`, 'success');
                     student.presentCount++;
                 } else if (status === 'absent' || status.includes('absent')) {
                     student.absentCount++;
-                    // Check if this absence is due to vacation
-                    if (record.notes && record.notes.toLowerCase().includes('on vacation')) {
+                    // Check if this absence is excused (vacation/abroad)
+                    if (isExcusedAbsence(record.notes)) {
                         student.vacationCount++;
                     }
                 }
@@ -12775,12 +12754,11 @@ File: ${fileName}`, 'success');
             // Calculate missing days (Days Covered - Present Records)
             const missingDays = daysCovered - presentRecords;
             
-            // Count vacation days from absent records with "on vacation" notes
+            // Count vacation days from absent records with excused notes (vacation/abroad)
             let vacationDays = 0;
             records.forEach(record => {
                 const status = (record.attendanceStatus || record.action || '').toLowerCase();
-                const notes = (record.notes || '').toLowerCase();
-                if (status.includes('absent') && notes.includes('on vacation')) {
+                if (status.includes('absent') && isExcusedAbsence(record.notes)) {
                     vacationDays++;
                 }
             });
@@ -12807,7 +12785,7 @@ File: ${fileName}`, 'success');
             
             // Special case: All missing days are vacation
             if (missingDays > 0 && regularMissingDays === 0 && vacationDays > 0) {
-                riskFactors.push('Student on vacation - all absences planned');
+                riskFactors.push('Student excused - all absences planned (vacation/abroad)');
                 return {
                     score: 0.1, // Very low risk
                     level: 'LOW',
@@ -13351,7 +13329,7 @@ File: ${fileName}`, 'success');
             let score = 0;
             
             // Check actual notes for vacation
-            const hasVacationNote = studentNotes && studentNotes.toLowerCase().includes('on vacation');
+            const hasVacationNote = isExcusedAbsence(studentNotes);
             const allAbsent = attendanceRate === 0;
             
             // Base risk from attendance rate (logical thresholds)
@@ -13399,7 +13377,7 @@ File: ${fileName}`, 'success');
             const recommendations = [];
             
             // NO MORE ASSUMPTIONS - Only check actual notes
-            const hasVacationNote = student.notes && student.notes.toLowerCase().includes('on vacation');
+            const hasVacationNote = isExcusedAbsence(student.notes);
             const allAbsent = student.presentCount === 0;
             const excellentAttendance = attendanceRate >= 90;
             
@@ -13417,7 +13395,7 @@ File: ${fileName}`, 'success');
             if (attendanceRate === 0) {
                 if (hasVacationNote) {
                     recommendations.push({
-                        text: "On vacation - Monitor return and re-engagement",
+                        text: "Excused absence - Monitor return and re-engagement",
                         priority: "medium",
                         icon: "fas fa-plane"
                     });
