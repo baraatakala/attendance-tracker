@@ -11183,10 +11183,25 @@ ${environment.tips.slice(0, 3).join('\n')}
         }
 
         // Helper function to resolve student names for PDF export
-        function getStudentDisplayName(studentKey) {
+        function getStudentDisplayName(studentKey, attendanceData = null) {
             console.log('🔍 Looking up student name for key:', studentKey);
             
-            // First try to get from activeStudents
+            // FIRST: If we have attendance data, try to extract name from records
+            if (attendanceData && Array.isArray(attendanceData)) {
+                // Look for a record with this student key that has both ID and name
+                const recordWithName = attendanceData.find(record => {
+                    return (record.student === studentKey || record.studentId === studentKey) && 
+                           record.studentName && 
+                           record.studentName !== studentKey;
+                });
+                
+                if (recordWithName && recordWithName.studentName) {
+                    console.log('📋 Found name in attendance data:', recordWithName.studentName);
+                    return recordWithName.studentName;
+                }
+            }
+            
+            // SECOND: Try to get from activeStudents
             if (activeStudents && activeStudents[studentKey]) {
                 const student = activeStudents[studentKey];
                 console.log('📁 Found in activeStudents:', student);
@@ -11197,7 +11212,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
             }
             
-            // Fallback to defaultStudentNames
+            // THIRD: Fallback to defaultStudentNames
             if (defaultStudentNames && defaultStudentNames[studentKey]) {
                 const student = defaultStudentNames[studentKey];
                 console.log('📁 Found in defaultStudentNames:', student);
@@ -11208,7 +11223,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
             }
             
-            // If it's already a display name (not an ID), return as is
+            // FOURTH: If it's already a display name (not an ID), return as is
             if (studentKey && !studentKey.startsWith('STU')) {
                 console.log('📝 Returning as display name:', studentKey);
                 return studentKey;
@@ -11477,7 +11492,7 @@ File: ${fileName}`, 'success');
             const uniqueStudentNames = new Set();
             uniqueStudentKeys.forEach(key => {
                 if (key !== 'Unknown') {
-                    uniqueStudentNames.add(getStudentDisplayName(key));
+                    uniqueStudentNames.add(getStudentDisplayName(key, data)); // Pass attendance data
                 }
             });
             
@@ -11550,7 +11565,7 @@ File: ${fileName}`, 'success');
                 const stats = studentStats[studentKey];
                 // Calculate attendance rate as: (present records / global days covered) * 100
                 const rate = globalDaysCovered > 0 ? ((stats.present / globalDaysCovered) * 100).toFixed(1) : '0.0';
-                const displayName = getStudentDisplayName(studentKey);
+                const displayName = getStudentDisplayName(studentKey, data); // Pass attendance data
                 
                 return {
                     name: displayName,
@@ -11589,7 +11604,7 @@ File: ${fileName}`, 'success');
                 const absenceCount = studentAbsences[studentKey];
                 const totalRecords = totalRecordsPerStudent[studentKey];
                 const percentage = ((absenceCount / totalRecords) * 100).toFixed(1);
-                const displayName = getStudentDisplayName(studentKey);
+                const displayName = getStudentDisplayName(studentKey, data); // Pass attendance data
                 
                 return {
                     name: displayName,
