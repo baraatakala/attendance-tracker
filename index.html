@@ -10949,6 +10949,85 @@ ${environment.tips.slice(0, 3).join('\n')}
             }
         }
 
+        function calculateDatesWithHighestAbsences(data) {
+            const dateStats = {};
+            let totalStudents = 0;
+            
+            // Count total unique students
+            const uniqueStudents = new Set();
+            data.forEach(record => {
+                const student = record.student || record.studentId || record.name || record.studentName;
+                if (student && student !== 'Unknown Student') {
+                    uniqueStudents.add(student);
+                }
+            });
+            totalStudents = uniqueStudents.size;
+            
+            if (totalStudents === 0) return [];
+            
+            // Count present and absent records by date
+            data.forEach(record => {
+                // Get date from multiple possible fields
+                let date = record.date || record.datetime;
+                if (!date && record.timestamp) {
+                    date = record.timestamp.split('T')[0];
+                }
+                
+                // Extract date portion if it's a full datetime string
+                if (date && date.includes('T')) {
+                    date = date.split('T')[0];
+                }
+                
+                if (!date) return;
+                
+                if (!dateStats[date]) {
+                    dateStats[date] = {
+                        present: 0,
+                        absent: 0,
+                        total: 0
+                    };
+                }
+                
+                // Check if student is present or absent
+                const isPresent = record.attendanceStatus === 'present' || 
+                                record.actionType === 'presence' || 
+                                record.action === 'Present' ||
+                                record.status === 'present';
+                                
+                const isAbsent = record.attendanceStatus === 'absent' || 
+                               record.actionType === 'absence' || 
+                               record.action === 'Absent' ||
+                               record.status === 'absent';
+                
+                if (isPresent) {
+                    dateStats[date].present++;
+                    dateStats[date].total++;
+                } else if (isAbsent) {
+                    dateStats[date].absent++;
+                    dateStats[date].total++;
+                }
+            });
+            
+            // Calculate absences as: Total Students - Present Students on that date
+            const sortedDates = Object.keys(dateStats)
+                .map(date => {
+                    const presentCount = dateStats[date].present;
+                    const calculatedAbsences = totalStudents - presentCount; // This is the key calculation!
+                    
+                    return {
+                        date: date,
+                        absentStudents: calculatedAbsences,
+                        absenceRate: calculatedAbsences, // For display purposes
+                        formattedDate: formatDisplayDate(date)
+                    };
+                })
+                .filter(item => item.absentStudents > 0) // Only show dates with absences
+                .sort((a, b) => b.absentStudents - a.absentStudents)
+                .slice(0, 10);
+            
+            return sortedDates;
+        }
+
         function getPercentageClass(rate) {
             if (rate >= 80) return 'percentage-high';
             if (rate >= 60) return 'percentage-medium';
@@ -11032,13 +11111,19 @@ ${environment.tips.slice(0, 3).join('\n')}
                            (record.student || record.studentId || record.studentName || record.name) && 
                            (record.status === 'present' || record.status === 'absent' || 
                             record.attendanceStatus === 'present' || record.attendanceStatus === 'absent' ||
-                            record.action === 'present' || record.action === 'absent');
+                            record.action === 'Present' || record.action === 'Absent' ||
+                            record.actionType === 'presence' || record.actionType === 'absence');
                 }).map(record => ({
                     student: record.student || record.studentName || record.studentId || record.name || 'Unknown Student',
                     status: record.status || record.attendanceStatus || record.action || 'unknown',
                     datetime: record.datetime || record.date || record.timestamp || new Date().toISOString(),
                     notes: record.notes || '',
-                    location: record.location || ''
+                    location: record.location || '',
+                    // Preserve original fields for the calculation functions
+                    attendanceStatus: record.attendanceStatus,
+                    actionType: record.actionType,
+                    action: record.action,
+                    date: record.date
                 }));
                 
                 if (filteredData.length === 0) {
@@ -11170,6 +11255,33 @@ ${environment.tips.slice(0, 3).join('\n')}
                 } else {
                     doc.setFontSize(10);
                     doc.text('No absence data available for the selected period.', 20, yPosition);
+                    yPosition += 20;
+                }
+                
+                // Check if we need a new page before adding dates analysis
+                if (yPosition > 200) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Dates with Highest Absences
+                addSectionHeader(doc, 'DATES WITH HIGHEST ABSENCES', yPosition);
+                yPosition += 15;
+                
+                const datesAbsenceData = calculateDatesWithHighestAbsences(filteredData);
+                if (datesAbsenceData.length > 0) {
+                    const datesTableData = datesAbsenceData.map(item => [
+                        item.date, // Show date in simple format like dashboard
+                        `${item.absentStudents} absence${item.absentStudents > 1 ? 's' : ''}`, // Match dashboard format
+                        '' // Remove the percentage column to match dashboard
+                    ]);
+                    
+                    addTable(doc, datesTableData, yPosition, true, 
+                        ['Date', 'Absences', '']); // Simplified headers
+                    yPosition += (datesTableData.length * 8) + 20;
+                } else {
+                    doc.setFontSize(10);
+                    doc.text('No date-specific absence data available for the selected period.', 20, yPosition);
                     yPosition += 20;
                 }
                 
