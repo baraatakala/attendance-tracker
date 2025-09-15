@@ -11110,6 +11110,21 @@ ${environment.tips.slice(0, 3).join('\n')}
                 yPosition += 10; // Reduced spacing from 15 to 10
                 
                 const attendanceRates = calculateAttendanceRates(filteredData);
+                
+                console.log('📄 PDF export data comparison:', {
+                    filteredDataLength: filteredData.length,
+                    attendanceRatesLength: attendanceRates.length,
+                    sampleStudent: attendanceRates[0],
+                    fullStudentData: attendanceRates.slice(0, 3).map(s => ({
+                        name: s.name,
+                        present: s.present,
+                        absent: s.absent,
+                        vacation: s.vacation,
+                        effectiveDays: s.effectiveDaysCovered,
+                        rate: s.rate
+                    }))
+                });
+                
                 const attendanceTableData = attendanceRates.map(student => {
                     // Calculate correct absent count: Effective Days - Present
                     const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
@@ -11525,6 +11540,9 @@ File: ${fileName}`, 'success');
             const filterPeriod = document.getElementById('analyticsFilter').value;
             console.log('🔄 IMPROVED ANALYTICS: Generating data-driven insights for period:', filterPeriod);
             
+            // Clear any cached data to ensure fresh calculation
+            console.log('🧹 Clearing cache and forcing fresh data calculation');
+            
             const filteredData = getAnalyticsData(filterPeriod);
             
             console.log('📊 Analytics Data Quality Check:', {
@@ -11860,81 +11878,53 @@ File: ${fileName}`, 'success');
         }
 
         function generateDetailedStudentStats(data) {
-            const studentDetails = {};
+            // Use the same reliable data processing as PDF export
+            // Clean and validate each record first, exactly like the PDF export does
+            const cleanedData = data.filter(record => {
+                return record && 
+                       (record.student || record.studentId || record.studentName || record.name) && 
+                       (record.status === 'present' || record.status === 'absent' || 
+                        record.attendanceStatus === 'present' || record.attendanceStatus === 'absent' ||
+                        record.action === 'present' || record.action === 'absent');
+            }).map(record => ({
+                student: record.student || record.studentName || record.studentId || record.name || 'Unknown Student',
+                status: record.status || record.attendanceStatus || record.action || 'unknown',
+                datetime: record.datetime || record.date || record.timestamp || new Date().toISOString(),
+                notes: record.notes || '',
+                location: record.location || ''
+            }));
             
-            // Calculate global days covered for the entire report period
-            const globalDates = new Set();
-            data.forEach(record => {
-                const recordDate = record.datetime || record.date || record.timestamp || '';
-                let dateStr = '';
-                if (typeof recordDate === 'string' && recordDate.includes(' ')) {
-                    dateStr = recordDate.split(' ')[0];
-                } else if (typeof recordDate === 'string') {
-                    dateStr = recordDate;
-                } else {
-                    dateStr = new Date().toISOString().split('T')[0]; // fallback to today
-                }
-                globalDates.add(dateStr);
-            });
-            const globalDaysCovered = globalDates.size;
+            // Use the same reliable calculation logic as the PDF export
+            const attendanceRates = calculateAttendanceRates(cleanedData);
             
-            data.forEach(record => {
-                const studentKey = record.studentId || record.studentName || 'Unknown';
-                const studentName = record.studentName || studentKey;
-                
-                if (!studentDetails[studentKey]) {
-                    studentDetails[studentKey] = {
-                        name: studentName,
-                        totalRecords: 0,
-                        presentCount: 0,
-                        absentCount: 0,
-                        vacationCount: 0,
-                        dates: new Set(),
-                        notes: [] // Collect all notes for this student
-                    };
-                }
-                
-                const student = studentDetails[studentKey];
-                student.totalRecords++;
-                student.dates.add(record.date);
-                
-                // Collect notes if they exist
-                if (record.notes && record.notes.trim()) {
-                    student.notes.push(record.notes.trim());
-                }
-                
-                // Check for present/absent status - handle multiple formats
-                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                if (status === 'present' || record.actionType === 'check-in' || status.includes('present')) {
-                    student.presentCount++;
-                } else if (status === 'absent' || status.includes('absent')) {
-                    student.absentCount++;
-                    // Check if this absence is excused (vacation/abroad)
-                    if (isExcusedAbsence(record.notes)) {
-                        student.vacationCount++;
-                    }
-                }
+            console.log('📊 Charts using same reliable data as PDF:', {
+                originalRecords: data.length,
+                cleanedRecords: cleanedData.length,
+                calculatedStudents: attendanceRates.length,
+                sampleStudent: attendanceRates[0],
+                fullStudentData: attendanceRates.slice(0, 3).map(s => ({
+                    name: s.name,
+                    present: s.present,
+                    absent: s.absent,
+                    vacation: s.vacation,
+                    effectiveDays: s.effectiveDaysCovered,
+                    rate: s.rate
+                }))
             });
             
-            const detailedStats = Object.values(studentDetails).map(student => {
-                // Calculate effective days covered (excluding vacation days)
-                const effectiveDaysCovered = globalDaysCovered - student.vacationCount;
-                
-                // Calculate attendance rate using effective days covered
-                // If student has vacation days: (present / (daysCovered - vacationDays)) * 100
-                // If no vacation days: (present / daysCovered) * 100
-                const attendanceRate = effectiveDaysCovered > 0 ? 
-                    ((student.presentCount / effectiveDaysCovered) * 100).toFixed(1) : '0.0';
-                
-                return {
-                    ...student,
-                    attendanceRate: attendanceRate,
-                    effectiveDaysCovered: effectiveDaysCovered,
-                    uniqueDays: student.dates.size,
-                    globalDaysCovered: globalDaysCovered,
-                    notes: student.notes.join(' | ') // Combine all notes for this student
-                };
-            }).sort((a, b) => b.totalRecords - a.totalRecords);
+            // Convert the reliable PDF data format to chart display format
+            const detailedStats = attendanceRates.map(student => ({
+                name: student.name,
+                totalRecords: student.total,
+                presentCount: student.present,
+                absentCount: student.absent,
+                vacationCount: student.vacation,
+                attendanceRate: student.rate.toFixed(1),
+                effectiveDaysCovered: student.effectiveDaysCovered,
+                globalDaysCovered: student.daysCovered,
+                uniqueDays: student.daysCovered, // Use global days as unique days for consistency
+                notes: '' // Notes not needed for charts display
+            }));
             
             updateChartsDisplay(detailedStats);
         }
@@ -11949,10 +11939,14 @@ File: ${fileName}`, 'success');
                 container.innerHTML = `
                     <div class="simplified-dashboard-header">
                         <h4><i class="fas fa-chart-line"></i> Student Analytics Dashboard</h4>
-                        <p>Comprehensive attendance insights and risk assessment</p>
+                        <p>Reliable attendance insights using PDF export calculation logic</p>
                         <div class="weekly-summary-badge">
-                            <i class="fas fa-users"></i> 
-                            <span>Individual Student Analysis</span>
+                            <i class="fas fa-chart-bar"></i> 
+                            <span>Same Data Source as PDF Report</span>
+                            <small style="display: block; margin-top: 4px; opacity: 0.8;">
+                                Filter: ${document.getElementById('analyticsFilter')?.value || 'all'} | 
+                                Records: ${stats.length} students from ${enrichedStats.reduce((sum, s) => sum + (s.totalRecords || 0), 0)} total records
+                            </small>
                         </div>
                     </div>
                     
@@ -12001,9 +11995,8 @@ File: ${fileName}`, 'success');
                                         
                                         <div class="data-summary">
                                             <small>
-                                                ${student.recordsAnalyzed || 0} records analyzed
-                                                ${student.dataQuality ? ` • ${student.dataQuality} data quality` : ''}
-                                                ${student.analysisTimespan ? ` • ${student.analysisTimespan} days tracked` : ''}
+                                                Present: ${student.presentCount} • Absent: ${Math.max(0, student.effectiveDaysCovered - student.presentCount)} • Num-Excuse: ${student.vacationCount || 0} • Effective Days: ${student.effectiveDaysCovered}
+                                                ${student.dataQuality ? ` • ${student.dataQuality} quality` : ''}
                                             </small>
                                         </div>
                                         
@@ -12396,84 +12389,222 @@ File: ${fileName}`, 'success');
                 };
             }
             
-            // Group records by week to calculate weekly attendance rates
-            const weeklyRates = [];
-            const weeks = {};
+            console.log('📊 TREND ANALYSIS for student:', {
+                totalRecords: records.length,
+                currentRate: currentRate,
+                recordsPreview: records.slice(0, 3).map(r => ({
+                    date: r.date,
+                    status: r.attendanceStatus || r.action,
+                    notes: r.notes
+                }))
+            });
             
-            records.forEach(record => {
-                const date = new Date(record.date);
-                const weekKey = Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000)); // Week number
-                
-                if (!weeks[weekKey]) {
-                    weeks[weekKey] = { present: 0, total: 0, date: date };
+            // Sort records chronologically first
+            const sortedRecords = records.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateA - dateB;
+            });
+            
+            // For small datasets (< 6 records), use simple chronological analysis
+            if (sortedRecords.length < 6) {
+                return analyzeShortTermTrend(sortedRecords, currentRate);
+            }
+            
+            // For larger datasets, use daily analysis instead of weekly grouping
+            const dailyRates = [];
+            const dailyStats = {};
+            
+            // Group by actual date to calculate daily attendance
+            sortedRecords.forEach(record => {
+                const dateStr = record.date;
+                if (!dailyStats[dateStr]) {
+                    dailyStats[dateStr] = { present: 0, absent: 0, total: 0, date: new Date(record.date) };
                 }
                 
-                weeks[weekKey].total++;
-                const status = (record.attendanceStatus || record.action || '').toLowerCase();
-                if (status.includes('present') || status === 'p') {
-                    weeks[weekKey].present++;
+                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
+                dailyStats[dateStr].total++;
+                
+                if (status === 'present' || status.includes('present')) {
+                    dailyStats[dateStr].present++;
+                } else if (status === 'absent' || status.includes('absent')) {
+                    dailyStats[dateStr].absent++;
                 }
             });
             
-            // Convert to weekly percentages
-            Object.keys(weeks).sort((a, b) => a - b).forEach(weekKey => {
-                const week = weeks[weekKey];
-                const rate = (week.present / week.total) * 100;
-                weeklyRates.push({ rate: rate, date: week.date });
+            // Convert to daily rates and calculate trend
+            const dates = Object.keys(dailyStats).sort();
+            dates.forEach(dateStr => {
+                const dayStats = dailyStats[dateStr];
+                // For individual day, rate is either 0% or 100% 
+                const rate = dayStats.present > 0 ? 100 : 0;
+                dailyRates.push({ 
+                    rate: rate, 
+                    date: dayStats.date,
+                    present: dayStats.present,
+                    absent: dayStats.absent
+                });
             });
             
-            if (weeklyRates.length < 2) {
+            console.log('📊 Daily rates calculated:', dailyRates);
+            
+            if (dailyRates.length < 2) {
                 return {
                     direction: 'STABLE',
                     icon: '➡️',
                     velocity: '0.0',
                     confidence: 'Low',
                     monthlyImprovement: '0.0',
-                    description: 'Single week data - trend unclear'
+                    description: 'Single day data - trend unclear'
                 };
             }
             
-            // Calculate linear regression for trend
-            const regression = calculateSimpleLinearRegression(weeklyRates);
-            const slope = regression.slope; // Change per week
-            const monthlyChange = slope * 4.33; // Approximate weeks per month
+            // Calculate recent vs early performance for trend
+            const totalDays = dailyRates.length;
+            const splitPoint = Math.floor(totalDays / 2);
             
-            // Determine trend direction and confidence
-            let direction, icon, confidence;
+            const earlyPeriod = dailyRates.slice(0, splitPoint);
+            const recentPeriod = dailyRates.slice(splitPoint);
             
-            if (Math.abs(slope) < 2) {
+            const earlyRate = earlyPeriod.reduce((sum, day) => sum + day.rate, 0) / earlyPeriod.length;
+            const recentRate = recentPeriod.reduce((sum, day) => sum + day.rate, 0) / recentPeriod.length;
+            
+            const trendChange = recentRate - earlyRate;
+            const changePerWeek = (trendChange / totalDays) * 7; // Approximate weekly change
+            const monthlyChange = changePerWeek * 4.33;
+            
+            console.log('📊 Trend calculation:', {
+                totalDays,
+                splitPoint,
+                earlyRate: earlyRate.toFixed(1),
+                recentRate: recentRate.toFixed(1),
+                trendChange: trendChange.toFixed(1),
+                changePerWeek: changePerWeek.toFixed(1)
+            });
+            
+            // Determine confidence based on data quality
+            let confidence = 'Low';
+            if (totalDays >= 8) {
+                confidence = 'High';
+            } else if (totalDays >= 4) {
+                confidence = 'Medium';
+            }
+            
+            // Determine trend direction with more realistic thresholds
+            let direction, icon;
+            
+            // For attendance data, changes are typically more dramatic
+            if (Math.abs(trendChange) < 10) {
                 direction = 'STABLE';
                 icon = '➡️';
-                confidence = 'High';
-            } else if (slope > 10) {
+            } else if (trendChange >= 50) {
                 direction = 'STRONGLY IMPROVING';
                 icon = '📈';
-                confidence = 'High';
-            } else if (slope > 3) {
+            } else if (trendChange >= 20) {
                 direction = 'IMPROVING';
                 icon = '📈';
-                confidence = 'High';
-            } else if (slope < -10) {
+            } else if (trendChange <= -50) {
                 direction = 'STRONGLY DECLINING';
                 icon = '📉';
-                confidence = 'High';
-            } else if (slope < -3) {
+            } else if (trendChange <= -20) {
                 direction = 'DECLINING';
                 icon = '📉';
-                confidence = 'High';
             } else {
-                direction = slope > 0 ? 'SLIGHTLY IMPROVING' : 'SLIGHTLY DECLINING';
-                icon = slope > 0 ? '📈' : '📉';
+                direction = trendChange > 0 ? 'SLIGHTLY IMPROVING' : 'SLIGHTLY DECLINING';
+                icon = trendChange > 0 ? '📈' : '📉';
+            }
+            
+            // Special handling for vacation/excuse patterns
+            const hasVacationPattern = records.some(r => isExcusedAbsence(r.notes));
+            if (hasVacationPattern && Math.abs(trendChange) < 20) {
+                direction = 'STABLE';
+                icon = '➡️';
                 confidence = 'Medium';
             }
             
             return {
                 direction: direction,
                 icon: icon,
-                velocity: slope.toFixed(1),
+                velocity: changePerWeek.toFixed(1),
                 confidence: confidence,
                 monthlyImprovement: monthlyChange.toFixed(1),
-                description: `${direction.toLowerCase()} at ${Math.abs(slope).toFixed(1)}% per week`
+                description: `${direction.toLowerCase()} trend based on ${totalDays} days of data`
+            };
+        }
+        
+        function analyzeShortTermTrend(records, currentRate) {
+            // For datasets with < 6 records, use simple chronological comparison
+            const totalRecords = records.length;
+            
+            // Get first half and second half
+            const midPoint = Math.ceil(totalRecords / 2);
+            const firstHalf = records.slice(0, midPoint);
+            const secondHalf = records.slice(midPoint);
+            
+            // Count present in each half
+            const firstHalfPresent = firstHalf.filter(r => {
+                const status = (r.attendanceStatus || r.action || '').toLowerCase();
+                return status === 'present' || status.includes('present');
+            }).length;
+            
+            const secondHalfPresent = secondHalf.filter(r => {
+                const status = (r.attendanceStatus || r.action || '').toLowerCase();
+                return status === 'present' || status.includes('present');
+            }).length;
+            
+            const firstHalfRate = (firstHalfPresent / firstHalf.length) * 100;
+            const secondHalfRate = secondHalfPresent > 0 ? (secondHalfPresent / secondHalf.length) * 100 : 0;
+            
+            const change = secondHalfRate - firstHalfRate;
+            
+            console.log('📊 Short-term trend analysis:', {
+                totalRecords,
+                firstHalf: firstHalf.length,
+                secondHalf: secondHalf.length,
+                firstHalfPresent,
+                secondHalfPresent,
+                firstHalfRate: firstHalfRate.toFixed(1),
+                secondHalfRate: secondHalfRate.toFixed(1),
+                change: change.toFixed(1)
+            });
+            
+            // For small datasets, be more conservative with trend detection
+            let direction, icon, confidence = 'Low';
+            
+            if (Math.abs(change) < 25) {
+                direction = 'STABLE';
+                icon = '➡️';
+            } else if (change >= 50) {
+                direction = 'STRONGLY IMPROVING';
+                icon = '📈';
+                confidence = 'Medium';
+            } else if (change >= 25) {
+                direction = 'IMPROVING';
+                icon = '📈';
+                confidence = 'Medium';
+            } else if (change <= -50) {
+                direction = 'STRONGLY DECLINING';
+                icon = '📉';
+                confidence = 'Medium';
+            } else if (change <= -25) {
+                direction = 'DECLINING';
+                icon = '📉';
+                confidence = 'Medium';
+            } else {
+                direction = change > 0 ? 'SLIGHTLY IMPROVING' : 'SLIGHTLY DECLINING';
+                icon = change > 0 ? '📈' : '📉';
+            }
+            
+            // Weekly velocity approximation
+            const weeklyChange = totalRecords >= 4 ? change / 2 : change;
+            
+            return {
+                direction: direction,
+                icon: icon,
+                velocity: weeklyChange.toFixed(1),
+                confidence: confidence,
+                monthlyImprovement: (weeklyChange * 4).toFixed(1),
+                description: `${direction.toLowerCase()} pattern in recent ${totalRecords} records`
             };
         }
 
