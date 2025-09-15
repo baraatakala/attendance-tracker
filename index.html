@@ -12755,17 +12755,9 @@ File: ${fileName}`, 'success');
                 effectiveAttendanceRate 
             });
             
-            // Special case: All missing days are vacation
+            // Note vacation information in risk factors but don't override percentage-based risk
             if (missingDays > 0 && regularMissingDays === 0 && vacationDays > 0) {
                 riskFactors.push('Student excused - all absences planned (vacation/abroad)');
-                return {
-                    score: 0.1, // Very low risk
-                    level: 'LOW',
-                    factors: riskFactors,
-                    needsIntervention: false,
-                    isOnVacation: true,
-                    adjustedRate: effectiveAttendanceRate.toFixed(1) + '% (Vacation excluded)'
-                };
             }
             
             // FACTOR 1: Use appropriate attendance rate based on data quality
@@ -12850,20 +12842,16 @@ File: ${fileName}`, 'success');
             // Clamp risk score between 0 and 1
             riskScore = Math.max(0, Math.min(1, riskScore));
             
-            // More reasonable risk level classification
+            // Simple risk level classification based on attendance percentage
             let riskLevel;
-            if (riskScore < 0.2) {
-                riskLevel = 'LOW';
-            } else if (riskScore < 0.65) {  // Increased threshold for MEDIUM risk
-                riskLevel = 'MEDIUM';  
-            } else {
-                riskLevel = 'HIGH';  // Only for very severe cases
-            }
             
-            // Override: Critically low attendance (< 30%) = HIGH risk
-            if (attendanceRate < 30 && regularMissingDays > 0) {
+            // Clear percentage-based thresholds
+            if (attendanceRate >= 80) {
+                riskLevel = 'LOW';
+            } else if (attendanceRate >= 60) {
+                riskLevel = 'MEDIUM';
+            } else {
                 riskLevel = 'HIGH';
-                riskScore = Math.max(riskScore, 0.8);
             }
             
             console.log('🎯 Final risk assessment:', { 
