@@ -1,140 +1,132 @@
- Student Analytics Dashboard
-Reliable attendance insights using PDF export calculation logic
-
-Same Data Source as PDF Report
 Asaad Diaa
-MEDIUM RISK
+LOW RISK
 100.0%
-Trend: STRONGLY IMPROVING 📈 (14.3%/week) (High confidence)
+Trend: INSUFFICIENT DATA ❓ (Low confidence)
 Goal: 95% target → ACHIEVED ✓ (Maintain current performance)
-Present: 1 • Absent: 0 • Num-Excuse: 5 • Effective Days: 1 • Good quality
- Lower attendance on Saturdays; Periods of consecutive absences (max: 5 days)
-Recognize and reinforce positive attendance improvement
-Risk factors: Zero attendance rate, Improving attendance trend, 5 planned vacation day(s)
+Present: 1 • Absent: 0 • Num-Excuse: 5 • Effective Days: 1 • Limited quality
+Collect more attendance data to improve analysis accuracy
+Risk factors: Insufficient data for complete assessment, 5 planned vacation day(s)
 Abdul Aziz Alzaub
 LOW RISK
 100.0%
 Trend: STABLE ➡️ (High confidence)
 Goal: 95% target → ACHIEVED ✓ (Maintain current performance)
-Present: 6 • Absent: 0 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
+Present: 6 • Absent: 0 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Collect more attendance data to improve analysis accuracy
 Baraa Shaibani
 LOW RISK
 100.0%
 Trend: STABLE ➡️ (High confidence)
 Goal: 95% target → ACHIEVED ✓ (Maintain current performance)
-Present: 6 • Absent: 0 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
+Present: 6 • Absent: 0 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Collect more attendance data to improve analysis accuracy
 Ahmed Naqawa
 LOW RISK
 100.0%
 Trend: STABLE ➡️ (High confidence)
 Goal: 95% target → ACHIEVED ✓ (Maintain current performance)
-Present: 6 • Absent: 0 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
+Present: 6 • Absent: 0 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Collect more attendance data to improve analysis accuracy
 Yaman Takala
 LOW RISK
 100.0%
 Trend: STABLE ➡️ (High confidence)
 Goal: 95% target → ACHIEVED ✓ (Maintain current performance)
-Present: 6 • Absent: 0 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
+Present: 6 • Absent: 0 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Collect more attendance data to improve analysis accuracy
 Maleek Bitar
 LOW RISK
 83.3%
-Trend: STABLE ➡️ (High confidence)
-Goal: 88.3% target → ACHIEVED ✓ (Maintain current performance)
-Present: 5 • Absent: 1 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
+Trend: STABLE ➡️ (-38.9%/week) (High confidence)
+Goal: 95% target → ACHIEVED ✓ (Maintain current performance)
+Present: 5 • Absent: 1 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Collect more attendance data to improve analysis accuracy
 Yosuf Sadek
 LOW RISK
 83.3%
-Trend: STABLE ➡️ (High confidence)
-Goal: 88.3% target → ACHIEVED ✓ (Maintain current performance)
-Present: 5 • Absent: 1 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
+Trend: STABLE ➡️ (-38.9%/week) (High confidence)
+Goal: 95% target → ACHIEVED ✓ (Maintain current performance)
+Present: 5 • Absent: 1 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Collect more attendance data to improve analysis accuracy
 Yahya Aldaik
-MEDIUM RISK
+LOW RISK
 75.0%
-Trend: STRONGLY IMPROVING 📈 (30.0%/week) (High confidence)
-Goal: 80% target → ACHIEVABLE (1 week)
-Present: 3 • Absent: 1 • Num-Excuse: 2 • Effective Days: 4 • Good quality
-Recognize and reinforce positive attendance improvement
-+1 more recommendations
-Risk factors: Zero attendance rate, Improving attendance trend, 2 planned vacation day(s)
+Trend: STABLE ➡️ (Medium confidence)
+Goal: 80% target → MONITOR PROGRESS (Gradual improvement with support)
+Present: 3 • Absent: 1 • Num-Excuse: 2 • Effective Days: 4 • Limited quality
+Collect more attendance data to improve analysis accuracy
+Risk factors: Student excused - all absences planned (vacation/abroad)
 Mohamed Kheir
 MEDIUM RISK
 66.7%
-Trend: STABLE ➡️ (High confidence)
+Trend: STRONGLY DECLINING 📉 (-77.8%/week) (High confidence)
 Goal: 80% target → HIGH PRIORITY (Urgent intervention needed)
-Present: 4 • Absent: 2 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
-Risk factors: Below average attendance
+Present: 4 • Absent: 2 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Address declining trend - attendance dropping by 77.8% per week
++1 more recommendations
+Risk factors: Slightly below target attendance, Multiple unplanned absences, Declining attendance trend
 Omar Bawab
 MEDIUM RISK
 66.7%
-Trend: STABLE ➡️ (High confidence)
+Trend: STRONGLY DECLINING 📉 (-77.8%/week) (High confidence)
 Goal: 80% target → HIGH PRIORITY (Urgent intervention needed)
-Present: 4 • Absent: 2 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
-Risk factors: Below average attendance
+Present: 4 • Absent: 2 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Address declining trend - attendance dropping by 77.8% per week
++1 more recommendations
+Risk factors: Slightly below target attendance, Multiple unplanned absences, Declining attendance trend
 Baraa Takala
 MEDIUM RISK
 66.7%
-Trend: STABLE ➡️ (High confidence)
+Trend: STRONGLY DECLINING 📉 (-77.8%/week) (High confidence)
 Goal: 80% target → HIGH PRIORITY (Urgent intervention needed)
-Present: 4 • Absent: 2 • Num-Excuse: 0 • Effective Days: 6 • Good quality
-Continue monitoring attendance patterns
-Risk factors: Below average attendance
-Homam Hassan
-MEDIUM RISK
-66.7%
-Trend: STRONGLY IMPROVING 📈 (30.0%/week) (High confidence)
-Goal: 80% target → ACHIEVABLE (1 week)
-Present: 2 • Absent: 1 • Num-Excuse: 3 • Effective Days: 3 • Good quality
- Lower attendance on Saturdays; Periods of consecutive absences (max: 3 days)
-Recognize and reinforce positive attendance improvement
+Present: 4 • Absent: 2 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Address declining trend - attendance dropping by 77.8% per week
 +1 more recommendations
-Risk factors: Zero attendance rate, Improving attendance trend, 3 planned vacation day(s)
+Risk factors: Slightly below target attendance, Multiple unplanned absences, Declining attendance trend
+Homam Hassan
+LOW RISK
+66.7%
+Trend: STABLE ➡️ (Medium confidence)
+Goal: 80% target → MONITOR PROGRESS (Gradual improvement with support)
+Present: 2 • Absent: 1 • Num-Excuse: 3 • Effective Days: 3 • Limited quality
+Collect more attendance data to improve analysis accuracy
+Risk factors: Student excused - all absences planned (vacation/abroad)
 Omar Akeel
-MEDIUM RISK
+HIGH RISK
 33.3%
-Trend: STABLE ➡️ (High confidence)
+Trend: STRONGLY DECLINING 📉 (-77.8%/week) (High confidence)
 Goal: 80% target → HIGH PRIORITY (Urgent intervention needed)
-Present: 2 • Absent: 4 • Num-Excuse: 0 • Effective Days: 6 • Fair quality
- Insufficient data for pattern analysis
-Continue monitoring attendance patterns
-Risk factors: Very low attendance rate
+Present: 2 • Absent: 4 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
+Schedule immediate meeting with student to discuss attendance patterns
++2 more recommendations
+Risk factors: Very low attendance rate, High rate of unplanned absences, Declining attendance trend, Consistently low attendance pattern, Insufficient data for complete assessment
 Lyth Kawokgi
 HIGH RISK
 16.7%
-Trend: INSUFFICIENT DATA ❓ (Low confidence)
+Trend: CONCERNING PATTERN ⚠️ (-38.9%/week) (High confidence)
 Goal: 80% target → HIGH PRIORITY (Urgent intervention needed)
 Present: 1 • Absent: 5 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
- Insufficient data for pattern analysis
 Schedule immediate meeting with student to discuss attendance patterns
 +1 more recommendations
-Risk factors: Critically low attendance rate, Insufficient data for complete assessment
+Risk factors: Critically low attendance rate, High rate of unplanned absences, Consistently low attendance pattern, Insufficient data for complete assessment
 Mohamed Amin
 HIGH RISK
 16.7%
-Trend: INSUFFICIENT DATA ❓ (Low confidence)
+Trend: CONCERNING PATTERN ⚠️ (-38.9%/week) (High confidence)
 Goal: 80% target → HIGH PRIORITY (Urgent intervention needed)
 Present: 1 • Absent: 5 • Num-Excuse: 0 • Effective Days: 6 • Limited quality
- Insufficient data for pattern analysis
 Schedule immediate meeting with student to discuss attendance patterns
 +1 more recommendations
-Risk factors: Critically low attendance rate, Insufficient data for complete assessment
+Risk factors: Critically low attendance rate, High rate of unplanned absences, Consistently low attendance pattern, Insufficient data for complete assessment
  Class Overview
 15
 Total Students
 7
 Meeting Target (≥80%)
-2
+3
 High Risk
 71.7%
-Class Average   
-
+Class Average
 
 
 

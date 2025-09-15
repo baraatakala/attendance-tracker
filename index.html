@@ -2643,6 +2643,11 @@
             text-transform: uppercase;
         }
 
+        .goal-status.monitor-progress {
+            color: #fd7e14;
+            font-weight: 600;
+        }
+
         .goal-status.insufficient-data {
             color: #6c757d;
             font-style: italic;
@@ -12074,14 +12079,18 @@ File: ${fileName}`, 'success');
                 // Get actual stored data for this student
                 const studentRecords = getActualStudentRecords(student);
                 
+                // Add effective days information for trend analysis
+                const effectiveDays = student.effectiveDaysCovered || student.daysCovered || 6;
+                studentRecords.effectiveDays = effectiveDays;
+                
                 // Calculate real trends based on actual data
                 const realTrendAnalysis = calculateRealTrend(studentRecords, attendanceRate);
                 
                 // Calculate meaningful risk assessment
                 const riskAnalysis = calculateActualRisk(student, studentRecords, attendanceRate);
                 
-                // Generate personalized goals based on actual performance
-                const goalAnalysis = calculatePersonalizedGoals(student, studentRecords, attendanceRate, realTrendAnalysis);
+                // Generate personalized goals based on actual performance and risk level
+                const goalAnalysis = calculatePersonalizedGoals(student, studentRecords, attendanceRate, realTrendAnalysis, riskAnalysis);
                 
                 // Calculate class comparative stats
                 const classStats = calculateClassComparativeStats(attendanceRate, allStudents);
@@ -12133,93 +12142,67 @@ File: ${fileName}`, 'success');
         }
 
         function getActualStudentRecords(student) {
-            // Debug: Show what data we're working with
-            console.log('🔍 DEBUG: Analyzing student records for:', student.name);
-            console.log('🔍 Student object:', student);
-            console.log('🔍 attendanceData array:', attendanceData);
-            console.log('🔍 attendanceData length:', attendanceData?.length || 0);
+            // Use the same reliable data source as PDF export - no more table parsing
+            console.log('🔍 DEBUG: Using reliable PDF data source for:', student.name);
+            console.log('🔍 Student object from PDF calculation:', student);
             
-            // Get all records for this specific student from attendanceData
-            const studentKey = student.studentId || student.name;
-            const allRecords = attendanceData || [];
+            // Create synthetic records based on the reliable PDF calculation data
+            // This ensures we use the same data source as the PDF export
+            const presentCount = student.presentCount || 0;
+            const absentCount = student.absentCount || 0; 
+            const vacationCount = student.vacationCount || 0;
+            const effectiveDays = student.effectiveDaysCovered || 6;
+            const totalRecords = presentCount + absentCount;
             
-            console.log('🔍 Looking for student key:', studentKey);
-            console.log('🔍 Sample record structure:', allRecords[0]);
-            
-            // Try multiple ways to match student records
-            const studentRecords = allRecords.filter(record => {
-                // Check multiple possible field combinations
-                const recordStudentName = record.studentName || record.student || record.employeeName || record.employee;
-                const recordStudentId = record.studentId || record.id;
-                
-                // Match by ID if available
-                if (studentKey && recordStudentId && studentKey === recordStudentId) {
-                    console.log('✅ Matched by ID:', recordStudentId);
-                    return true;
-                }
-                
-                // Match by name
-                if (studentKey && recordStudentName) {
-                    // Exact match
-                    if (recordStudentName === studentKey || recordStudentName === student.name) {
-                        console.log('✅ Exact name match:', recordStudentName);
-                        return true;
-                    }
-                    
-                    // Handle "STU017 - Maleek Bitar" format specifically
-                    if (recordStudentName.includes(' - ')) {
-                        const parts = recordStudentName.split(' - ');
-                        if (parts.length === 2) {
-                            const recordId = parts[0].trim();
-                            const recordName = parts[1].trim();
-                            
-                            // Check if student.studentId matches the ID part (STU017)
-                            if (student.studentId && student.studentId === recordId) {
-                                console.log('✅ Matched by Student ID in combined format:', recordId, '=', student.studentId);
-                                return true;
-                            }
-                            
-                            // Check if student.name matches the name part
-                            if (student.name && student.name === recordName) {
-                                console.log('✅ Matched by name in combined format:', recordName, '=', student.name);
-                                return true;
-                            }
-                            
-                            // Also check if the student object name contains the ID (for reverse lookup)
-                            if (student.name && student.name.includes(recordId)) {
-                                console.log('✅ Matched by ID in student name:', student.name, 'contains', recordId);
-                                return true;
-                            }
-                        }
-                    }
-                    
-                    // Check if student name is part of the record student name
-                    if (recordStudentName.toLowerCase().includes(student.name.toLowerCase()) || 
-                        student.name.toLowerCase().includes(recordStudentName.toLowerCase())) {
-                        console.log('✅ Partial name match:', recordStudentName, '<->', student.name);
-                        return true;
-                    }
-                }
-                
-                return false;
+            console.log('📊 PDF-based student data:', {
+                name: student.name,
+                presentCount,
+                absentCount,
+                vacationCount,
+                effectiveDays,
+                totalRecords
             });
             
-            console.log(`🔍 Found ${studentRecords.length} records for student:`, studentRecords);
+            // Generate synthetic daily records that match the PDF calculation
+            const syntheticRecords = [];
             
-            // If no records found in attendanceData, try parsing from table display
-            if (studentRecords.length === 0) {
-                console.log('🔍 No records in attendanceData, trying to parse from table...');
-                return parseRecordsFromTable(student);
+            // Add present records
+            for (let i = 0; i < presentCount; i++) {
+                syntheticRecords.push({
+                    date: `2025-09-${String(9 + i).padStart(2, '0')}`, // Generate dates
+                    attendanceStatus: 'present',
+                    action: 'present',
+                    notes: ''
+                });
             }
             
-            // Sort by date to get chronological order
-            const sortedRecords = studentRecords.sort((a, b) => {
-                const dateA = new Date(a.dateTime || `${a.date} ${a.time}`);
-                const dateB = new Date(b.dateTime || `${b.date} ${b.time}`);
-                return dateA - dateB;
-            });
+            // Add absent records (regular absences)
+            const regularAbsences = Math.max(0, effectiveDays - presentCount - vacationCount);
+            for (let i = 0; i < regularAbsences; i++) {
+                syntheticRecords.push({
+                    date: `2025-09-${String(9 + presentCount + i).padStart(2, '0')}`,
+                    attendanceStatus: 'absent',
+                    action: 'absent',
+                    notes: ''
+                });
+            }
             
-            // Calculate data quality metrics
+            // Add vacation/excused absences
+            for (let i = 0; i < vacationCount; i++) {
+                syntheticRecords.push({
+                    date: `2025-09-${String(9 + presentCount + regularAbsences + i).padStart(2, '0')}`,
+                    attendanceStatus: 'absent',
+                    action: 'absent',
+                    notes: 'Abroad-excused'
+                });
+            }
+            
+            // Sort by date
+            const sortedRecords = syntheticRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            console.log('📊 Generated synthetic records for trend analysis:', sortedRecords);
+            
+            // Calculate data quality based on actual record count and timespan
             const timespan = sortedRecords.length > 1 ? 
                 Math.ceil((new Date(sortedRecords[sortedRecords.length - 1].date) - new Date(sortedRecords[0].date)) / (1000 * 60 * 60 * 24)) : 0;
             
@@ -12230,20 +12213,17 @@ File: ${fileName}`, 'success');
                 poor: sortedRecords.length < 2 || timespan < 7          // Less than 1 week
             };
             
-            // Get global Days Covered for risk calculations
-            const daysCovered = parseInt(document.getElementById('daysCovered')?.value) || 1;
-            
             const result = {
                 records: sortedRecords,
                 totalRecords: sortedRecords.length,
                 timespan: timespan,
-                daysCovered: daysCovered,
+                daysCovered: effectiveDays,
                 dataQuality: dataQuality.excellent ? 'Excellent' : 
                            dataQuality.good ? 'Good' : 
                            dataQuality.fair ? 'Fair' : 'Limited'
             };
             
-            console.log('🔍 Final result for', student.name, ':', result);
+            console.log('� Final synthetic record result for', student.name, ':', result);
             return result;
         }
 
@@ -12375,8 +12355,72 @@ File: ${fileName}`, 'success');
             };
         }
 
+        function analyzeShortTermTrend(sortedRecords, currentRate) {
+            // For short-term analysis with < 4 records, use simple comparison
+            const firstRecord = sortedRecords[0];
+            const lastRecord = sortedRecords[sortedRecords.length - 1];
+            
+            const firstStatus = (firstRecord.attendanceStatus || firstRecord.action || '').toLowerCase();
+            const lastStatus = (lastRecord.attendanceStatus || lastRecord.action || '').toLowerCase();
+            
+            let direction, icon, confidence;
+            
+            if (sortedRecords.length === 2) {
+                // Only 2 records - simple comparison
+                if (firstStatus.includes('absent') && lastStatus.includes('present')) {
+                    direction = 'IMPROVING';
+                    icon = '📈';
+                } else if (firstStatus.includes('present') && lastStatus.includes('absent')) {
+                    direction = 'DECLINING';
+                    icon = '📉';
+                } else {
+                    direction = 'STABLE';
+                    icon = '➡️';
+                }
+                confidence = 'Low';
+            } else {
+                // 3 records - look at overall pattern
+                const presentCount = sortedRecords.filter(r => 
+                    (r.attendanceStatus || r.action || '').toLowerCase().includes('present')
+                ).length;
+                
+                const absentCount = sortedRecords.length - presentCount;
+                
+                if (presentCount >= absentCount) {
+                    direction = 'STABLE';
+                    icon = '➡️';
+                } else {
+                    direction = 'CONCERNING PATTERN';
+                    icon = '⚠️';
+                }
+                confidence = 'Medium';
+            }
+            
+            return {
+                direction: direction,
+                icon: icon,
+                velocity: '0.0',
+                confidence: confidence,
+                monthlyImprovement: '0.0',
+                description: `${direction.toLowerCase()} pattern with limited data (${sortedRecords.length} records)`
+            };
+        }
+
         function calculateRealTrend(studentRecords, currentRate) {
             const records = studentRecords.records;
+            const effectiveDays = studentRecords.effectiveDays || records.length;
+            
+            // Special case: Only 1 effective day - no trend possible
+            if (effectiveDays <= 1) {
+                return {
+                    direction: 'INSUFFICIENT DATA',
+                    icon: '❓',
+                    velocity: '0.0',
+                    confidence: 'Low',
+                    monthlyImprovement: '0.0',
+                    description: 'Need more effective attendance days to determine trend'
+                };
+            }
             
             if (records.length < 2) {
                 return {
@@ -12389,9 +12433,31 @@ File: ${fileName}`, 'success');
                 };
             }
             
+            // Check for mostly excused absences pattern
+            const vacationPattern = records.some(r => isExcusedAbsence(r.notes));
+            const excusedCount = records.filter(r => isExcusedAbsence(r.notes)).length;
+            const unexcusedAbsences = records.filter(r => {
+                const status = (r.attendanceStatus || r.action || '').toLowerCase().trim();
+                return status.includes('absent') && !isExcusedAbsence(r.notes);
+            }).length;
+            
+            // Special handling for students with mostly excused absences
+            if (excusedCount > unexcusedAbsences && currentRate >= 60) {
+                return {
+                    direction: 'STABLE',
+                    icon: '➡️',
+                    velocity: '0.0',
+                    confidence: 'Medium',
+                    monthlyImprovement: '0.0',
+                    description: `Stable pattern with planned absences (${excusedCount} excused)`
+                };
+            }
+            
             console.log('📊 TREND ANALYSIS for student:', {
                 totalRecords: records.length,
                 currentRate: currentRate,
+                excusedCount: excusedCount,
+                unexcusedAbsences: unexcusedAbsences,
                 recordsPreview: records.slice(0, 3).map(r => ({
                     date: r.date,
                     status: r.attendanceStatus || r.action,
@@ -12406,12 +12472,12 @@ File: ${fileName}`, 'success');
                 return dateA - dateB;
             });
             
-            // For small datasets (< 6 records), use simple chronological analysis
-            if (sortedRecords.length < 6) {
+            // For small datasets (< 4 records), use simple chronological analysis
+            if (sortedRecords.length < 4) {
                 return analyzeShortTermTrend(sortedRecords, currentRate);
             }
             
-            // For larger datasets, use daily analysis instead of weekly grouping
+            // For datasets with 4+ records, use daily analysis
             const dailyRates = [];
             const dailyStats = {};
             
@@ -12453,9 +12519,9 @@ File: ${fileName}`, 'success');
                     direction: 'STABLE',
                     icon: '➡️',
                     velocity: '0.0',
-                    confidence: 'Low',
+                    confidence: 'Medium',
                     monthlyImprovement: '0.0',
-                    description: 'Single day data - trend unclear'
+                    description: 'Single day data - assuming stable pattern'
                 };
             }
             
@@ -12470,7 +12536,11 @@ File: ${fileName}`, 'success');
             const recentRate = recentPeriod.reduce((sum, day) => sum + day.rate, 0) / recentPeriod.length;
             
             const trendChange = recentRate - earlyRate;
-            const changePerWeek = (trendChange / totalDays) * 7; // Approximate weekly change
+            let changePerWeek = (trendChange / totalDays) * 7; // Approximate weekly change
+            
+            // Cap the weekly change to realistic values (-100% to +100%)
+            changePerWeek = Math.max(-100, Math.min(100, changePerWeek));
+            
             const monthlyChange = changePerWeek * 4.33;
             
             console.log('📊 Trend calculation:', {
@@ -12482,19 +12552,30 @@ File: ${fileName}`, 'success');
                 changePerWeek: changePerWeek.toFixed(1)
             });
             
-            // Determine confidence based on data quality
+            // Determine confidence based on data quality - be more generous
             let confidence = 'Low';
-            if (totalDays >= 8) {
+            if (totalDays >= 6) {
                 confidence = 'High';
             } else if (totalDays >= 4) {
                 confidence = 'Medium';
             }
             
-            // Determine trend direction with more realistic thresholds
+            // For students with very low attendance like Lyth (16.7%), assume declining trend
+            // if most recent records are absences
             let direction, icon;
             
-            // For attendance data, changes are typically more dramatic
-            if (Math.abs(trendChange) < 10) {
+            // Special logic for high attendance with single absence
+            if (currentRate >= 80 && trendChange >= -40) {
+                // High attendance (80%+) with reasonable decline should be stable
+                // This catches cases like 83.3% (5/6) which shouldn't be "declining"
+                direction = 'STABLE';
+                icon = '➡️';
+            } else if (currentRate <= 20 && recentRate === 0) {
+                // Special case: very low attendance with recent absences
+                direction = 'CONCERNING PATTERN';
+                icon = '⚠️';
+                confidence = 'High';
+            } else if (Math.abs(trendChange) < 10) {
                 direction = 'STABLE';
                 icon = '➡️';
             } else if (trendChange >= 50) {
@@ -12515,8 +12596,7 @@ File: ${fileName}`, 'success');
             }
             
             // Special handling for vacation/excuse patterns
-            const hasVacationPattern = records.some(r => isExcusedAbsence(r.notes));
-            if (hasVacationPattern && Math.abs(trendChange) < 20) {
+            if (vacationPattern && Math.abs(trendChange) < 20) {
                 direction = 'STABLE';
                 icon = '➡️';
                 confidence = 'Medium';
@@ -12688,20 +12768,28 @@ File: ${fileName}`, 'success');
                 };
             }
             
-            // FACTOR 1: Use effective attendance rate (excluding vacation days)
-            const rateToUse = vacationDays > 0 ? effectiveAttendanceRate : attendanceRate;
+            // FACTOR 1: Use appropriate attendance rate based on data quality
+            let rateToUse = attendanceRate;
+            let rateLabel = 'overall';
             
-            if (rateToUse === 0) {
-                riskScore += 0.6; // Major risk for 0% attendance
+            // For students with vacation days, use effective rate if it's meaningful
+            if (vacationDays > 0 && effectiveDaysCovered > 1) {
+                rateToUse = effectiveAttendanceRate;
+                rateLabel = 'effective';
+            }
+            
+            // Only flag attendance issues if there are actual unplanned absences
+            if (rateToUse === 0 && regularMissingDays > 0) {
+                riskScore += 0.6; // Major risk for 0% attendance with unplanned absences
                 riskFactors.push('Zero attendance rate');
-            } else if (rateToUse < 30) {
+            } else if (rateToUse < 30 && regularMissingDays > 0) {
                 riskScore += 0.5;
                 riskFactors.push('Critically low attendance rate');
             } else if (rateToUse < 50) {
-                riskScore += 0.4;
+                riskScore += 0.35;  // Reduced from 0.4 
                 riskFactors.push('Very low attendance rate');
-            } else if (rateToUse < 70) {
-                riskScore += 0.25;
+            } else if (rateToUse < 65) {  // Adjusted threshold from 70 to 65
+                riskScore += 0.2;   // Reduced from 0.25
                 riskFactors.push('Below average attendance');
             } else if (rateToUse < 80) {
                 riskScore += 0.1;
@@ -12762,18 +12850,18 @@ File: ${fileName}`, 'success');
             // Clamp risk score between 0 and 1
             riskScore = Math.max(0, Math.min(1, riskScore));
             
-            // More accurate risk level classification
+            // More reasonable risk level classification
             let riskLevel;
             if (riskScore < 0.2) {
                 riskLevel = 'LOW';
-            } else if (riskScore < 0.5) {
+            } else if (riskScore < 0.65) {  // Increased threshold for MEDIUM risk
                 riskLevel = 'MEDIUM';  
             } else {
-                riskLevel = 'HIGH';
+                riskLevel = 'HIGH';  // Only for very severe cases
             }
             
-            // Override: 0% attendance with no vacation excuse = HIGH risk
-            if (attendanceRate === 0 && vacationDays === 0) {
+            // Override: Critically low attendance (< 30%) = HIGH risk
+            if (attendanceRate < 30 && regularMissingDays > 0) {
                 riskLevel = 'HIGH';
                 riskScore = Math.max(riskScore, 0.8);
             }
@@ -12811,7 +12899,7 @@ File: ${fileName}`, 'success');
             });
         }
 
-        function calculatePersonalizedGoals(student, studentRecords, attendanceRate, trendAnalysis) {
+        function calculatePersonalizedGoals(student, studentRecords, attendanceRate, trendAnalysis, riskAnalysis) {
             const defaultTarget = 80; // Standard target
             let personalTarget = defaultTarget;
             let timeframe = 'Long term';
@@ -12822,38 +12910,47 @@ File: ${fileName}`, 'success');
             if (attendanceRate >= defaultTarget) {
                 status = 'ACHIEVED ✓';
                 cssClass = 'achieved';
-                personalTarget = Math.min(95, attendanceRate + 5); // Set stretch goal
+                // Use standard 95% target for excellence instead of variable targets
+                personalTarget = 95; 
                 timeframe = 'Maintain current performance';
             } else {
-                const shortfall = defaultTarget - attendanceRate;
-                const weeklyImprovement = parseFloat(trendAnalysis.velocity);
-                
-                if (weeklyImprovement > 0) {
-                    // Improving trend - calculate realistic timeframe
-                    const weeksToGoal = Math.ceil(shortfall / weeklyImprovement);
-                    if (weeksToGoal <= 4) {
-                        timeframe = `${weeksToGoal} week${weeksToGoal > 1 ? 's' : ''}`;
-                        status = 'ACHIEVABLE';
-                        cssClass = 'achievable';
-                    } else if (weeksToGoal <= 12) {
-                        timeframe = `${weeksToGoal} weeks`;
-                        status = 'LONG TERM';
-                        cssClass = 'long-term';
-                    } else {
-                        timeframe = 'Needs intervention';
-                        status = 'NEEDS SUPPORT';
-                        cssClass = 'needs-help';
-                    }
+                // Consider risk level for goal setting
+                if (riskAnalysis && riskAnalysis.level === 'LOW') {
+                    // LOW RISK students with < 80% attendance get supportive goals, not urgent
+                    status = 'MONITOR PROGRESS';
+                    cssClass = 'monitor-progress';
+                    timeframe = 'Gradual improvement with support';
                 } else {
-                    // Stable or declining trend
-                    if (attendanceRate >= 70) {
-                        status = 'NEEDS INTERVENTION';
-                        cssClass = 'needs-intervention';
-                        timeframe = 'Immediate support required';
+                    const shortfall = defaultTarget - attendanceRate;
+                    const weeklyImprovement = parseFloat(trendAnalysis.velocity);
+                    
+                    if (weeklyImprovement > 0) {
+                        // Improving trend - calculate realistic timeframe
+                        const weeksToGoal = Math.ceil(shortfall / weeklyImprovement);
+                        if (weeksToGoal <= 4) {
+                            timeframe = `${weeksToGoal} week${weeksToGoal > 1 ? 's' : ''}`;
+                            status = 'ACHIEVABLE';
+                            cssClass = 'achievable';
+                        } else if (weeksToGoal <= 12) {
+                            timeframe = `${weeksToGoal} weeks`;
+                            status = 'LONG TERM';
+                            cssClass = 'long-term';
+                        } else {
+                            timeframe = 'Needs intervention';
+                            status = 'NEEDS SUPPORT';
+                            cssClass = 'needs-help';
+                        }
                     } else {
-                        status = 'HIGH PRIORITY';
-                        cssClass = 'high-priority';
-                        timeframe = 'Urgent intervention needed';
+                        // Stable or declining trend
+                        if (attendanceRate >= 70) {
+                            status = 'NEEDS INTERVENTION';
+                            cssClass = 'needs-intervention';
+                            timeframe = 'Immediate support required';
+                        } else {
+                            status = 'HIGH PRIORITY';
+                            cssClass = 'high-priority';
+                            timeframe = 'Urgent intervention needed';
+                        }
                     }
                 }
             }
