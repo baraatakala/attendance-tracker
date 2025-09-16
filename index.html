@@ -2117,13 +2117,13 @@
         }
 
         .timeline-count {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            background: linear-gradient(45deg, #27ae60, #229954);
             color: white;
             padding: 6px 12px;
             border-radius: 15px;
             font-size: 0.85rem;
             font-weight: 700;
-            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
         }
 
         .individual-stats {
@@ -5671,10 +5671,10 @@
                     </div>
                 </div>
 
-                <!-- Dates with Highest Absences -->
+                <!-- Dates with Highest Present -->
                 <div class="date-analytics">
                     <div class="section-header" onclick="toggleSection(this)">
-                        <span><i class="fas fa-calendar-times header-icon"></i> Dates with Highest Absences</span>
+                        <span><i class="fas fa-calendar-check header-icon"></i> Dates with Highest Present</span>
                         <i class="fas fa-chevron-down section-toggle"></i>
                     </div>
                     <div class="section-content">
@@ -10876,22 +10876,24 @@ ${environment.tips.slice(0, 3).join('\n')}
         }
 
         function generateDateAnalytics(data) {
-            const dateAbsences = {};
+            const datePresence = {};
             
             data.forEach(record => {
-                const isAbsent = record.attendanceStatus === 'absent' || 
-                               record.actionType === 'absence' || 
-                               record.action === 'Absent';
+                // Use the same presence detection logic as the PDF function
+                const isPresent = record.attendanceStatus === 'present' || 
+                                record.actionType === 'presence' || 
+                                record.action === 'Present' ||
+                                record.status === 'present';
                 
-                if (isAbsent) {
+                if (isPresent) {
                     const date = record.date;
-                    if (!dateAbsences[date]) {
-                        dateAbsences[date] = {
+                    if (!datePresence[date]) {
+                        datePresence[date] = {
                             count: 0,
                             students: []
                         };
                     }
-                    dateAbsences[date].count++;
+                    datePresence[date].count++;
                     
                     // Get student name
                     let studentName;
@@ -10905,15 +10907,15 @@ ${environment.tips.slice(0, 3).join('\n')}
                         studentName = 'Unknown';
                     }
                     
-                    dateAbsences[date].students.push(studentName);
+                    datePresence[date].students.push(studentName);
                 }
             });
 
-            const sortedDates = Object.keys(dateAbsences)
+            const sortedDates = Object.keys(datePresence)
                 .map(date => ({
                     date: date,
-                    count: dateAbsences[date].count,
-                    students: dateAbsences[date].students,
+                    count: datePresence[date].count,
+                    students: datePresence[date].students,
                     formattedDate: formatDisplayDate(date)
                 }))
                 .sort((a, b) => b.count - a.count)
@@ -10924,14 +10926,14 @@ ${environment.tips.slice(0, 3).join('\n')}
                 timelineContainer.innerHTML = sortedDates.map(item => `
                     <div class="timeline-item">
                         <div>
-                            <div class="timeline-date">${item.formattedDate}</div>
+                            <div class="timeline-date">${item.date}</div>
                             <div class="stat-details">${item.students.slice(0, 3).join(', ')}${item.students.length > 3 ? ` +${item.students.length - 3} more` : ''}</div>
                         </div>
-                        <div class="timeline-count">${item.count} absence${item.count > 1 ? 's' : ''}</div>
+                        <div class="timeline-count">${item.count} present</div>
                     </div>
                 `).join('');
             } else {
-                timelineContainer.innerHTML = '<div class="analytics-empty">No absence data available</div>';
+                timelineContainer.innerHTML = '<div class="analytics-empty">No presence data available</div>';
             }
         }
 
@@ -10951,77 +10953,48 @@ ${environment.tips.slice(0, 3).join('\n')}
 
         function calculateDatesWithHighestAbsences(data) {
             const dateStats = {};
-            let totalStudents = 0;
             
-            // Count total unique students
-            const uniqueStudents = new Set();
+            // Count present students by date - simple and straightforward!
             data.forEach(record => {
-                const student = record.student || record.studentId || record.name || record.studentName;
-                if (student && student !== 'Unknown Student') {
-                    uniqueStudents.add(student);
-                }
-            });
-            totalStudents = uniqueStudents.size;
-            
-            if (totalStudents === 0) return [];
-            
-            // Count present and absent records by date
-            data.forEach(record => {
-                // Get date from multiple possible fields
-                let date = record.date || record.datetime;
-                if (!date && record.timestamp) {
-                    date = record.timestamp.split('T')[0];
-                }
-                
-                // Extract date portion if it's a full datetime string
-                if (date && date.includes('T')) {
-                    date = date.split('T')[0];
-                }
-                
-                if (!date) return;
-                
-                if (!dateStats[date]) {
-                    dateStats[date] = {
-                        present: 0,
-                        absent: 0,
-                        total: 0
-                    };
-                }
-                
-                // Check if student is present or absent
+                // Check if student is present
                 const isPresent = record.attendanceStatus === 'present' || 
                                 record.actionType === 'presence' || 
                                 record.action === 'Present' ||
                                 record.status === 'present';
-                                
-                const isAbsent = record.attendanceStatus === 'absent' || 
-                               record.actionType === 'absence' || 
-                               record.action === 'Absent' ||
-                               record.status === 'absent';
                 
                 if (isPresent) {
+                    // Get date from multiple possible fields
+                    let date = record.date || record.datetime;
+                    if (!date && record.timestamp) {
+                        date = record.timestamp.split('T')[0];
+                    }
+                    
+                    // Extract date portion if it's a full datetime string
+                    if (date && date.includes('T')) {
+                        date = date.split('T')[0];
+                    }
+                    
+                    if (!date) return;
+                    
+                    if (!dateStats[date]) {
+                        dateStats[date] = {
+                            present: 0
+                        };
+                    }
+                    
                     dateStats[date].present++;
-                    dateStats[date].total++;
-                } else if (isAbsent) {
-                    dateStats[date].absent++;
-                    dateStats[date].total++;
                 }
             });
             
-            // Calculate absences as: Total Students - Present Students on that date
+            // Convert to array and sort by present count (highest first)
             const sortedDates = Object.keys(dateStats)
-                .map(date => {
-                    const presentCount = dateStats[date].present;
-                    const calculatedAbsences = totalStudents - presentCount; // This is the key calculation!
-                    
-                    return {
-                        date: date,
-                        absentStudents: calculatedAbsences,
-                        absenceRate: calculatedAbsences, // For display purposes
-                        formattedDate: formatDisplayDate(date)
-                    };
-                })
-                .filter(item => item.absentStudents > 0) // Only show dates with absences
+                .map(date => ({
+                    date: date,
+                    absentStudents: dateStats[date].present, // Using this field name for compatibility
+                    absenceRate: dateStats[date].present, // For display purposes
+                    formattedDate: formatDisplayDate(date)
+                }))
+                .filter(item => item.absentStudents > 0) // Only show dates with present students
                 .sort((a, b) => b.absentStudents - a.absentStudents)
                 .slice(0, 10);
             
@@ -11264,20 +11237,20 @@ ${environment.tips.slice(0, 3).join('\n')}
                     yPosition = 20;
                 }
                 
-                // Dates with Highest Absences
-                addSectionHeader(doc, 'DATES WITH HIGHEST ABSENCES', yPosition);
+                // Dates with Highest Present
+                addSectionHeader(doc, 'DATES WITH HIGHEST PRESENT', yPosition);
                 yPosition += 15;
                 
                 const datesAbsenceData = calculateDatesWithHighestAbsences(filteredData);
                 if (datesAbsenceData.length > 0) {
                     const datesTableData = datesAbsenceData.map(item => [
                         item.date, // Show date in simple format like dashboard
-                        `${item.absentStudents} absence${item.absentStudents > 1 ? 's' : ''}`, // Match dashboard format
+                        `${item.absentStudents} present`, // Show present count
                         '' // Remove the percentage column to match dashboard
                     ]);
                     
                     addTable(doc, datesTableData, yPosition, true, 
-                        ['Date', 'Absences', '']); // Simplified headers
+                        ['Date', 'Present Students', '']); // Updated headers
                     yPosition += (datesTableData.length * 8) + 20;
                 } else {
                     doc.setFontSize(10);
@@ -11890,43 +11863,28 @@ File: ${fileName}`, 'success');
 
         function generateDateAnalytics(data) {
             const dateStats = {};
-            const totalStudents = new Set();
-            
-            // First, determine total number of students
-            data.forEach(record => {
-                const studentKey = record.student || record.studentId || record.studentName || record.name || 'Unknown';
-                if (studentKey !== 'Unknown') {
-                    totalStudents.add(studentKey);
-                }
-            });
-            
-            const totalStudentCount = totalStudents.size;
             
             // Count present records per date
             data.forEach(record => {
-                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                if (status === 'present' || record.actionType === 'check-in' || status.includes('present')) {
+                const isPresent = record.attendanceStatus === 'present' || 
+                                record.actionType === 'presence' || 
+                                record.action === 'Present' ||
+                                record.status === 'present';
+                                
+                if (isPresent) {
                     const date = record.date;
                     if (!dateStats[date]) {
-                        dateStats[date] = { present: 0, absent: 0 };
+                        dateStats[date] = { present: 0 };
                     }
                     dateStats[date].present++;
                 }
             });
             
-            // Calculate absences using new formula: Total Students - Present Records
-            const dateAbsences = {};
-            Object.keys(dateStats).forEach(date => {
-                const presentCount = dateStats[date].present;
-                const absentCount = totalStudentCount - presentCount;
-                if (absentCount > 0) {
-                    dateAbsences[date] = absentCount;
-                }
-            });
-            
-            const sortedDates = Object.entries(dateAbsences)
+            // Create sorted list of dates with present counts
+            const sortedDates = Object.entries(dateStats)
+                .map(([date, stats]) => [date, stats.present])
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 10); // Top 10 dates with most absences
+                .slice(0, 10); // Top 10 dates with most present students
             
             updateDateAnalyticsDisplay(sortedDates);
         }
@@ -11983,11 +11941,11 @@ File: ${fileName}`, 'success');
                 timeline.innerHTML = dates.map(([date, count]) => `
                     <div class="timeline-item">
                         <span class="timeline-date">${new Date(date).toLocaleDateString()}</span>
-                        <span class="timeline-count">${count} absence${count !== 1 ? 's' : ''}</span>
+                        <span class="timeline-count">${count} present</span>
                     </div>
                 `).join('');
             } else {
-                timeline.innerHTML = '<div class="analytics-empty">No absence data available</div>';
+                timeline.innerHTML = '<div class="analytics-empty">No presence data available</div>';
             }
         }
 
