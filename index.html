@@ -5654,9 +5654,9 @@
                 </div>
 
                 <div class="analytics-grid">
-                    <!-- Highest Attendance Rate -->
+                    <!-- Highest Weighted Score -->
                     <div class="analytics-card">
-                        <h4><i class="fas fa-trophy"></i> Highest Attendance Rate</h4>
+                        <h4><i class="fas fa-trophy"></i> Highest Weighted Score</h4>
                         <ul id="highestAttendanceList" class="analytics-list">
                             <li class="analytics-empty">No data available</li>
                         </ul>
@@ -11171,21 +11171,56 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 const attendanceRates = calculateAttendanceRates(filteredData);
                 
+                // Calculate weighted scores and sort by them
+                const attendanceRatesWithWeights = attendanceRates.map(student => {
+                    const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
+                    const daysCovered = student.daysCovered || effectiveDays;
+                    
+                    // Calculate weighted score using different formulas based on Num-Excuse
+                    const effectiveDaysPercentage = daysCovered > 0 ? (effectiveDays / daysCovered * 100) : 0;
+                    const excusePercentage = daysCovered > 0 ? (student.vacation / daysCovered * 100) : 0;
+                    
+                    let weightedScore;
+                    
+                    if (student.vacation === 0) {
+                        // If Num-Excuse is 0, use simplified formula:
+                        // 0.7 * Rate + 0.3 * (effective_days / Days Covered * 100)
+                        weightedScore = (
+                            0.7 * student.rate +
+                            0.3 * effectiveDaysPercentage
+                        );
+                    } else {
+                        // If Num-Excuse > 0, use original formula:
+                        // 0.7 * Rate + 0.2 * (effective_days / Days Covered * 100) + 0.1 * (num_excuse / Days Covered * 100)
+                        weightedScore = (
+                            0.7 * student.rate +
+                            0.2 * effectiveDaysPercentage +
+                            0.1 * excusePercentage
+                        );
+                    }
+                    
+                    return {
+                        ...student,
+                        weightedScore: Math.round(weightedScore * 10) / 10 // Round to 1 decimal place
+                    };
+                }).sort((a, b) => b.weightedScore - a.weightedScore); // Sort by weighted score descending
+                
                 console.log('📄 PDF export data comparison:', {
                     filteredDataLength: filteredData.length,
-                    attendanceRatesLength: attendanceRates.length,
-                    sampleStudent: attendanceRates[0],
-                    fullStudentData: attendanceRates.slice(0, 3).map(s => ({
+                    attendanceRatesLength: attendanceRatesWithWeights.length,
+                    sampleStudent: attendanceRatesWithWeights[0],
+                    fullStudentData: attendanceRatesWithWeights.slice(0, 3).map(s => ({
                         name: s.name,
                         present: s.present,
                         absent: s.absent,
                         vacation: s.vacation,
                         effectiveDays: s.effectiveDaysCovered,
-                        rate: s.rate
+                        rate: s.rate,
+                        weightedScore: s.weightedScore
                     }))
                 });
                 
-                const attendanceTableData = attendanceRates.map(student => {
+                const attendanceTableData = attendanceRatesWithWeights.map(student => {
                     // Calculate correct absent count: Effective Days - Present
                     const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
                     const calculatedAbsent = Math.max(0, effectiveDays - student.present);
@@ -11196,12 +11231,13 @@ ${environment.tips.slice(0, 3).join('\n')}
                         calculatedAbsent.toString(),
                         student.vacation ? student.vacation.toString() : '0',
                         effectiveDays.toString(),
-                        `${student.rate}%`
+                        `${student.rate}%`,
+                        student.weightedScore.toString()
                     ];
                 });
                 
                 addTable(doc, attendanceTableData, yPosition, true, 
-                    ['Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate']);
+                    ['Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score']);
                 yPosition += (attendanceTableData.length * 8) + 25;
                 
                 // Check if we need a new page
@@ -11299,15 +11335,21 @@ File: ${fileName}`, 'success');
             
             let currentY = yPosition;
             
+            // Reduced margins: left margin 10 (was 20), right margin 10 (was 20)
+            // Available width: 190 (was 170) - gives more space for columns
+            const leftMargin = 10;
+            const availableWidth = 190;
+            const textStartX = leftMargin + 5;
+            
             // Add headers if provided
             if (hasHeaders && headers.length > 0) {
                 doc.setFont('helvetica', 'bold');
                 doc.setFillColor(240, 240, 240);
-                doc.rect(20, currentY - 5, 170, 8, 'F');
+                doc.rect(leftMargin, currentY - 5, availableWidth, 8, 'F');
                 
-                const colWidth = 170 / headers.length;
+                const colWidth = availableWidth / headers.length;
                 headers.forEach((header, index) => {
-                    doc.text(header, 25 + (index * colWidth), currentY);
+                    doc.text(header, textStartX + (index * colWidth), currentY);
                 });
                 currentY += 10;
                 doc.setFont('helvetica', 'normal');
@@ -11315,17 +11357,17 @@ File: ${fileName}`, 'success');
             
             // Add data rows
             data.forEach((row, index) => {
-                const colWidth = 170 / row.length;
+                const colWidth = availableWidth / row.length;
                 
                 // Alternate row colors
                 if (index % 2 === 0) {
                     doc.setFillColor(250, 250, 250);
-                    doc.rect(20, currentY - 5, 170, 8, 'F');
+                    doc.rect(leftMargin, currentY - 5, availableWidth, 8, 'F');
                 }
                 
                 row.forEach((cell, cellIndex) => {
                     const text = cell.toString();
-                    const xPosition = 25 + (cellIndex * colWidth);
+                    const xPosition = textStartX + (cellIndex * colWidth);
                     
                     // Color coding for rates
                     if (text.includes('%') && cellIndex === row.length - 1) {
@@ -11802,27 +11844,49 @@ File: ${fileName}`, 'success');
                 const effectiveDaysCovered = globalDaysCovered - student.vacation;
                 
                 // Calculate attendance rate using effective days covered
-                // If student has vacation days: (present / (daysCovered - vacationDays)) * 100
-                // If no vacation days: (present / daysCovered) * 100
                 const rate = effectiveDaysCovered > 0 ? (student.present / effectiveDaysCovered) * 100 : 0;
+                
+                // Calculate weighted score using the same logic as PDF export
+                const effectiveDaysPercentage = globalDaysCovered > 0 ? (effectiveDaysCovered / globalDaysCovered * 100) : 0;
+                const excusePercentage = globalDaysCovered > 0 ? (student.vacation / globalDaysCovered * 100) : 0;
+                
+                let weightedScore;
+                
+                if (student.vacation === 0) {
+                    // If Num-Excuse is 0, use simplified formula:
+                    // 0.7 * Rate + 0.3 * (effective_days / Days Covered * 100)
+                    weightedScore = (
+                        0.7 * rate +
+                        0.3 * effectiveDaysPercentage
+                    );
+                } else {
+                    // If Num-Excuse > 0, use original formula:
+                    // 0.7 * Rate + 0.2 * (effective_days / Days Covered * 100) + 0.1 * (num_excuse / Days Covered * 100)
+                    weightedScore = (
+                        0.7 * rate +
+                        0.2 * effectiveDaysPercentage +
+                        0.1 * excusePercentage
+                    );
+                }
                 
                 return {
                     ...student,
                     attendanceRate: rate.toFixed(1),
                     numericRate: rate,
+                    weightedScore: Math.round(weightedScore * 10) / 10,
                     daysCovered: globalDaysCovered,
                     effectiveDaysCovered: effectiveDaysCovered
                 };
             });
             
-            // Highest attendance rates (best to worst)
+            // Highest weighted scores (best to worst)
             const highest = studentsWithRates
-                .sort((a, b) => b.numericRate - a.numericRate)
+                .sort((a, b) => b.weightedScore - a.weightedScore)
                 .slice(0, 5);
             
-            // Lowest attendance rates (worst to best)
+            // Lowest weighted scores (worst to best)
             const lowest = studentsWithRates
-                .sort((a, b) => a.numericRate - b.numericRate)
+                .sort((a, b) => a.weightedScore - b.weightedScore)
                 .slice(0, 5);
             
             updateAttendanceRateDisplay(highest, lowest);
@@ -11832,27 +11896,27 @@ File: ${fileName}`, 'success');
             const highestList = document.getElementById('highestAttendanceList');
             const lowestList = document.getElementById('lowestAttendanceList');
             
-            // Highest attendance
+            // Highest weighted scores
             if (highest.length > 0) {
                 highestList.innerHTML = highest.map(student => `
                     <li>
                         <span>${student.name}</span>
-                        <span class="analytics-percentage percentage-high">${student.attendanceRate}%</span>
+                        <span class="analytics-percentage percentage-high">${student.weightedScore}</span>
                     </li>
                 `).join('');
             } else {
                 highestList.innerHTML = '<li class="analytics-empty">No data available</li>';
             }
             
-            // Lowest attendance
+            // Lowest weighted scores
             if (lowest.length > 0) {
                 lowestList.innerHTML = lowest.map(student => {
-                    const percentClass = student.attendanceRate >= 80 ? 'percentage-high' : 
-                                       student.attendanceRate >= 60 ? 'percentage-medium' : 'percentage-low';
+                    const percentClass = student.weightedScore >= 80 ? 'percentage-high' : 
+                                       student.weightedScore >= 60 ? 'percentage-medium' : 'percentage-low';
                     return `
                         <li>
                             <span>${student.name}</span>
-                            <span class="analytics-percentage ${percentClass}">${student.attendanceRate}%</span>
+                            <span class="analytics-percentage ${percentClass}">${student.weightedScore}</span>
                         </li>
                     `;
                 }).join('');
