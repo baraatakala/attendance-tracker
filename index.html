@@ -11147,12 +11147,17 @@ ${environment.tips.slice(0, 3).join('\n')}
                 addSectionHeader(doc, 'SUMMARY STATISTICS', yPosition);
                 yPosition += 12; // Reduced from 15 to 12
                 
+                // Calculate raw attendance rate: (Total Present Records) / (Total Students × Days Covered)
+                const rawAttendanceRate = summaryStats.totalStudents > 0 && summaryStats.daysCovered > 0 ? 
+                    ((summaryStats.presentRecords / (summaryStats.totalStudents * summaryStats.daysCovered)) * 100).toFixed(1) : '0.0';
+                
                 const summaryData = [
                     ['Total Records', summaryStats.totalRecords.toString()],
                     ['Total Students', summaryStats.totalStudents.toString()],
                     ['Present Records', summaryStats.presentRecords.toString()],
                     ['Absent Records', summaryStats.absentRecords.toString()],
-                    ['Overall Attendance Rate', `${summaryStats.overallAttendanceRate}%`],
+                    ['Raw Attendance Rate', `${rawAttendanceRate}%`],
+                    ['Effective Attendance Rate', `${summaryStats.overallAttendanceRate}%`],
                     ['Days Covered', summaryStats.daysCovered.toString()]
                 ];
                 
@@ -14621,6 +14626,10 @@ File: ${fileName}`, 'success');
                 const attendanceRate = effectiveTotalDays > 0 ? 
                     Math.round((presentCount / effectiveTotalDays) * 100) : 0;
                 
+                // Calculate raw attendance rate: (Total Present Records) / (Total Students × Days Covered)
+                const rawAttendanceRate = expectedTotalAttendance > 0 ? 
+                    Math.round((presentCount / expectedTotalAttendance) * 100) : 0;
+                
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
                 doc.text('Summary Statistics:', 14, finalY);
@@ -14631,7 +14640,8 @@ File: ${fileName}`, 'success');
                 doc.text('Absent: ' + absentCount + ' records', 14, finalY + 18);
                 doc.text('Total Students: ' + totalStudents, 14, finalY + 26);
                 doc.text('Days Covered: ' + daysCovered, 14, finalY + 34);
-                doc.text('Attendance Rate: ' + attendanceRate + '%', 14, finalY + 42);
+                doc.text('Raw Attendance Rate: ' + rawAttendanceRate + '%', 14, finalY + 42);
+                doc.text('Effective Attendance Rate: ' + attendanceRate + '%', 14, finalY + 50);
                 
                 // Add footer
                 const pageCount = doc.internal.getNumberOfPages();
