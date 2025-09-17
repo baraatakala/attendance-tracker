@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Professional attendance tracking system with GPS location verification and penalties management - v3.0 Production Ready">
     <meta name="keywords" content="attendance tracker, GPS location, student management, penalties system">
     <meta name="author" content="Attendance Management System v3.0">
@@ -1493,7 +1493,7 @@
             background: var(--bg-card);
             border-radius: 0;
             overflow: hidden;
-            min-width: 320px; /* Mobile-friendly minimum width */
+            min-width: 1200px; /* Ensure minimum width for all columns */
         }
 
         .records-table th {
@@ -2266,33 +2266,6 @@
 
             .records-actions {
                 justify-content: center;
-            }
-
-            /* Mobile table container with horizontal scroll */
-            .table-container {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .records-table {
-                min-width: 800px; /* Smaller minimum width for mobile */
-                font-size: 14px;
-            }
-
-            .records-table th,
-            .records-table td {
-                padding: 8px 6px;
-                white-space: nowrap;
-            }
-
-            /* Mobile container adjustments */
-            .container {
-                padding: 10px;
-            }
-
-            .header {
-                padding: 15px;
-                margin-bottom: 20px;
             }
 
             .info-btn {
