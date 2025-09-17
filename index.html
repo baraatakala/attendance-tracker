@@ -11151,18 +11151,63 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const rawAttendanceRate = summaryStats.totalStudents > 0 && summaryStats.daysCovered > 0 ? 
                     ((summaryStats.presentRecords / (summaryStats.totalStudents * summaryStats.daysCovered)) * 100).toFixed(1) : '0.0';
                 
+                // Calculate total absent from attendance rates data (sum of individual absent counts)
+                const attendanceRatesForAbsent = calculateAttendanceRates(filteredData);
+                const totalAbsent = attendanceRatesForAbsent.reduce((sum, student) => {
+                    const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
+                    const calculatedAbsent = Math.max(0, effectiveDays - student.present);
+                    return sum + calculatedAbsent;
+                }, 0);
+                
+                // Calculate class averages for summary statistics
+                const attendanceRatesForAvg = calculateAttendanceRates(filteredData);
+                const avgRate = attendanceRatesForAvg.length > 0 ? 
+                    (attendanceRatesForAvg.reduce((sum, student) => sum + student.rate, 0) / attendanceRatesForAvg.length).toFixed(1) : '0.0';
+                
+                // Calculate weighted scores and average (using same logic as table generation)
+                const attendanceRatesWithWeightsForSummary = attendanceRatesForAvg.map(student => {
+                    const baseScore = student.rate;
+                    const excuseUsageRatio = student.vacation > 0 ? student.vacation / student.daysCovered : 0;
+                    const consistencyBonus = student.rate >= 90 ? 5 : (student.rate >= 80 ? 2 : 0);
+                    
+                    const weightedScore = excuseUsageRatio <= 0.2 ? 
+                        (0.7 * student.rate + 0.2 * (100 - excuseUsageRatio * 100) + 0.1 * consistencyBonus).toFixed(1) :
+                        (0.7 * student.rate + 0.15 * (100 - excuseUsageRatio * 100) + 0.15 * consistencyBonus).toFixed(1);
+                    
+                    return { ...student, weightedScore: parseFloat(weightedScore) };
+                });
+                
+                const avgWeightedScore = attendanceRatesWithWeightsForSummary.length > 0 ? 
+                    (attendanceRatesWithWeightsForSummary.reduce((sum, student) => sum + student.weightedScore, 0) / attendanceRatesWithWeightsForSummary.length).toFixed(1) : '0.0';
+                
                 const summaryData = [
                     ['Total Records', summaryStats.totalRecords.toString()],
                     ['Total Students', summaryStats.totalStudents.toString()],
                     ['Present Records', summaryStats.presentRecords.toString()],
                     ['Absent Records', summaryStats.absentRecords.toString()],
+                    ['Total Absent', totalAbsent.toString()],
                     ['Raw Attendance Rate', `${rawAttendanceRate}%`],
                     ['Effective Attendance Rate', `${summaryStats.overallAttendanceRate}%`],
+                    ['Class Average Rate', `${avgRate}%`],
+                    ['Class Average Weighted Score', `${avgWeightedScore}`],
                     ['Days Covered', summaryStats.daysCovered.toString()]
                 ];
                 
-                addTable(doc, summaryData, yPosition, false);
-                yPosition += (summaryData.length * 8) + 10; // Reduced spacing from 20 to 10
+                doc.autoTable({
+                    body: summaryData,
+                    startY: yPosition,
+                    theme: 'plain',
+                    styles: {
+                        fontSize: 10,
+                        cellPadding: 4
+                    },
+                    columnStyles: {
+                        0: { fontStyle: 'bold', cellWidth: 60 },
+                        1: { cellWidth: 40 }
+                    },
+                    margin: { top: 20, left: 8, right: 8 }
+                });
+                yPosition = doc.lastAutoTable.finalY + 15;
                 
                 // Check if we need a new page
                 if (yPosition > 250) {
@@ -11171,7 +11216,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
                 
                 // Attendance Rates by Student
-                addSectionHeader(doc, 'INDIVIDUAL ATTENDANCE RATES', yPosition);
+                addSectionHeader(doc, 'Individual Student Attendance and Weighted Performance', yPosition);
                 yPosition += 10; // Reduced spacing from 15 to 10
                 
                 const attendanceRates = calculateAttendanceRates(filteredData);
@@ -11232,38 +11277,62 @@ ${environment.tips.slice(0, 3).join('\n')}
                     
                     return [
                         (index + 1).toString(), // Add row number
-                        '|', // Separator
                         student.name,
-                        '|', // Separator
                         student.present.toString(),
-                        '|', // Separator
                         calculatedAbsent.toString(),
-                        '|', // Separator
                         student.vacation ? student.vacation.toString() : '0',
-                        '|', // Separator
                         effectiveDays.toString(),
-                        '|', // Separator
                         `${student.rate}%`,
-                        '|', // Separator
                         student.weightedScore.toString()
                     ];
                 });
                 
-                addTable(doc, attendanceTableData, yPosition, true, 
-                    ['#', '|', 'Student Name', '|', 'Present', '|', 'Absent', '|', 'Num-Excuse', '|', 'Effective Days', '|', 'Rate', '|', 'Weighted Score']);
-                yPosition += (attendanceTableData.length * 8) + 25;
+                // Use autoTable for proper pagination instead of custom addTable
+                doc.autoTable({
+                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score']],
+                    body: attendanceTableData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [52, 73, 94],
+                        textColor: 255,
+                        fontStyle: 'bold',
+                        fontSize: 10
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245]
+                    },
+                    columnStyles: {
+                        0: { halign: 'center', cellWidth: 12 },   // # 
+                        1: { cellWidth: 44 },                    // Student Name
+                        2: { halign: 'center', cellWidth: 18 },  // Present
+                        3: { halign: 'center', cellWidth: 18 },  // Absent
+                        4: { halign: 'center', cellWidth: 22 },  // Num-Excuse
+                        5: { halign: 'center', cellWidth: 25 },  // Effective Days
+                        6: { halign: 'center', cellWidth: 20 },  // Rate
+                        7: { halign: 'center', cellWidth: 30 }   // Weighted Score
+                    },
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3,
+                        overflow: 'linebreak',
+                        cellWidth: 'wrap'
+                    },
+                    margin: { top: 20, left: 8, right: 8 },
+                    tableWidth: 'auto',
+                    showHead: 'everyPage',
+                    didParseCell: function(data) {
+                        // Color coding for rates
+                        if (data.column.index === 6 && data.cell.raw.includes('%')) { // Rate column
+                            const rate = parseFloat(data.cell.raw);
+                            if (rate >= 80) data.cell.styles.textColor = [46, 204, 113]; // Green
+                            else if (rate >= 60) data.cell.styles.textColor = [243, 156, 18]; // Orange
+                            else data.cell.styles.textColor = [231, 76, 60]; // Red
+                        }
+                    }
+                });
                 
-                // Add average Rate and Weighted Score
-                if (attendanceRatesWithWeights.length > 0) {
-                    const avgRate = (attendanceRatesWithWeights.reduce((sum, student) => sum + student.rate, 0) / attendanceRatesWithWeights.length).toFixed(1);
-                    const avgWeightedScore = (attendanceRatesWithWeights.reduce((sum, student) => sum + student.weightedScore, 0) / attendanceRatesWithWeights.length).toFixed(1);
-                    
-                    doc.setFontSize(10);
-                    doc.setFont(undefined, 'bold');
-                    doc.setTextColor(52, 73, 94); // Dark blue
-                    doc.text(`Class Average Rate: ${avgRate}%  |  Class Average Weighted Score: ${avgWeightedScore}`, 20, yPosition);
-                    yPosition += 15;
-                }
+                yPosition = doc.lastAutoTable.finalY + 20;
                 
                 // Check if we need a new page
                 if (yPosition > 220) {
@@ -11283,9 +11352,34 @@ ${environment.tips.slice(0, 3).join('\n')}
                         `${item.percentage}%`
                     ]);
                     
-                    addTable(doc, absenceTableData, yPosition, true, 
-                        ['Student Name', 'Absent Days', 'Absence Rate']);
-                    yPosition += (absenceTableData.length * 8) + 20;
+                    doc.autoTable({
+                        head: [['Student Name', 'Absent Days', 'Absence Rate']],
+                        body: absenceTableData,
+                        startY: yPosition,
+                        theme: 'striped',
+                        headStyles: {
+                            fillColor: [52, 73, 94],
+                            textColor: 255,
+                            fontStyle: 'bold',
+                            fontSize: 10
+                        },
+                        alternateRowStyles: {
+                            fillColor: [245, 245, 245]
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 60 },                    // Student Name
+                            1: { halign: 'center', cellWidth: 30 },  // Absent Days
+                            2: { halign: 'center', cellWidth: 30 }   // Absence Rate
+                        },
+                        styles: {
+                            fontSize: 9,
+                            cellPadding: 3,
+                            overflow: 'linebreak'
+                        },
+                        margin: { top: 20, left: 8, right: 8 },
+                        showHead: 'everyPage'
+                    });
+                    yPosition = doc.lastAutoTable.finalY + 20;
                 } else {
                     doc.setFontSize(10);
                     doc.text('No absence data available for the selected period.', 20, yPosition);
@@ -11306,13 +11400,36 @@ ${environment.tips.slice(0, 3).join('\n')}
                 if (datesAbsenceData.length > 0) {
                     const datesTableData = datesAbsenceData.map(item => [
                         item.date, // Show date in simple format like dashboard
-                        `${item.absentStudents} present`, // Show present count
-                        '' // Remove the percentage column to match dashboard
+                        `${item.absentStudents} present` // Show present count
                     ]);
                     
-                    addTable(doc, datesTableData, yPosition, true, 
-                        ['Date', 'Present Students', '']); // Updated headers
-                    yPosition += (datesTableData.length * 8) + 20;
+                    doc.autoTable({
+                        head: [['Date', 'Present Students']],
+                        body: datesTableData,
+                        startY: yPosition,
+                        theme: 'striped',
+                        headStyles: {
+                            fillColor: [52, 73, 94],
+                            textColor: 255,
+                            fontStyle: 'bold',
+                            fontSize: 10
+                        },
+                        alternateRowStyles: {
+                            fillColor: [245, 245, 245]
+                        },
+                        columnStyles: {
+                            0: { halign: 'center', cellWidth: 60 },  // Date
+                            1: { halign: 'center', cellWidth: 60 }   // Present Students
+                        },
+                        styles: {
+                            fontSize: 9,
+                            cellPadding: 3,
+                            overflow: 'linebreak'
+                        },
+                        margin: { top: 20, left: 8, right: 8 },
+                        showHead: 'everyPage'
+                    });
+                    yPosition = doc.lastAutoTable.finalY + 20;
                 } else {
                     doc.setFontSize(10);
                     doc.text('No date-specific absence data available for the selected period.', 20, yPosition);
@@ -11345,12 +11462,12 @@ File: ${fileName}`, 'success');
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
             doc.setTextColor(52, 152, 219);
-            doc.text(title, 20, yPosition);
+            doc.text(title, 8, yPosition); // Changed from 20 to 8 to match table margins
             
-            // Add underline
+            // Add underline - adjust line position to match new left margin
             doc.setLineWidth(0.5);
             doc.setDrawColor(52, 152, 219);
-            doc.line(20, yPosition + 2, 190, yPosition + 2);
+            doc.line(8, yPosition + 2, 202, yPosition + 2); // Adjusted from 20,190 to 8,202
         }
         
         function addTable(doc, data, yPosition, hasHeaders = false, headers = []) {
