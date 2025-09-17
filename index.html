@@ -11431,9 +11431,16 @@ File: ${fileName}`, 'success');
                 }
             }).filter(date => date)).size;
             
-            // Calculate overall attendance rate as: (Present Records / (Days Covered × Total Students)) × 100
+            // Calculate total vacation days across all students
+            const totalVacationDays = data.filter(record => 
+                record.status === 'absent' && isExcusedAbsence(record.notes)
+            ).length;
+            
+            // Calculate overall effective attendance rate as: ∑(Presents) / ∑(Effective Days) × 100
+            // Where Effective Days = (Days Covered × Total Students) - Total Vacation Days
             const expectedTotalAttendance = uniqueDays * uniqueStudentNames.size;
-            const overallAttendanceRate = expectedTotalAttendance > 0 ? ((presentRecords / expectedTotalAttendance) * 100).toFixed(1) : '0.0';
+            const effectiveTotalDays = expectedTotalAttendance - totalVacationDays;
+            const overallAttendanceRate = effectiveTotalDays > 0 ? ((presentRecords / effectiveTotalDays) * 100).toFixed(1) : '0.0';
             
             return {
                 totalRecords,
@@ -14579,12 +14586,28 @@ File: ${fileName}`, 'success');
                 // Add summary statistics at the bottom
                 const finalY = doc.lastAutoTable.finalY + 15;
                 
-                // Calculate attendance rate using new formula: (Present Records / (Days Covered × Total Students)) × 100
+                // Calculate total vacation days from the current filtered data
+                let totalVacationDays = 0;
+                tableRows.forEach((row) => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 6) {
+                        const status = cells[2].textContent.trim(); // Status column
+                        const notes = cells[6] ? cells[6].textContent.trim() : ''; // Notes column
+                        
+                        // Count vacation days (absent records with excused notes)
+                        if (status.toLowerCase().includes('absent') && isExcusedAbsence(notes)) {
+                            totalVacationDays++;
+                        }
+                    }
+                });
+                
+                // Calculate attendance rate using new effective days formula: ∑(Presents) / ∑(Effective Days) × 100
                 const totalStudents = uniqueStudents.size;
                 const daysCovered = uniqueDays.size;
                 const expectedTotalAttendance = daysCovered * totalStudents;
-                const attendanceRate = expectedTotalAttendance > 0 ? 
-                    Math.round((presentCount / expectedTotalAttendance) * 100) : 0;
+                const effectiveTotalDays = expectedTotalAttendance - totalVacationDays;
+                const attendanceRate = effectiveTotalDays > 0 ? 
+                    Math.round((presentCount / effectiveTotalDays) * 100) : 0;
                 
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
