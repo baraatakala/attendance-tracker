@@ -11166,26 +11166,46 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 // Calculate weighted scores and average (using same logic as table generation)
                 const attendanceRatesWithWeightsForSummary = attendanceRatesForAvg.map(student => {
-                    const baseScore = student.rate;
-                    const excuseUsageRatio = student.vacation > 0 ? student.vacation / student.daysCovered : 0;
-                    const consistencyBonus = student.rate >= 90 ? 5 : (student.rate >= 80 ? 2 : 0);
+                    const daysCovered = student.daysCovered;
+                    const effectiveDays = daysCovered - student.vacation;
+                    const effectiveDaysPercentage = daysCovered > 0 ? (effectiveDays / daysCovered * 100) : 0;
+                    const excusePercentage = daysCovered > 0 ? (student.vacation / daysCovered * 100) : 0;
                     
-                    const weightedScore = excuseUsageRatio <= 0.2 ? 
-                        (0.7 * student.rate + 0.2 * (100 - excuseUsageRatio * 100) + 0.1 * consistencyBonus).toFixed(1) :
-                        (0.7 * student.rate + 0.15 * (100 - excuseUsageRatio * 100) + 0.15 * consistencyBonus).toFixed(1);
+                    let weightedScore;
                     
-                    return { ...student, weightedScore: parseFloat(weightedScore) };
+                    if (student.vacation === 0) {
+                        // If Num-Excuse is 0, use simplified formula:
+                        // 0.7 * Rate + 0.3 * (effective_days / Days Covered * 100)
+                        weightedScore = (
+                            0.7 * student.rate +
+                            0.3 * effectiveDaysPercentage
+                        );
+                    } else {
+                        // If Num-Excuse > 0, use original formula:
+                        // 0.7 * Rate + 0.2 * (effective_days / Days Covered * 100) + 0.1 * (num_excuse / Days Covered * 100)
+                        weightedScore = (
+                            0.7 * student.rate +
+                            0.2 * effectiveDaysPercentage +
+                            0.1 * excusePercentage
+                        );
+                    }
+                    
+                    return { ...student, weightedScore: Math.round(weightedScore * 10) / 10 };
                 });
                 
                 const avgWeightedScore = attendanceRatesWithWeightsForSummary.length > 0 ? 
                     (attendanceRatesWithWeightsForSummary.reduce((sum, student) => sum + student.weightedScore, 0) / attendanceRatesWithWeightsForSummary.length).toFixed(1) : '0.0';
                 
+                // Calculate unexcused absent (Total Absent - Absent Records)
+                const unexcusedAbsent = totalAbsent - summaryStats.absentRecords;
+                
                 const summaryData = [
                     ['Total Records', summaryStats.totalRecords.toString()],
                     ['Total Students', summaryStats.totalStudents.toString()],
-                    ['Present Records', summaryStats.presentRecords.toString()],
-                    ['Absent Records', summaryStats.absentRecords.toString()],
-                    ['Total Absent', totalAbsent.toString()],
+                    ['Number of Present', summaryStats.presentRecords.toString()],
+                    ['number of Execused Absent', summaryStats.absentRecords.toString()],
+                    ['Total number of Absent', totalAbsent.toString()],
+                    ['number of Unexcused Absent', unexcusedAbsent.toString()],
                     ['Raw Attendance Rate', `${rawAttendanceRate}%`],
                     ['Effective Attendance Rate', `${summaryStats.overallAttendanceRate}%`],
                     ['Class Average Rate', `${avgRate}%`],
