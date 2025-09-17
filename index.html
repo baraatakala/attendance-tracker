@@ -11225,24 +11225,32 @@ ${environment.tips.slice(0, 3).join('\n')}
                     }))
                 });
                 
-                const attendanceTableData = attendanceRatesWithWeights.map(student => {
+                const attendanceTableData = attendanceRatesWithWeights.map((student, index) => {
                     // Calculate correct absent count: Effective Days - Present
                     const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
                     const calculatedAbsent = Math.max(0, effectiveDays - student.present);
                     
                     return [
+                        (index + 1).toString(), // Add row number
+                        '|', // Separator
                         student.name,
+                        '|', // Separator
                         student.present.toString(),
+                        '|', // Separator
                         calculatedAbsent.toString(),
+                        '|', // Separator
                         student.vacation ? student.vacation.toString() : '0',
+                        '|', // Separator
                         effectiveDays.toString(),
+                        '|', // Separator
                         `${student.rate}%`,
+                        '|', // Separator
                         student.weightedScore.toString()
                     ];
                 });
                 
                 addTable(doc, attendanceTableData, yPosition, true, 
-                    ['Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score']);
+                    ['#', '|', 'Student Name', '|', 'Present', '|', 'Absent', '|', 'Num-Excuse', '|', 'Effective Days', '|', 'Rate', '|', 'Weighted Score']);
                 yPosition += (attendanceTableData.length * 8) + 25;
                 
                 // Add average Rate and Weighted Score
@@ -11352,11 +11360,25 @@ File: ${fileName}`, 'success');
             
             let currentY = yPosition;
             
-            // Reduced margins: left margin 10 (was 20), right margin 10 (was 20)
-            // Available width: 190 (was 170) - gives more space for columns
-            const leftMargin = 10;
-            const availableWidth = 190;
-            const textStartX = leftMargin + 5;
+            // Reduced margins: left margin 8 (was 10), right margin 8 (was 10)
+            // Available width: 194 (was 190) - gives more space for columns
+            const leftMargin = 8;
+            const availableWidth = 194;
+            const textStartX = leftMargin + 3; // Reduced from 5 to 3
+            
+            // Define custom column widths for attendance table (15 columns with separators)
+            let columnWidths;
+            if (headers.length === 15 && headers[0] === '#') {
+                // Custom widths for attendance table with # column and separators
+                columnWidths = [12, 3, 30, 3, 18, 3, 18, 3, 22, 3, 18, 3, 30, 3, 18]; // Total: 194
+            } else if (headers.length === 8 && headers[0] === '#') {
+                // Custom widths for attendance table with # column (fallback)
+                columnWidths = [6, 47, 12, 12, 22, 40, 20, 22]; // Total: 194
+            } else {
+                // Equal width for other tables
+                const colWidth = availableWidth / (headers.length || data[0].length);
+                columnWidths = new Array(headers.length || data[0].length).fill(colWidth);
+            }
             
             // Add headers if provided
             if (hasHeaders && headers.length > 0) {
@@ -11364,9 +11386,18 @@ File: ${fileName}`, 'success');
                 doc.setFillColor(240, 240, 240);
                 doc.rect(leftMargin, currentY - 5, availableWidth, 8, 'F');
                 
-                const colWidth = availableWidth / headers.length;
+                let xOffset = 0;
                 headers.forEach((header, index) => {
-                    doc.text(header, textStartX + (index * colWidth), currentY);
+                    let headerXPosition = textStartX + xOffset;
+                    
+                    // Special alignment for "Rate" header (index 12) - shift right
+                    if (header === 'Rate' && index === 12) {
+                        const textWidth = doc.getTextWidth(header);
+                        headerXPosition = textStartX + xOffset + (columnWidths[index] - textWidth) / 2 + 5; // Center + 5 units right
+                    }
+                    
+                    doc.text(header, headerXPosition, currentY);
+                    xOffset += columnWidths[index];
                 });
                 currentY += 10;
                 doc.setFont('helvetica', 'normal');
@@ -11374,20 +11405,19 @@ File: ${fileName}`, 'success');
             
             // Add data rows
             data.forEach((row, index) => {
-                const colWidth = availableWidth / row.length;
-                
                 // Alternate row colors
                 if (index % 2 === 0) {
                     doc.setFillColor(250, 250, 250);
                     doc.rect(leftMargin, currentY - 5, availableWidth, 8, 'F');
                 }
                 
+                let xOffset = 0;
                 row.forEach((cell, cellIndex) => {
                     const text = cell.toString();
-                    const xPosition = textStartX + (cellIndex * colWidth);
+                    const xPosition = textStartX + xOffset;
                     
                     // Color coding for rates
-                    if (text.includes('%') && cellIndex === row.length - 1) {
+                    if (text.includes('%') && (cellIndex === 12 || cellIndex === 14)) { // Rate and Weighted Score columns
                         const rate = parseFloat(text);
                         if (rate >= 80) doc.setTextColor(46, 204, 113); // Green
                         else if (rate >= 60) doc.setTextColor(243, 156, 18); // Orange
@@ -11396,7 +11426,32 @@ File: ${fileName}`, 'success');
                         doc.setTextColor(44, 62, 80);
                     }
                     
-                    doc.text(text, xPosition, currentY);
+                    // Handle alignment based on column type
+                    if (text === '|') {
+                        // Center align separator
+                        const textWidth = doc.getTextWidth(text);
+                        doc.text(text, xPosition + (columnWidths[cellIndex] - textWidth) / 2, currentY);
+                    } else if (cellIndex === 0 && headers[0] === '#') {
+                        // Center align # column
+                        const textWidth = doc.getTextWidth(text);
+                        doc.text(text, xPosition + (columnWidths[cellIndex] - textWidth) / 2, currentY);
+                    } else if (headers.length === 15 && (cellIndex === 4 || cellIndex === 6 || cellIndex === 8 || cellIndex === 10 || cellIndex === 12 || cellIndex === 14)) {
+                        // Center align numeric columns (Present, Absent, Num-Excuse, Effective Days, Rate, Weighted Score)
+                        const textWidth = doc.getTextWidth(text);
+                        doc.text(text, xPosition + (columnWidths[cellIndex] - textWidth) / 2, currentY);
+                    } else if (cellIndex === 2 && headers.length === 15) {
+                        // Left align Student Name column
+                        doc.text(text, xPosition, currentY);
+                    } else if (cellIndex >= 2 && cellIndex <= 7 && headers.length === 8) {
+                        // Fallback: Center align numeric columns for 8-column layout
+                        const textWidth = doc.getTextWidth(text);
+                        doc.text(text, xPosition + (columnWidths[cellIndex] - textWidth) / 2, currentY);
+                    } else {
+                        // Default left align
+                        doc.text(text, xPosition, currentY);
+                    }
+                    
+                    xOffset += columnWidths[cellIndex];
                 });
                 currentY += 8;
             });
