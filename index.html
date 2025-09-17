@@ -11240,6 +11240,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                     ['Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score']);
                 yPosition += (attendanceTableData.length * 8) + 25;
                 
+                // Add average Rate and Weighted Score
+                if (attendanceRatesWithWeights.length > 0) {
+                    const avgRate = (attendanceRatesWithWeights.reduce((sum, student) => sum + student.rate, 0) / attendanceRatesWithWeights.length).toFixed(1);
+                    const avgWeightedScore = (attendanceRatesWithWeights.reduce((sum, student) => sum + student.weightedScore, 0) / attendanceRatesWithWeights.length).toFixed(1);
+                    
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(52, 73, 94); // Dark blue
+                    doc.text(`Class Average Rate: ${avgRate}%  |  Class Average Weighted Score: ${avgWeightedScore}`, 20, yPosition);
+                    yPosition += 15;
+                }
+                
                 // Check if we need a new page
                 if (yPosition > 220) {
                     doc.addPage();
