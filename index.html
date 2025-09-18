@@ -6674,6 +6674,19 @@
                 
                 try {
                     const timeString = record.time;
+                    
+                    // Check if time string exists and is valid
+                    if (!timeString || typeof timeString !== 'string') {
+                        console.warn('⚠️ No valid time found for record:', record);
+                        // Default to on-time if no time available
+                        return {
+                            status: 'on-time',
+                            label: 'On-Time',
+                            icon: 'fas fa-check',
+                            class: 'on-time'
+                        };
+                    }
+                    
                     let hours, minutes;
                     
                     console.log('📊 Status Check:', {
@@ -11269,6 +11282,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                     datetime: record.datetime || record.date || record.timestamp || new Date().toISOString(),
                     notes: record.notes || '',
                     location: record.location || '',
+                    time: record.time || record.datetime || record.timestamp || '', // Add time field for status determination
                     // Preserve original fields for the calculation functions
                     attendanceStatus: record.attendanceStatus,
                     actionType: record.actionType,
@@ -11383,6 +11397,23 @@ ${environment.tips.slice(0, 3).join('\n')}
                 filteredData.forEach(record => {
                     if (record.status === 'present' || record.attendanceStatus === 'present' || 
                         (record.action && record.action.toLowerCase().includes('present'))) {
+                        
+                        // Extract time from datetime if time field is not available
+                        if (!record.time && record.datetime) {
+                            try {
+                                // Extract time portion from datetime string
+                                const datetime = record.datetime;
+                                if (typeof datetime === 'string') {
+                                    // Handle formats like "2025-09-13 1:26:00 PM" or "9/13/2025, 1:26:00 PM"
+                                    const timeMatch = datetime.match(/(\d{1,2}:\d{2}:\d{2}\s?[AP]M|\d{1,2}:\d{2}\s?[AP]M)/i);
+                                    if (timeMatch) {
+                                        record.time = timeMatch[0].trim();
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn('Could not extract time from datetime:', record.datetime);
+                            }
+                        }
                         
                         // Determine if this present record is on-time or late
                         const statusResult = determineAttendanceStatus(record);
