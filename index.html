@@ -6228,20 +6228,22 @@
                 </div>
                 <div class="admin-modal-body">
                     <p>This action requires administrator privileges.</p>
-                    <div class="admin-form-group">
-                        <label for="adminPassword">
-                            <i class="fas fa-lock"></i> Enter Admin Password:
-                        </label>
-                        <input type="password" id="adminPassword" placeholder="Admin password" 
-                               onkeypress="handleAdminKeyPress(event)">
-                    </div>
-                    <div id="adminError" class="admin-error" style="display: none;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span id="adminErrorText"></span>
-                    </div>
-                    <div class="admin-attempts" id="adminAttempts" style="display: none;">
-                        <small>Attempts remaining: <span id="attemptsCount">3</span></small>
-                    </div>
+                    <form id="adminPasswordForm" onsubmit="handleAdminLogin(event)">
+                        <div class="admin-form-group">
+                            <label for="adminPassword">
+                                <i class="fas fa-lock"></i> Enter Admin Password:
+                            </label>
+                            <input type="password" id="adminPassword" placeholder="Admin password" 
+                                   required autocomplete="current-password">
+                        </div>
+                        <div id="adminError" class="admin-error" style="display: none;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="adminErrorText"></span>
+                        </div>
+                        <div class="admin-attempts" id="adminAttempts" style="display: none;">
+                            <small>Attempts remaining: <span id="attemptsCount">3</span></small>
+                        </div>
+                    </form>
                 </div>
                 <div class="admin-modal-footer">
                     <button class="admin-btn admin-btn-cancel" onclick="closeAdminModal()">
@@ -8163,7 +8165,14 @@
             pendingAdminAction = null;
         }
 
+        function handleAdminLogin(event) {
+            event.preventDefault(); // Prevent form submission and page reload
+            validateAdminPassword();
+        }
+
         function handleAdminKeyPress(event) {
+            // This function is kept for backward compatibility but is no longer needed
+            // since the form handles Enter key properly now
             if (event.key === 'Enter') {
                 validateAdminPassword();
             }
