@@ -11066,7 +11066,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
                 exportBtn.disabled = true;
 
-                // Get current analytics data
+                // Use the same data source as the dashboard analytics
                 const filterPeriod = document.getElementById('analyticsFilter').value;
                 let filteredData = getAnalyticsData(filterPeriod);
                 
@@ -11078,33 +11078,101 @@ ${environment.tips.slice(0, 3).join('\n')}
                     return;
                 }
                 
-                // Clean and validate each record
-                filteredData = filteredData.filter(record => {
-                    return record && 
-                           (record.student || record.studentId || record.studentName || record.name) && 
-                           (record.status === 'present' || record.status === 'absent' || 
-                            record.attendanceStatus === 'present' || record.attendanceStatus === 'absent' ||
-                            record.action === 'Present' || record.action === 'Absent' ||
-                            record.actionType === 'presence' || record.actionType === 'absence');
-                }).map(record => ({
-                    student: record.student || record.studentName || record.studentId || record.name || 'Unknown Student',
-                    status: record.status || record.attendanceStatus || record.action || 'unknown',
-                    datetime: record.datetime || record.date || record.timestamp || new Date().toISOString(),
-                    notes: record.notes || '',
-                    location: record.location || '',
-                    // Preserve original fields for the calculation functions
-                    attendanceStatus: record.attendanceStatus,
-                    actionType: record.actionType,
-                    action: record.action,
-                    date: record.date
-                }));
+                // Use the same attendance rate calculation as the dashboard
+                const attendanceRates = [];
+                const studentStats = {};
                 
-                if (filteredData.length === 0) {
-                    showMessage('No valid attendance records found to export', 'warning');
-                    exportBtn.innerHTML = originalText;
-                    exportBtn.disabled = false;
-                    return;
-                }
+                // Calculate global days covered for the entire report period
+                const globalDates = new Set();
+                filteredData.forEach(record => {
+                    const recordDate = record.datetime || record.date || record.timestamp || '';
+                    let dateStr = '';
+                    if (typeof recordDate === 'string' && recordDate.includes(' ')) {
+                        dateStr = recordDate.split(' ')[0];
+                    } else if (typeof recordDate === 'string') {
+                        dateStr = recordDate;
+                    } else {
+                        dateStr = new Date().toISOString().split('T')[0]; // fallback to today
+                    }
+                    globalDates.add(dateStr);
+                });
+                const globalDaysCovered = globalDates.size;
+                
+                // Calculate attendance rates for each student (same logic as dashboard)
+                filteredData.forEach(record => {
+                    const studentKey = record.studentId || record.studentName || 'Unknown';
+                    const studentName = record.studentName || studentKey;
+                    
+                    if (!studentStats[studentKey]) {
+                        studentStats[studentKey] = {
+                            name: studentName,
+                            total: 0,
+                            present: 0,
+                            absent: 0,
+                            vacation: 0
+                        };
+                    }
+                    
+                    studentStats[studentKey].total++;
+                    
+                    // Check for present status - handle multiple formats
+                    const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
+                    if (status === 'present' || record.actionType === 'check-in' || status.includes('present')) {
+                        studentStats[studentKey].present++;
+                    } else if (status === 'absent' || status.includes('absent')) {
+                        studentStats[studentKey].absent++;
+                        // Check if this absence is excused (vacation/abroad)
+                        if (isExcusedAbsence(record.notes)) {
+                            studentStats[studentKey].vacation++;
+                        }
+                    }
+                });
+                
+                // Calculate percentages using effective days covered (same as dashboard)
+                const attendanceRatesWithWeights = Object.values(studentStats).map(student => {
+                    // Calculate actual absent days: Total days - Present days - Vacation days
+                    const actualAbsent = globalDaysCovered - student.present - student.vacation;
+                    
+                    // Calculate effective days covered (excluding vacation days)
+                    const effectiveDaysCovered = globalDaysCovered - student.vacation;
+                    const rate = effectiveDaysCovered > 0 ? (student.present / effectiveDaysCovered * 100) : 0;
+                    
+                    // Calculate weighted score using the same formula as dashboard
+                    const daysCovered = globalDaysCovered;
+                    const effectiveDays = daysCovered - student.vacation;
+                    const effectiveDaysPercentage = daysCovered > 0 ? (effectiveDays / daysCovered * 100) : 0;
+                    const excusePercentage = daysCovered > 0 ? (student.vacation / daysCovered * 100) : 0;
+                    
+                    let weightedScore;
+                    
+                    if (student.vacation === 0) {
+                        // If Num-Excuse is 0, use simplified formula:
+                        // 0.7 * Rate + 0.3 * (effective_days / Days Covered * 100)
+                        weightedScore = (
+                            0.7 * rate +
+                            0.3 * effectiveDaysPercentage
+                        );
+                    } else {
+                        // If Num-Excuse > 0, use original formula:
+                        // 0.7 * Rate + 0.2 * (effective_days / Days Covered * 100) + 0.1 * (num_excuse / Days Covered * 100)
+                        weightedScore = (
+                            0.7 * rate +
+                            0.2 * effectiveDaysPercentage +
+                            0.1 * excusePercentage
+                        );
+                    }
+                    
+                    return {
+                        name: student.name,
+                        present: student.present,
+                        absent: actualAbsent, // Use calculated absent days
+                        vacation: student.vacation,
+                        daysCovered: globalDaysCovered,
+                        effectiveDaysCovered: effectiveDaysCovered,
+                        rate: Math.round(rate * 10) / 10,
+                        weightedScore: Math.round(weightedScore * 10) / 10
+                    };
+                }).sort((a, b) => b.weightedScore - a.weightedScore); // Sort by weighted score descending
 
                 // Create PDF
                 const { jsPDF } = window.jspdf;
@@ -11142,75 +11210,50 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 let yPosition = 50; // Reduced from 55 to 50 for better spacing
                 
-                // Summary Statistics
-                const summaryStats = calculateSummaryStats(filteredData);
+                // Summary Statistics using the same calculations as dashboard
                 addSectionHeader(doc, 'SUMMARY STATISTICS', yPosition);
-                yPosition += 12; // Reduced from 15 to 12
+                yPosition += 12;
                 
-                // Calculate raw attendance rate: (Total Present Records) / (Total Students × Days Covered)
-                const rawAttendanceRate = summaryStats.totalStudents > 0 && summaryStats.daysCovered > 0 ? 
-                    ((summaryStats.presentRecords / (summaryStats.totalStudents * summaryStats.daysCovered)) * 100).toFixed(1) : '0.0';
+                // Calculate summary statistics from the correctly calculated data
+                const totalRecords = filteredData.length;
+                const totalStudents = attendanceRatesWithWeights.length;
+                const presentRecords = filteredData.filter(r => {
+                    const status = (r.attendanceStatus || r.action || '').toLowerCase().trim();
+                    return status === 'present' || status.includes('present');
+                }).length;
+                const absentRecords = filteredData.filter(r => {
+                    const status = (r.attendanceStatus || r.action || '').toLowerCase().trim();
+                    return status === 'absent' || status.includes('absent');
+                }).length;
                 
-                // Calculate total absent from attendance rates data (sum of individual absent counts)
-                const attendanceRatesForAbsent = calculateAttendanceRates(filteredData);
-                const totalAbsent = attendanceRatesForAbsent.reduce((sum, student) => {
-                    const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
-                    const calculatedAbsent = Math.max(0, effectiveDays - student.present);
-                    return sum + calculatedAbsent;
-                }, 0);
+                // Calculate totals from student data
+                const totalAbsent = attendanceRatesWithWeights.reduce((sum, student) => sum + student.absent, 0);
+                const totalVacation = attendanceRatesWithWeights.reduce((sum, student) => sum + student.vacation, 0);
+                const unexcusedAbsent = totalAbsent - totalVacation;
                 
-                // Calculate class averages for summary statistics
-                const attendanceRatesForAvg = calculateAttendanceRates(filteredData);
-                const avgRate = attendanceRatesForAvg.length > 0 ? 
-                    (attendanceRatesForAvg.reduce((sum, student) => sum + student.rate, 0) / attendanceRatesForAvg.length).toFixed(1) : '0.0';
+                // Calculate rates
+                const rawAttendanceRate = totalStudents > 0 && globalDaysCovered > 0 ? 
+                    ((presentRecords / (totalStudents * globalDaysCovered)) * 100).toFixed(1) : '0.0';
                 
-                // Calculate weighted scores and average (using same logic as table generation)
-                const attendanceRatesWithWeightsForSummary = attendanceRatesForAvg.map(student => {
-                    const daysCovered = student.daysCovered;
-                    const effectiveDays = daysCovered - student.vacation;
-                    const effectiveDaysPercentage = daysCovered > 0 ? (effectiveDays / daysCovered * 100) : 0;
-                    const excusePercentage = daysCovered > 0 ? (student.vacation / daysCovered * 100) : 0;
-                    
-                    let weightedScore;
-                    
-                    if (student.vacation === 0) {
-                        // If Num-Excuse is 0, use simplified formula:
-                        // 0.7 * Rate + 0.3 * (effective_days / Days Covered * 100)
-                        weightedScore = (
-                            0.7 * student.rate +
-                            0.3 * effectiveDaysPercentage
-                        );
-                    } else {
-                        // If Num-Excuse > 0, use original formula:
-                        // 0.7 * Rate + 0.2 * (effective_days / Days Covered * 100) + 0.1 * (num_excuse / Days Covered * 100)
-                        weightedScore = (
-                            0.7 * student.rate +
-                            0.2 * effectiveDaysPercentage +
-                            0.1 * excusePercentage
-                        );
-                    }
-                    
-                    return { ...student, weightedScore: Math.round(weightedScore * 10) / 10 };
-                });
+                const effectiveAttendanceRate = attendanceRatesWithWeights.length > 0 ? 
+                    (attendanceRatesWithWeights.reduce((sum, student) => sum + student.rate, 0) / attendanceRatesWithWeights.length).toFixed(1) : '0.0';
                 
-                const avgWeightedScore = attendanceRatesWithWeightsForSummary.length > 0 ? 
-                    (attendanceRatesWithWeightsForSummary.reduce((sum, student) => sum + student.weightedScore, 0) / attendanceRatesWithWeightsForSummary.length).toFixed(1) : '0.0';
-                
-                // Calculate unexcused absent (Total Absent - Absent Records)
-                const unexcusedAbsent = totalAbsent - summaryStats.absentRecords;
+                const classAverageRate = effectiveAttendanceRate; // Same as effective rate
+                const classAverageWeightedScore = attendanceRatesWithWeights.length > 0 ? 
+                    (attendanceRatesWithWeights.reduce((sum, student) => sum + student.weightedScore, 0) / attendanceRatesWithWeights.length).toFixed(1) : '0.0';
                 
                 const summaryData = [
-                    ['Total Records', summaryStats.totalRecords.toString()],
-                    ['Total Students', summaryStats.totalStudents.toString()],
-                    ['Number of Present', summaryStats.presentRecords.toString()],
-                    ['number of Execused Absent', summaryStats.absentRecords.toString()],
+                    ['Total Records', totalRecords.toString()],
+                    ['Total Students', totalStudents.toString()],
+                    ['Number of Present', presentRecords.toString()],
+                    ['number of Execused Absent', totalVacation.toString()],
                     ['Total number of Absent', totalAbsent.toString()],
                     ['number of Unexcused Absent', unexcusedAbsent.toString()],
                     ['Raw Attendance Rate', `${rawAttendanceRate}%`],
-                    ['Effective Attendance Rate', `${summaryStats.overallAttendanceRate}%`],
-                    ['Class Average Rate', `${avgRate}%`],
-                    ['Class Average Weighted Score', `${avgWeightedScore}`],
-                    ['Days Covered', summaryStats.daysCovered.toString()]
+                    ['Effective Attendance Rate', `${effectiveAttendanceRate}%`],
+                    ['Class Average Rate', `${classAverageRate}%`],
+                    ['Class Average Weighted Score', `${classAverageWeightedScore}`],
+                    ['Days Covered', globalDaysCovered.toString()]
                 ];
                 
                 doc.autoTable({
@@ -11237,43 +11280,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 // Attendance Rates by Student
                 addSectionHeader(doc, 'Individual Student Attendance and Weighted Performance', yPosition);
-                yPosition += 10; // Reduced spacing from 15 to 10
-                
-                const attendanceRates = calculateAttendanceRates(filteredData);
-                
-                // Calculate weighted scores and sort by them
-                const attendanceRatesWithWeights = attendanceRates.map(student => {
-                    const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
-                    const daysCovered = student.daysCovered || effectiveDays;
-                    
-                    // Calculate weighted score using different formulas based on Num-Excuse
-                    const effectiveDaysPercentage = daysCovered > 0 ? (effectiveDays / daysCovered * 100) : 0;
-                    const excusePercentage = daysCovered > 0 ? (student.vacation / daysCovered * 100) : 0;
-                    
-                    let weightedScore;
-                    
-                    if (student.vacation === 0) {
-                        // If Num-Excuse is 0, use simplified formula:
-                        // 0.7 * Rate + 0.3 * (effective_days / Days Covered * 100)
-                        weightedScore = (
-                            0.7 * student.rate +
-                            0.3 * effectiveDaysPercentage
-                        );
-                    } else {
-                        // If Num-Excuse > 0, use original formula:
-                        // 0.7 * Rate + 0.2 * (effective_days / Days Covered * 100) + 0.1 * (num_excuse / Days Covered * 100)
-                        weightedScore = (
-                            0.7 * student.rate +
-                            0.2 * effectiveDaysPercentage +
-                            0.1 * excusePercentage
-                        );
-                    }
-                    
-                    return {
-                        ...student,
-                        weightedScore: Math.round(weightedScore * 10) / 10 // Round to 1 decimal place
-                    };
-                }).sort((a, b) => b.weightedScore - a.weightedScore); // Sort by weighted score descending
+                yPosition += 10;
                 
                 console.log('📄 PDF export data comparison:', {
                     filteredDataLength: filteredData.length,
@@ -11291,17 +11298,13 @@ ${environment.tips.slice(0, 3).join('\n')}
                 });
                 
                 const attendanceTableData = attendanceRatesWithWeights.map((student, index) => {
-                    // Calculate correct absent count: Effective Days - Present
-                    const effectiveDays = student.effectiveDaysCovered || student.daysCovered;
-                    const calculatedAbsent = Math.max(0, effectiveDays - student.present);
-                    
                     return [
                         (index + 1).toString(), // Add row number
                         student.name,
                         student.present.toString(),
-                        calculatedAbsent.toString(),
-                        student.vacation ? student.vacation.toString() : '0',
-                        effectiveDays.toString(),
+                        student.absent.toString(),
+                        student.vacation.toString(),
+                        student.effectiveDaysCovered.toString(),
                         `${student.rate}%`,
                         student.weightedScore.toString()
                     ];
@@ -11364,7 +11367,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                 addSectionHeader(doc, 'ABSENCE ANALYSIS', yPosition);
                 yPosition += 15;
                 
-                const absenceData = calculateAbsenceAnalysis(filteredData);
+                // Use the correctly calculated attendance data for absence analysis
+                const absenceData = attendanceRatesWithWeights
+                    .filter(student => student.absent > 0) // Only show students with absences
+                    .sort((a, b) => b.absent - a.absent) // Sort by absent days descending
+                    .map(student => {
+                        const absenceRate = student.daysCovered > 0 ? (student.absent / student.daysCovered) * 100 : 0;
+                        return {
+                            name: student.name,
+                            count: student.absent,
+                            percentage: parseFloat(absenceRate.toFixed(1))
+                        };
+                    });
                 if (absenceData.length > 0) {
                     const absenceTableData = absenceData.map(item => [
                         item.name,
@@ -12283,140 +12297,8 @@ File: ${fileName}`, 'success');
 
         function updateChartsDisplay(stats) {
             const container = document.getElementById('studentChartsContainer');
-            
-            if (stats.length > 0) {
-                // Calculate mathematical insights for each student
-                const enrichedStats = stats.map(student => calculateMathematicalInsights(student, stats));
-                
-                container.innerHTML = `
-                    <div class="simplified-dashboard-header">
-                        <h4><i class="fas fa-chart-line"></i> Student Analytics Dashboard</h4>
-                        <p>Reliable attendance insights using PDF export calculation logic</p>
-                        <div class="weekly-summary-badge">
-                            <i class="fas fa-chart-bar"></i> 
-                            <span>Same Data Source as PDF Report</span>
-                            <small style="display: block; margin-top: 4px; opacity: 0.8;">
-                                Filter: ${document.getElementById('analyticsFilter')?.value || 'all'} | 
-                                Records: ${stats.length} students from ${enrichedStats.reduce((sum, s) => sum + (s.totalRecords || 0), 0)} total records
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <div class="simplified-charts-grid">
-                        ${enrichedStats.map(student => {
-                            const attendanceRate = parseFloat(student.attendanceRate);
-                            const riskColor = student.riskLevel === 'HIGH' ? '#dc3545' : 
-                                            student.riskLevel === 'MEDIUM' ? '#ffc107' : '#28a745';
-                            
-                            // Use the new meaningful trend analysis
-                            const trendText = student.trendDirection || 'STABLE';
-                            const trendIcon = student.trendIcon || '➡️';
-                            const trendDetail = student.trendConfidence ? ` (${student.trendConfidence} confidence)` : '';
-                            
-                            return `
-                                <div class="simple-student-card">
-                                    <div class="student-header-simple">
-                                        <h5>${student.name}</h5>
-                                        <span class="risk-badge" style="background-color: ${riskColor}">
-                                            ${student.riskLevel} RISK
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="attendance-summary">
-                                        <div class="attendance-rate">
-                                            <span class="rate-number">${student.attendanceRate}%</span>
-                                            <div class="rate-bar">
-                                                <div class="rate-fill" style="width: ${attendanceRate}%; background-color: ${riskColor}"></div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="trend-simple">
-                                            <strong>Trend:</strong> ${trendText} ${trendIcon}
-                                            ${student.trendVelocity !== '0.0' ? ` (${student.trendVelocity}%/week)` : ''}
-                                            ${trendDetail}
-                                        </div>
-                                        
-                                        <div class="goal-simple">
-                                            <strong>Goal:</strong> ${student.personalTarget || 80}% target → 
-                                            <span class="goal-status ${student.goalAchievementClass}">
-                                                ${student.goalAchievement}
-                                            </span>
-                                            ${student.timeToGoal && student.timeToGoal !== student.goalAchievement ? 
-                                                `<small>(${student.timeToGoal})</small>` : ''}
-                                        </div>
-                                        
-                                        <div class="data-summary">
-                                            <small>
-                                                Present: ${student.presentCount} • Absent: ${Math.max(0, student.effectiveDaysCovered - student.presentCount)} • Num-Excuse: ${student.vacationCount || 0} • Effective Days: ${student.effectiveDaysCovered}
-                                                ${student.dataQuality ? ` • ${student.dataQuality} quality` : ''}
-                                            </small>
-                                        </div>
-                                        
-                                        ${student.attendancePattern && student.attendancePattern !== 'Regular attendance pattern' ? 
-                                            `<div class="pattern-alert">
-                                                <i class="fas fa-info-circle"></i>
-                                                <small>${student.attendancePattern}</small>
-                                            </div>` : ''}
-                                    </div>
-                                    
-                                    <div class="key-recommendation">
-                                        <i class="fas fa-lightbulb"></i>
-                                        <span>${(student.recommendations && student.recommendations.length > 0) ? 
-                                            student.recommendations[0].text : 
-                                            'Continue monitoring attendance pattern'}</span>
-                                        ${student.recommendations && student.recommendations.length > 1 ? 
-                                            `<div class="additional-recommendations">
-                                                <small>+${student.recommendations.length - 1} more recommendations</small>
-                                            </div>` : ''}
-                                    </div>
-                                    
-                                    ${student.riskFactors && student.riskFactors.length > 0 ? 
-                                        `<div class="risk-factors">
-                                            <small><strong>Risk factors:</strong> ${student.riskFactors.join(', ')}</small>
-                                            ${student.isOnVacation ? 
-                                                `<br><small><i class="fas fa-plane" style="color: #17a2b8;"></i> <strong>Status:</strong> On planned vacation</small>` : ''}
-                                            ${student.adjustedRate ? 
-                                                `<br><small><i class="fas fa-calculator" style="color: #28a745;"></i> <strong>Adjusted rate (excluding vacation):</strong> ${student.adjustedRate}</small>` : ''}
-                                        </div>` : ''}
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    
-                    <div class="class-overview-simple">
-                        <h4><i class="fas fa-users"></i> Class Overview</h4>
-                        <div class="overview-stats">
-                            <div class="stat-card">
-                                <span class="stat-number">${enrichedStats.length}</span>
-                                <span class="stat-label">Total Students</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-number">${enrichedStats.filter(s => parseFloat(s.attendanceRate) >= 80).length}</span>
-                                <span class="stat-label">Meeting Target (≥80%)</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-number">${enrichedStats.filter(s => s.riskLevel === 'HIGH').length}</span>
-                                <span class="stat-label">High Risk</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-number">${(enrichedStats.reduce((sum, s) => sum + parseFloat(s.attendanceRate), 0) / enrichedStats.length).toFixed(1)}%</span>
-                                <span class="stat-label">Class Average</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // Initialize the student filter after charts are loaded
-                setTimeout(() => {
-                    initializeChartStudentFilter();
-                    const resultsInfo = document.getElementById('chartFilterResults');
-                    if (resultsInfo) {
-                        resultsInfo.textContent = `Showing all ${enrichedStats.length} students`;
-                    }
-                }, 100);
-            } else {
-                container.innerHTML = '<div class="analytics-empty">No chart data available</div>';
-            }
+            // Analytics dashboard section removed - use PDF export for detailed analytics
+            container.innerHTML = '';
         }
 
         function calculateMathematicalInsights(student, allStudents) {
