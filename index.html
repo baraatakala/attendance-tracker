@@ -1948,6 +1948,59 @@
             font-size: 1rem;
         }
 
+        /* Punctuality Statistics Styling */
+        .punctuality-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .punctuality-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .punctuality-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .punctuality-item.on-time {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+        }
+
+        .punctuality-item.late {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+        }
+
+        .punctuality-item.absent {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+        }
+
+        .punctuality-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .punctuality-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .punctuality-icon {
+            font-size: 1.2rem;
+        }
+
         .analytics-percentage {
             padding: 3px 8px;
             border-radius: 12px;
@@ -5664,6 +5717,14 @@
                 </div>
 
                 <div class="analytics-grid">
+                    <!-- Punctuality Statistics -->
+                    <div class="analytics-card">
+                        <h4><i class="fas fa-clock"></i> Punctuality Analysis</h4>
+                        <div id="punctualityStats" class="punctuality-stats">
+                            <div class="analytics-empty">No data available</div>
+                        </div>
+                    </div>
+
                     <!-- Highest Weighted Score -->
                     <div class="analytics-card">
                         <h4><i class="fas fa-trophy"></i> Highest Weighted Score</h4>
@@ -11338,7 +11399,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                 // Calculate unexcused absent (Total Absent - Absent Records)
                 const unexcusedAbsent = totalAbsent - summaryStats.absentRecords;
                 
-                const summaryData = [
+                // Add punctuality statistics if available
+                let summaryData = [
                     ['Total Records', summaryStats.totalRecords.toString()],
                     ['Total Students', summaryStats.totalStudents.toString()],
                     ['Number of Present', summaryStats.presentRecords.toString()],
@@ -11351,6 +11413,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                     ['Class Average Weighted Score', `${avgWeightedScore}`],
                     ['Days Covered', summaryStats.daysCovered.toString()]
                 ];
+
+                // Add punctuality statistics if available
+                if (window.punctualityAnalytics) {
+                    const pStats = window.punctualityAnalytics;
+                    summaryData.push(
+                        ['', ''], // Empty row for spacing
+                        ['PUNCTUALITY ANALYSIS', ''],
+                        ['On-Time Records', `${pStats.onTimePercent}% (${pStats.onTimeCount} records)`],
+                        ['Late Records', `${pStats.latePercent}% (${pStats.lateCount} records)`],
+                        ['Absent Records', `${pStats.absentPercent}% (${pStats.absentCount} records)`]
+                    );
+                }
                 
                 doc.autoTable({
                     body: summaryData,
@@ -12048,6 +12122,7 @@ File: ${fileName}`, 'success');
 
             console.log('✅ Proceeding with improved analytics generation...');
             // Generate all analytics with improved algorithms
+            generatePunctualityAnalytics(filteredData);
             generateAttendanceRateAnalytics(filteredData);
             generateDateAnalytics(filteredData);
             generateDetailedStudentStats(filteredData);
@@ -12142,6 +12217,96 @@ File: ${fileName}`, 'success');
                 const recordDate = new Date(record.date);
                 return recordDate >= startDate;
             });
+        }
+
+        function generatePunctualityAnalytics(data) {
+            const punctualityStats = {
+                onTime: 0,
+                late: 0,
+                absent: 0,
+                total: data.length
+            };
+
+            // Calculate punctuality based on status
+            data.forEach(record => {
+                const status = record.status || '';
+                
+                // If no status, calculate it from time and attendance
+                let calculatedStatus = status;
+                if (!status && record.time && record.attendanceStatus) {
+                    calculatedStatus = calculateAttendanceStatus(record.time, record.attendanceStatus);
+                } else if (!status) {
+                    calculatedStatus = record.attendanceStatus === 'absent' ? 'Absent' : 'On-Time';
+                }
+
+                switch (calculatedStatus) {
+                    case 'On-Time':
+                        punctualityStats.onTime++;
+                        break;
+                    case 'Late':
+                        punctualityStats.late++;
+                        break;
+                    case 'Absent':
+                        punctualityStats.absent++;
+                        break;
+                }
+            });
+
+            // Calculate percentages
+            const onTimePercent = punctualityStats.total > 0 ? 
+                Math.round((punctualityStats.onTime / punctualityStats.total) * 100) : 0;
+            const latePercent = punctualityStats.total > 0 ? 
+                Math.round((punctualityStats.late / punctualityStats.total) * 100) : 0;
+            const absentPercent = punctualityStats.total > 0 ? 
+                Math.round((punctualityStats.absent / punctualityStats.total) * 100) : 0;
+
+            // Update the display
+            updatePunctualityDisplay(
+                onTimePercent, punctualityStats.onTime,
+                latePercent, punctualityStats.late,
+                absentPercent, punctualityStats.absent
+            );
+
+            // Store for PDF export
+            window.punctualityAnalytics = {
+                onTimePercent, onTimeCount: punctualityStats.onTime,
+                latePercent, lateCount: punctualityStats.late,
+                absentPercent, absentCount: punctualityStats.absent,
+                total: punctualityStats.total
+            };
+        }
+
+        function updatePunctualityDisplay(onTimePercent, onTimeCount, latePercent, lateCount, absentPercent, absentCount) {
+            const punctualityContainer = document.getElementById('punctualityStats');
+            
+            if (onTimeCount === 0 && lateCount === 0 && absentCount === 0) {
+                punctualityContainer.innerHTML = '<div class="analytics-empty">No punctuality data available</div>';
+                return;
+            }
+
+            punctualityContainer.innerHTML = `
+                <div class="punctuality-item on-time">
+                    <div class="punctuality-label">
+                        <span class="punctuality-icon">🟢</span>
+                        <span>On-Time</span>
+                    </div>
+                    <div class="punctuality-value">${onTimePercent}% (${onTimeCount} records)</div>
+                </div>
+                <div class="punctuality-item late">
+                    <div class="punctuality-label">
+                        <span class="punctuality-icon">🟡</span>
+                        <span>Late</span>
+                    </div>
+                    <div class="punctuality-value">${latePercent}% (${lateCount} records)</div>
+                </div>
+                <div class="punctuality-item absent">
+                    <div class="punctuality-label">
+                        <span class="punctuality-icon">🔴</span>
+                        <span>Absent</span>
+                    </div>
+                    <div class="punctuality-value">${absentPercent}% (${absentCount} records)</div>
+                </div>
+            `;
         }
 
         function generateAttendanceRateAnalytics(data) {
