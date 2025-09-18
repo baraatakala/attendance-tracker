@@ -1597,43 +1597,6 @@
             border-color: rgba(231, 76, 60, 0.3);
         }
 
-        /* Attendance Status Indicators */
-        .attendance-status {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            min-width: 70px;
-            justify-content: center;
-            gap: 4px;
-        }
-
-        .attendance-status.on-time {
-            background: linear-gradient(45deg, #27ae60, #2ecc71);
-            color: white;
-            box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
-        }
-
-        .attendance-status.late {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
-            color: white;
-            box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
-        }
-
-        .attendance-status.absent {
-            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
-            color: white;
-            box-shadow: 0 2px 4px rgba(149, 165, 166, 0.3);
-        }
-
-        .attendance-status i {
-            font-size: 0.7rem;
-        }
-
         /* Action buttons in table */
         .table-action-btn {
             background: #e74c3c;
@@ -5598,19 +5561,10 @@
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label for="filterAction"><i class="fas fa-filter"></i> Action:</label>
+                            <label for="filterAction"><i class="fas fa-filter"></i> Status:</label>
                             <select id="filterAction">
-                                <option value="">All Actions</option>
+                                <option value="">All Status</option>
                                 <option value="present">Present</option>
-                                <option value="absent">Absent</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="filterStatus"><i class="fas fa-clock"></i> Timing:</label>
-                            <select id="filterStatus">
-                                <option value="">All Timing</option>
-                                <option value="on-time">On-Time</option>
-                                <option value="late">Late</option>
                                 <option value="absent">Absent</option>
                             </select>
                         </div>
@@ -5633,7 +5587,6 @@
                                     <th data-column="id">ID</th>
                                     <th data-column="student">Student</th>
                                     <th data-column="action">Action</th>
-                                    <th data-column="status">Status</th>
                                     <th data-column="date">Date</th>
                                     <th data-column="time">Time</th>
                                     <th data-column="location">Location</th>
@@ -6572,11 +6525,6 @@
             // Close modal
             closePenaltySettings();
             
-            // Refresh the View Records table to reflect new status calculations
-            if (typeof displayRecords === 'function') {
-                displayRecords();
-            }
-            
             // Refresh penalties display if visible
             if (document.getElementById('penaltiesSection').style.display !== 'none') {
                 generatePenalties();
@@ -6653,98 +6601,6 @@
                     }, 300);
                 }
             }, 4000);
-        }
-
-        // Determine attendance status based on time and penalty settings
-        function determineAttendanceStatus(record) {
-            // If the record is absent, return absent status
-            if (record.attendanceStatus === 'absent' || 
-                (record.actionType && record.actionType.toLowerCase().includes('absent'))) {
-                return {
-                    status: 'absent',
-                    label: 'Absent',
-                    icon: 'fas fa-user-times',
-                    class: 'absent'
-                };
-            }
-
-            // For present records, check if they're on time or late
-            if (record.attendanceStatus === 'present' || 
-                (record.actionType && record.actionType.toLowerCase().includes('present'))) {
-                
-                try {
-                    const timeString = record.time;
-                    let hours, minutes;
-                    
-                    console.log('📊 Status Check:', {
-                        time: timeString,
-                        allowedStart: penaltySettings.allowedTimeStart,
-                        allowedEnd: penaltySettings.allowedTimeEnd,
-                        penaltyEnabled: penaltySettings.enabled
-                    });
-                    
-                    // Parse time string (handle different formats)
-                    if (timeString.includes('AM') || timeString.includes('PM')) {
-                        // 12-hour format
-                        const time = new Date(`1970-01-01 ${timeString}`);
-                        hours = time.getHours();
-                        minutes = time.getMinutes();
-                    } else {
-                        // 24-hour format
-                        const time = new Date(`1970-01-01T${timeString}`);
-                        hours = time.getHours();
-                        minutes = time.getMinutes();
-                    }
-                    
-                    // Convert time to decimal hours for comparison
-                    const decimalTime = hours + (minutes / 60);
-                    
-                    console.log('🕐 Time Calculation:', {
-                        original: timeString,
-                        hours: hours,
-                        minutes: minutes,
-                        decimal: decimalTime,
-                        withinRange: decimalTime >= penaltySettings.allowedTimeStart && decimalTime <= penaltySettings.allowedTimeEnd
-                    });
-                    
-                    // Check if time is within allowed window
-                    const isLate = decimalTime < penaltySettings.allowedTimeStart || 
-                                  decimalTime > penaltySettings.allowedTimeEnd;
-                    
-                    if (isLate) {
-                        return {
-                            status: 'late',
-                            label: 'Late',
-                            icon: 'fas fa-clock',
-                            class: 'late'
-                        };
-                    } else {
-                        return {
-                            status: 'on-time',
-                            label: 'On-Time',
-                            icon: 'fas fa-check',
-                            class: 'on-time'
-                        };
-                    }
-                } catch (error) {
-                    console.error('Error parsing time for status determination:', error);
-                    // Default to on-time if parsing fails
-                    return {
-                        status: 'on-time',
-                        label: 'On-Time',
-                        icon: 'fas fa-check',
-                        class: 'on-time'
-                    };
-                }
-            }
-
-            // Default fallback
-            return {
-                status: 'unknown',
-                label: 'Unknown',
-                icon: 'fas fa-question',
-                class: 'absent'
-            };
         }
         
         // Load fraud protection data from localStorage
@@ -6927,7 +6783,6 @@
             filterDate: document.getElementById('filterDate'),
             filterEmployee: document.getElementById('filterEmployee'),
             filterAction: document.getElementById('filterAction'),
-            filterStatus: document.getElementById('filterStatus'),
             applyFilters: document.getElementById('applyFilters'),
             recordsTableBody: document.getElementById('recordsTableBody'),
             statsGrid: document.getElementById('statsGrid'),
@@ -10217,7 +10072,6 @@ ${environment.tips.slice(0, 3).join('\n')}
             elements.filterDateEnd.value = '';
             elements.filterEmployee.value = '';
             elements.filterAction.value = '';
-            if (elements.filterStatus) elements.filterStatus.value = '';
             
             // Reset date filter type to single
             elements.dateFilterType.value = 'single';
@@ -10314,30 +10168,17 @@ ${environment.tips.slice(0, 3).join('\n')}
             // Filter by status - improved logic
             if (elements.filterAction.value) {
                 const filterValue = elements.filterAction.value.toLowerCase();
-                console.log('Filtering by action:', filterValue);
+                console.log('Filtering by status:', filterValue);
                 filtered = filtered.filter(record => {
                     // Check multiple status fields with flexible matching
                     const status = (record.attendanceStatus || record.attendanceLabel || record.actionType || '').toLowerCase();
                     const matches = status.includes(filterValue) || 
                                   (filterValue === 'present' && (status === 'p' || status === '1' || status.includes('check-in'))) ||
                                   (filterValue === 'absent' && (status === 'a' || status === '0'));
-                    console.log('Record action status:', status, 'vs filter:', filterValue, 'matches:', matches);
+                    console.log('Record status:', status, 'vs filter:', filterValue, 'matches:', matches);
                     return matches;
                 });
-                console.log('After action filter:', filtered.length, 'records');
-            }
-            
-            // Filter by timing status (On-Time/Late/Absent)
-            if (elements.filterStatus && elements.filterStatus.value) {
-                const filterValue = elements.filterStatus.value.toLowerCase();
-                console.log('Filtering by timing status:', filterValue);
-                filtered = filtered.filter(record => {
-                    const attendanceStatus = determineAttendanceStatus(record);
-                    const matches = attendanceStatus.status === filterValue;
-                    console.log('Record timing status:', attendanceStatus.status, 'vs filter:', filterValue, 'matches:', matches);
-                    return matches;
-                });
-                console.log('After timing status filter:', filtered.length, 'records');
+                console.log('After status filter:', filtered.length, 'records');
             }
             
             console.log('Final filtered records:', filtered.length);
@@ -10440,16 +10281,6 @@ ${environment.tips.slice(0, 3).join('\n')}
                     
                     valueA = statusA.toLowerCase();
                     valueB = statusB.toLowerCase();
-                } else if (currentSort.column === 'status') {
-                    // Sort by attendance status (On-Time, Late, Absent)
-                    const statusA = determineAttendanceStatus(a);
-                    const statusB = determineAttendanceStatus(b);
-                    
-                    // Define sort order: On-Time < Late < Absent
-                    const statusOrder = { 'on-time': 1, 'late': 2, 'absent': 3, 'unknown': 4 };
-                    
-                    valueA = statusOrder[statusA.status] || 4;
-                    valueB = statusOrder[statusB.status] || 4;
                 }
 
                 const comparison = compareValues(valueA, valueB);
@@ -10470,7 +10301,7 @@ ${environment.tips.slice(0, 3).join('\n')}
             if (records.length === 0) {
                 elements.recordsTableBody.innerHTML = `
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px; color: #7f8c8d;">
+                        <td colspan="8" style="text-align: center; padding: 40px; color: #7f8c8d;">
                             <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 10px; display: block;"></i>
                             No records found
                         </td>
@@ -10536,20 +10367,12 @@ ${environment.tips.slice(0, 3).join('\n')}
             const altitudeText = record.altitude ? `${Math.round(record.altitude)}m` : 'N/A';
             const speedText = record.speed ? `${(record.speed * 3.6).toFixed(1)} km/h` : 'N/A';
             
-            // Determine attendance status (On-Time/Late/Absent)
-            const attendanceStatus = determineAttendanceStatus(record);
-            
             row.innerHTML = `
                 <td>${index + 1}</td>
                 <td><strong>${studentDisplay}</strong></td>
                 <td>
                     <span class="status-badge ${record.attendanceStatus || record.actionType}" style="background-color: ${statusInfo.color};">
                         <i class="${statusInfo.icon}"></i> ${statusInfo.label}
-                    </span>
-                </td>
-                <td>
-                    <span class="attendance-status ${attendanceStatus.class}">
-                        <i class="${attendanceStatus.icon}"></i> ${attendanceStatus.label}
                     </span>
                 </td>
                 <td>${record.date}</td>
@@ -11376,30 +11199,10 @@ ${environment.tips.slice(0, 3).join('\n')}
                 // Calculate unexcused absent (Total Absent - Absent Records)
                 const unexcusedAbsent = totalAbsent - summaryStats.absentRecords;
                 
-                // Calculate On-Time and Late counts from present records
-                let onTimeCount = 0;
-                let lateCount = 0;
-                
-                filteredData.forEach(record => {
-                    if (record.status === 'present' || record.attendanceStatus === 'present' || 
-                        (record.action && record.action.toLowerCase().includes('present'))) {
-                        
-                        // Determine if this present record is on-time or late
-                        const statusResult = determineAttendanceStatus(record);
-                        if (statusResult.status === 'on-time') {
-                            onTimeCount++;
-                        } else if (statusResult.status === 'late') {
-                            lateCount++;
-                        }
-                    }
-                });
-                
                 const summaryData = [
                     ['Total Records', summaryStats.totalRecords.toString()],
                     ['Total Students', summaryStats.totalStudents.toString()],
                     ['Number of Present', summaryStats.presentRecords.toString()],
-                    ['  • On-Time', onTimeCount.toString()],
-                    ['  • Late', lateCount.toString()],
                     ['number of Execused Absent', summaryStats.absentRecords.toString()],
                     ['Total number of Absent', totalAbsent.toString()],
                     ['number of Unexcused Absent', unexcusedAbsent.toString()],
@@ -12022,8 +11825,8 @@ File: ${fileName}`, 'success');
             const dates = [];
             tableRows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 5) {
-                    const dateStr = cells[4].textContent.trim(); // Date column (5th column after Status addition)
+                if (cells.length >= 4) {
+                    const dateStr = cells[3].textContent.trim(); // Date column
                     const date = new Date(dateStr);
                     if (!isNaN(date.getTime())) {
                         dates.push(date);
@@ -14919,43 +14722,32 @@ File: ${fileName}`, 'success');
                 const tableData = [];
                 let presentCount = 0;
                 let absentCount = 0;
-                let onTimeCount = 0;
-                let lateCount = 0;
                 const uniqueStudents = new Set();
                 const uniqueDays = new Set();
                 
                 tableRows.forEach((row, index) => {
                     const cells = row.querySelectorAll('td');
-                    if (cells.length >= 7) { // Make sure we have enough cells including the new status column
+                    if (cells.length >= 6) { // Make sure we have enough cells including notes
                         const studentName = cells[1].textContent.trim(); // Student column
-                        const action = cells[2].textContent.trim(); // Action column
-                        const status = cells[3].textContent.trim(); // Status column (NEW)
-                        const date = cells[4].textContent.trim(); // Date column
-                        const time = cells[5].textContent.trim(); // Time column
-                        const notes = cells[7] ? cells[7].textContent.trim() : ''; // Notes column (location is 6)
+                        const status = cells[2].textContent.trim(); // Action/Status column
+                        const date = cells[3].textContent.trim(); // Date column
+                        const time = cells[4].textContent.trim(); // Time column
+                        const notes = cells[6] ? cells[6].textContent.trim() : ''; // Notes column (index 6, location is 5)
                         
                         // Track unique students and days
                         uniqueStudents.add(studentName);
                         uniqueDays.add(date);
                         
-                        // Count status for statistics (use action column for present/absent count)
-                        if (action.toLowerCase().includes('present')) {
+                        // Count status for statistics
+                        if (status.toLowerCase().includes('present')) {
                             presentCount++;
-                        } else if (action.toLowerCase().includes('absent')) {
+                        } else if (status.toLowerCase().includes('absent')) {
                             absentCount++;
-                        }
-                        
-                        // Count status insights for detailed breakdown
-                        if (status.toLowerCase().includes('on-time')) {
-                            onTimeCount++;
-                        } else if (status.toLowerCase().includes('late')) {
-                            lateCount++;
                         }
                         
                         tableData.push([
                             (index + 1).toString(),
                             studentName,
-                            action,
                             status,
                             date,
                             time,
@@ -14965,7 +14757,7 @@ File: ${fileName}`, 'success');
                 });
                 
                 // Create table headers
-                const headers = [['#', 'Student Name', 'Action', 'Status', 'Date', 'Time', 'Notes']];
+                const headers = [['#', 'Student Name', 'Status', 'Date', 'Time', 'Notes']];
                 
                 // Add table to PDF using the data from displayed table
                 doc.autoTable({
@@ -14982,13 +14774,12 @@ File: ${fileName}`, 'success');
                         fillColor: [245, 245, 245]
                     },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 'auto' },   // # (auto-width)
-                        1: { cellWidth: 'auto' },                     // Student Name (auto-width)
-                        2: { halign: 'center', cellWidth: 'auto' },   // Action (auto-width)
-                        3: { halign: 'center', cellWidth: 'auto' },   // Status (auto-width)
-                        4: { halign: 'center', cellWidth: 'auto' },   // Date (auto-width)
-                        5: { halign: 'center', cellWidth: 'auto' },   // Time (auto-width)
-                        6: { cellWidth: 'auto' }                      // Notes (auto-width)
+                        0: { halign: 'center', cellWidth: 8 },   // # (reduced from 10)
+                        1: { cellWidth: 32 },                    // Student Name (reduced from 35)
+                        2: { halign: 'center', cellWidth: 18 },  // Status (reduced from 20)
+                        3: { halign: 'center', cellWidth: 23 },  // Date (reduced from 25)
+                        4: { halign: 'center', cellWidth: 23 },  // Time (reduced from 25)
+                        5: { cellWidth: 36 }                     // Notes (reduced from 40)
                     },
                     styles: {
                         fontSize: 9,                             // Reduced from 10
@@ -15008,12 +14799,12 @@ File: ${fileName}`, 'success');
                 let totalVacationDays = 0;
                 tableRows.forEach((row) => {
                     const cells = row.querySelectorAll('td');
-                    if (cells.length >= 7) {
-                        const action = cells[2].textContent.trim(); // Action column
-                        const notes = cells[6] ? cells[6].textContent.trim() : ''; // Notes column (7th column, index 6)
+                    if (cells.length >= 6) {
+                        const status = cells[2].textContent.trim(); // Status column
+                        const notes = cells[6] ? cells[6].textContent.trim() : ''; // Notes column
                         
                         // Count vacation days (absent records with excused notes)
-                        if (action.toLowerCase().includes('absent') && isExcusedAbsence(notes)) {
+                        if (status.toLowerCase().includes('absent') && isExcusedAbsence(notes)) {
                             totalVacationDays++;
                         }
                     }
@@ -15025,11 +14816,11 @@ File: ${fileName}`, 'success');
                 const expectedTotalAttendance = daysCovered * totalStudents;
                 const effectiveTotalDays = expectedTotalAttendance - totalVacationDays;
                 const attendanceRate = effectiveTotalDays > 0 ? 
-                    ((presentCount / effectiveTotalDays) * 100).toFixed(1) : '0.0';
+                    Math.round((presentCount / effectiveTotalDays) * 100) : 0;
                 
                 // Calculate raw attendance rate: (Total Present Records) / (Total Students × Days Covered)
                 const rawAttendanceRate = expectedTotalAttendance > 0 ? 
-                    ((presentCount / expectedTotalAttendance) * 100).toFixed(1) : '0.0';
+                    Math.round((presentCount / expectedTotalAttendance) * 100) : 0;
                 
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
@@ -15039,11 +14830,10 @@ File: ${fileName}`, 'success');
                 doc.setFontSize(10);
                 doc.text('Present: ' + presentCount + ' records', 14, finalY + 10);
                 doc.text('Absent: ' + absentCount + ' records', 14, finalY + 18);
-                doc.text('  • On-Time: ' + onTimeCount + ' records', 14, finalY + 26);
-                doc.text('  • Late: ' + lateCount + ' records', 14, finalY + 34);
-                doc.text('Total Students: ' + totalStudents, 14, finalY + 42);
-                doc.text('Days Covered: ' + daysCovered, 14, finalY + 50);
-                doc.text('Raw Attendance Rate: ' + rawAttendanceRate + '%', 14, finalY + 58);
+                doc.text('Total Students: ' + totalStudents, 14, finalY + 26);
+                doc.text('Days Covered: ' + daysCovered, 14, finalY + 34);
+                doc.text('Raw Attendance Rate: ' + rawAttendanceRate + '%', 14, finalY + 42);
+                doc.text('Effective Attendance Rate: ' + attendanceRate + '%', 14, finalY + 50);
                 
                 // Add footer
                 const pageCount = doc.internal.getNumberOfPages();
