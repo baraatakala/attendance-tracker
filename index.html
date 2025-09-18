@@ -5530,6 +5530,9 @@
                         <button class="action-btn" style="background: #FF9800; color: white;" onclick="showFirebaseStatus()">
                             <i class="fas fa-info-circle"></i> Status
                         </button>
+                        <button class="action-btn" style="background: #9C27B0; color: white;" onclick="migrateFirestoreRecords()">
+                            <i class="fas fa-database"></i> Migrate Status Data
+                        </button>
                     </div>
                     <div id="firebaseStatusInfo" style="font-size: 12px; color: #e8f4fd; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px;">
                         <div>🔗 Status: <span id="connectionStatus">Checking...</span></div>
@@ -6655,7 +6658,7 @@
             }, 4000);
         }
 
-        // Determine attendance status based on time and penalty settings
+        // Determine attendance status based on hardcoded time window (1:00 PM - 1:15 PM)
         function determineAttendanceStatus(record) {
             // If the record is absent, return absent status
             if (record.attendanceStatus === 'absent' || 
@@ -6678,23 +6681,16 @@
                     // Check if time string exists and is valid
                     if (!timeString || typeof timeString !== 'string') {
                         console.warn('⚠️ No valid time found for record:', record);
-                        // Default to on-time if no time available
+                        // Default to late if no time available
                         return {
-                            status: 'on-time',
-                            label: 'On-Time',
-                            icon: 'fas fa-check',
-                            class: 'on-time'
+                            status: 'late',
+                            label: 'Late',
+                            icon: 'fas fa-clock',
+                            class: 'late'
                         };
                     }
                     
                     let hours, minutes;
-                    
-                    console.log('📊 Status Check:', {
-                        time: timeString,
-                        allowedStart: penaltySettings.allowedTimeStart,
-                        allowedEnd: penaltySettings.allowedTimeEnd,
-                        penaltyEnabled: penaltySettings.enabled
-                    });
                     
                     // Parse time string (handle different formats)
                     if (timeString.includes('AM') || timeString.includes('PM')) {
@@ -6712,41 +6708,46 @@
                     // Convert time to decimal hours for comparison
                     const decimalTime = hours + (minutes / 60);
                     
+                    // Hardcoded allowed time window: 1:00 PM (13.0) to 1:15 PM (13.25)
+                    const ALLOWED_TIME_START = 13.0;  // 1:00 PM
+                    const ALLOWED_TIME_END = 13.25;   // 1:15 PM
+                    
                     console.log('🕐 Time Calculation:', {
                         original: timeString,
                         hours: hours,
                         minutes: minutes,
                         decimal: decimalTime,
-                        withinRange: decimalTime >= penaltySettings.allowedTimeStart && decimalTime <= penaltySettings.allowedTimeEnd
+                        allowedStart: ALLOWED_TIME_START,
+                        allowedEnd: ALLOWED_TIME_END,
+                        withinRange: decimalTime >= ALLOWED_TIME_START && decimalTime <= ALLOWED_TIME_END
                     });
                     
                     // Check if time is within allowed window
-                    const isLate = decimalTime < penaltySettings.allowedTimeStart || 
-                                  decimalTime > penaltySettings.allowedTimeEnd;
+                    const isOnTime = decimalTime >= ALLOWED_TIME_START && decimalTime <= ALLOWED_TIME_END;
                     
-                    if (isLate) {
-                        return {
-                            status: 'late',
-                            label: 'Late',
-                            icon: 'fas fa-clock',
-                            class: 'late'
-                        };
-                    } else {
+                    if (isOnTime) {
                         return {
                             status: 'on-time',
                             label: 'On-Time',
                             icon: 'fas fa-check',
                             class: 'on-time'
                         };
+                    } else {
+                        return {
+                            status: 'late',
+                            label: 'Late',
+                            icon: 'fas fa-clock',
+                            class: 'late'
+                        };
                     }
                 } catch (error) {
                     console.error('Error parsing time for status determination:', error);
-                    // Default to on-time if parsing fails
+                    // Default to late if parsing fails
                     return {
-                        status: 'on-time',
-                        label: 'On-Time',
-                        icon: 'fas fa-check',
-                        class: 'on-time'
+                        status: 'late',
+                        label: 'Late',
+                        icon: 'fas fa-clock',
+                        class: 'late'
                     };
                 }
             }
@@ -10120,7 +10121,16 @@ ${environment.tips.slice(0, 3).join('\n')}
                     userAgent: navigator.userAgent,
                     platform: navigator.platform,
                     language: navigator.language
-                }
+                },
+                // Add computed status based on hardcoded time window
+                computedStatus: (() => {
+                    const tempRecord = {
+                        attendanceStatus: elements.attendanceStatus.value,
+                        time: selectedDateTime.toLocaleTimeString('en-US', { hour12: true })
+                    };
+                    const statusResult = determineAttendanceStatus(tempRecord);
+                    return statusResult.status; // 'on-time', 'late', 'absent'
+                })()
             };
         }
 
@@ -10345,9 +10355,10 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const filterValue = elements.filterStatus.value.toLowerCase();
                 console.log('Filtering by timing status:', filterValue);
                 filtered = filtered.filter(record => {
-                    const attendanceStatus = determineAttendanceStatus(record);
-                    const matches = attendanceStatus.status === filterValue;
-                    console.log('Record timing status:', attendanceStatus.status, 'vs filter:', filterValue, 'matches:', matches);
+                    // Use stored computedStatus when available, fallback to function for older records
+                    const statusValue = record.computedStatus || determineAttendanceStatus(record).status;
+                    const matches = statusValue === filterValue;
+                    console.log('Record timing status:', statusValue, 'vs filter:', filterValue, 'matches:', matches);
                     return matches;
                 });
                 console.log('After timing status filter:', filtered.length, 'records');
@@ -10455,14 +10466,15 @@ ${environment.tips.slice(0, 3).join('\n')}
                     valueB = statusB.toLowerCase();
                 } else if (currentSort.column === 'status') {
                     // Sort by attendance status (On-Time, Late, Absent)
-                    const statusA = determineAttendanceStatus(a);
-                    const statusB = determineAttendanceStatus(b);
+                    // Use stored computedStatus when available, fallback to function for older records
+                    const statusA = a.computedStatus || determineAttendanceStatus(a).status;
+                    const statusB = b.computedStatus || determineAttendanceStatus(b).status;
                     
                     // Define sort order: On-Time < Late < Absent
                     const statusOrder = { 'on-time': 1, 'late': 2, 'absent': 3, 'unknown': 4 };
                     
-                    valueA = statusOrder[statusA.status] || 4;
-                    valueB = statusOrder[statusB.status] || 4;
+                    valueA = statusOrder[statusA] || 4;
+                    valueB = statusOrder[statusB] || 4;
                 }
 
                 const comparison = compareValues(valueA, valueB);
@@ -10549,8 +10561,18 @@ ${environment.tips.slice(0, 3).join('\n')}
             const altitudeText = record.altitude ? `${Math.round(record.altitude)}m` : 'N/A';
             const speedText = record.speed ? `${(record.speed * 3.6).toFixed(1)} km/h` : 'N/A';
             
-            // Determine attendance status (On-Time/Late/Absent)
-            const attendanceStatus = determineAttendanceStatus(record);
+            // Determine attendance status (On-Time/Late/Absent) - use stored value when available
+            const attendanceStatus = record.computedStatus ? 
+                (() => {
+                    // Use stored status - reconstruct the status object format
+                    const statusMap = {
+                        'on-time': { label: 'On-Time', class: 'on-time', icon: 'fas fa-clock' },
+                        'late': { label: 'Late', class: 'late', icon: 'fas fa-clock' },
+                        'absent': { label: 'Absent', class: 'absent', icon: 'fas fa-user-times' }
+                    };
+                    return statusMap[record.computedStatus] || statusMap['absent'];
+                })() :
+                determineAttendanceStatus(record); // Fallback for older records without stored status
             
             row.innerHTML = `
                 <td>${index + 1}</td>
@@ -16915,6 +16937,20 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
                     });
                 });
                 
+                // Migration: Add computedStatus to existing records that don't have it
+                let migrationCount = 0;
+                attendanceData.forEach(record => {
+                    if (!record.computedStatus && record.attendanceStatus && record.time) {
+                        const statusResult = determineAttendanceStatus(record);
+                        record.computedStatus = statusResult.status;
+                        migrationCount++;
+                    }
+                });
+                
+                if (migrationCount > 0) {
+                    console.log(`🔄 Migrated ${migrationCount} records with missing computedStatus field`);
+                }
+                
                 console.log(`🔥 Loaded ${attendanceData.length} records from Firestore`);
                 displayRecords();
                 updateStatistics();
@@ -17064,6 +17100,54 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
             }
         }
 
+        // Migration function to add computedStatus to existing Firestore records
+        async function migrateFirestoreRecords() {
+            try {
+                showLoading(true);
+                showMessage('Migrating existing records...', 'info');
+                
+                // Load all records from Firestore
+                const q = window.firebase.query(window.firebase.collection(window.firebase.db, 'attendance'));
+                const querySnapshot = await window.firebase.getDocs(q);
+                
+                const updatePromises = [];
+                let migratedCount = 0;
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    
+                    // Check if record is missing computedStatus
+                    if (!data.computedStatus && data.attendanceStatus && data.time) {
+                        const statusResult = determineAttendanceStatus(data);
+                        
+                        // Update this record in Firestore
+                        updatePromises.push(
+                            window.firebase.updateDoc(doc.ref, {
+                                computedStatus: statusResult.status
+                            })
+                        );
+                        migratedCount++;
+                    }
+                });
+                
+                if (updatePromises.length > 0) {
+                    await Promise.all(updatePromises);
+                    showMessage(`Successfully migrated ${migratedCount} records with status data!`, 'success');
+                    
+                    // Reload data to reflect changes
+                    await loadDataFromFirestore();
+                } else {
+                    showMessage('All records already have status data - no migration needed!', 'info');
+                }
+                
+            } catch (error) {
+                console.error('Error migrating records: ', error);
+                showMessage('Error migrating records: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
         // Simple Firebase connection test
         async function testFirebaseConnection() {
             try {
@@ -17109,6 +17193,7 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
         window.clearAllDataFromFirestore = clearAllDataFromFirestore;
         window.testFirebaseConnection = testFirebaseConnection;
         window.disableRealtimeSync = disableRealtimeSync;
+        window.migrateFirestoreRecords = migrateFirestoreRecords;
         
         // Firebase functions
         window.toggleFirebaseMode = toggleFirebaseMode;
