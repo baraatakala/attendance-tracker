@@ -11964,8 +11964,8 @@ File: ${fileName}`, 'success');
             const dates = [];
             tableRows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 4) {
-                    const dateStr = cells[3].textContent.trim(); // Date column
+                if (cells.length >= 5) {
+                    const dateStr = cells[4].textContent.trim(); // Date column (now 5th column due to Status column)
                     const date = new Date(dateStr);
                     if (!isNaN(date.getTime())) {
                         dates.push(date);
@@ -14986,7 +14986,6 @@ File: ${fileName}`, 'success');
                 doc.text('Total Students: ' + totalStudents, 14, finalY + 26);
                 doc.text('Days Covered: ' + daysCovered, 14, finalY + 34);
                 doc.text('Raw Attendance Rate: ' + rawAttendanceRate + '%', 14, finalY + 42);
-                doc.text('Effective Attendance Rate: ' + attendanceRate + '%', 14, finalY + 50);
                 
                 // Add footer
                 const pageCount = doc.internal.getNumberOfPages();
