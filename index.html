@@ -19,6 +19,35 @@
     
     <!-- External Dependencies -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3498db',
+                        success: '#27ae60',
+                        danger: '#e74c3c',
+                        warning: '#f39c12',
+                        dark: '#2c3e50',
+                        light: '#ecf0f1'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-success': 'pulseSuccess 0.6s ease-in-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out'
+                    }
+                }
+            }
+        }
+    </script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -383,6 +412,157 @@
             }
         });
     </script>
+    
+    <!-- Framework Integration Styles -->
+    <style>
+        /* Framework Integration Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes pulseSuccess {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Modern Glass Morphism Effects */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+        
+        .gradient-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+        
+        .gradient-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        .gradient-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+        
+        /* Modern Button Enhancements */
+        .btn-modern {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateZ(0);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-modern:active {
+            transform: translateY(0);
+        }
+        
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-modern:hover::before {
+            left: 100%;
+        }
+        
+        /* Enhanced Form Controls */
+        .form-modern {
+            transition: all 0.3s ease;
+            border-width: 2px;
+        }
+        
+        .form-modern:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.2);
+        }
+        
+        /* Dark Mode Enhancements */
+        .dark-mode {
+            background: #1a202c;
+            color: #e2e8f0;
+        }
+        
+        .dark-mode .glass-effect {
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .dark-mode .glass-card {
+            background: rgba(26, 32, 44, 0.95);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Loading States */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading-wave 1.5s infinite;
+        }
+        
+        @keyframes loading-wave {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        /* Modern Scrollbars */
+        .modern-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .modern-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        
+        .modern-scroll::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            border-radius: 4px;
+        }
+        
+        .modern-scroll::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #2980b9, #3498db);
+        }
+    </style>
     
     <style>
         /* CSS Variables for Theme Support */
@@ -5289,59 +5469,127 @@
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <h1 ondblclick="secretAdminAccess()"><i class="fas fa-school"></i> Class Attendance System</h1>
-                <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
-                    <i class="fas fa-moon" id="themeIcon"></i>
-                </button>
-            </div>
-            <div class="current-info">
-                <div class="info-item">
-                    <i class="fas fa-calendar"></i>
-                    <span id="currentDate"></span>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-clock"></i>
-                    <span id="currentTime"></span>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <span id="locationStatus">Getting location...</span>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Main Application Container -->
+        <!-- Modern Header with Bootstrap + Tailwind -->
+        <header class="gradient-bg shadow-lg sticky-top">
+            <div class="container-fluid">
+                <nav class="navbar navbar-expand-lg navbar-dark py-3">
+                    <div class="container">
+                        <!-- Brand with Tailwind styling -->
+                        <a class="navbar-brand d-flex align-items-center text-white text-2xl font-bold" href="#" ondblclick="secretAdminAccess()">
+                            <i class="fas fa-school text-yellow-300 me-3 text-3xl animate-pulse"></i>
+                            <span class="bg-gradient-to-r from-yellow-300 to-white bg-clip-text text-transparent">
+                                Class Attendance System
+                            </span>
+                        </a>
+                        
+                        <!-- Theme Toggle with Modern Design -->
+                        <button id="themeToggle" 
+                                class="btn btn-outline-light btn-modern rounded-full d-flex align-items-center justify-content-center"
+                                style="width: 3rem; height: 3rem;"
+                                onclick="toggleTheme()" 
+                                title="Toggle Dark/Light Mode">
+                            <i class="fas fa-moon text-lg transition-transform duration-300 hover:rotate-12" id="themeIcon"></i>
+                        </button>
+                    </div>
+                </nav>
+                
+                <!-- Enhanced Info Bar with Bootstrap cards and glass effect -->
+                <div class="container pb-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card glass-effect text-white border-0 btn-modern">
+                                <div class="card-body py-3 d-flex align-items-center">
+                                    <div class="bg-yellow-400 rounded-full p-2 me-3">
+                                        <i class="fas fa-calendar text-gray-800"></i>
+                                    </div>
+                                    <div>
+                                        <div class="small opacity-75">Today</div>
+                                        <span id="currentDate" class="fw-semibold"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card glass-effect text-white border-0 btn-modern">
+                                <div class="card-body py-3 d-flex align-items-center">
+                                    <div class="bg-green-400 rounded-full p-2 me-3">
+                                        <i class="fas fa-clock text-gray-800"></i>
+                                    </div>
+                                    <div>
+                                        <div class="small opacity-75">Current Time</div>
+                                        <span id="currentTime" class="fw-semibold font-mono"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card glass-effect text-white border-0 btn-modern">
+                                <div class="card-body py-3 d-flex align-items-center">
+                                    <div class="bg-red-400 rounded-full p-2 me-3">
+                                        <i class="fas fa-map-marker-alt text-gray-800"></i>
+                                    </div>
+                                    <div>
+                                        <div class="small opacity-75">Location</div>
+                                        <span id="locationStatus" class="fw-semibold">Getting location...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Attendance Form -->
+        <!-- Main Content with Modern Container -->
+        <main class="container my-5">
+            <!-- Attendance Form Section with Enhanced Design -->
             <section class="attendance-section">
-                <div class="form-card">
-                    <h2><i class="fas fa-user-check"></i> Record Attendance</h2>
-                    
-                    <form id="attendanceForm" class="attendance-form">
-                        <!-- Student Selection -->
-                        <div class="form-group">
-                            <label for="student"><i class="fas fa-user"></i> Select Student:</label>
-                            <div class="student-selection-container">
-                                <select id="student" name="student" required 
-                                        aria-describedby="student-help" 
-                                        aria-label="Select student for attendance tracking">
-                                    <option value="">-- Select Student --</option>
-                                </select>
-                                <button type="button" id="manageStudentsBtn" class="manage-students-btn" 
-                                        title="Manage Students" 
-                                        aria-label="Manage student list"
-                                        aria-expanded="false"
-                                        aria-controls="studentManagementPanel">
-                                    <i class="fas fa-cog" aria-hidden="true"></i>
-                                </button>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 col-xl-7">
+                        <div class="card shadow-lg border-0 glass-card animate-fade-in">
+                            <div class="card-header gradient-primary text-white border-0 p-4">
+                                <h2 class="card-title mb-0 d-flex align-items-center text-xl font-bold">
+                                    <i class="fas fa-user-check me-3 text-2xl"></i>
+                                    Record Attendance
+                                </h2>
                             </div>
-                            <small id="student-help" class="form-help">Select the student for attendance tracking</small>
-                        </div>
+                            
+                            <div class="card-body p-4">
+                                <form id="attendanceForm" class="attendance-form">
+                                    <!-- Student Selection with Modern Design -->
+                                    <div class="mb-4">
+                                        <label for="student" class="form-label d-flex align-items-center fw-semibold text-gray-700 mb-3">
+                                            <i class="fas fa-user text-blue-500 me-2"></i>
+                                            Select Student:
+                                        </label>
+                                        <div class="student-selection-container">
+                                            <div class="input-group">
+                                                <select id="student" 
+                                                        name="student" 
+                                                        class="form-select form-select-lg form-modern border-2 focus:ring-4 focus:ring-blue-200 focus:border-blue-500" 
+                                                        required 
+                                                        aria-describedby="student-help" 
+                                                        aria-label="Select student for attendance tracking">
+                                                    <option value="">-- Select Student --</option>
+                                                </select>
+                                                <button type="button" 
+                                                        id="manageStudentsBtn" 
+                                                        class="btn btn-outline-secondary btn-modern border-2" 
+                                                        title="Manage Students" 
+                                                        aria-label="Manage student list"
+                                                        aria-expanded="false"
+                                                        aria-controls="studentManagementPanel">
+                                                    <i class="fas fa-cog" aria-hidden="true"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <small id="student-help" class="form-text text-muted d-flex align-items-center mt-2">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Select the student for attendance tracking
+                                        </small>
+                                    </div>
 
                         <!-- Student Management Panel (Hidden by default) -->
                         <div id="studentManagementPanel" class="student-management-panel" style="display: none;">
@@ -5381,45 +5629,93 @@
                             </div>
                         </div>
 
-                        <!-- Attendance Status -->
-                        <div class="form-group">
-                            <fieldset style="border: none; padding: 0; margin: 0;">
-                                <legend style="font-weight: 600; color: #34495e; display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                    <i class="fas fa-user-check"></i> Mark Attendance:
+                        <!-- Modern Attendance Buttons -->
+                        <div class="mb-4">
+                            <fieldset class="border-0 p-0 m-0">
+                                <legend class="form-label fw-semibold text-gray-700 d-flex align-items-center mb-3">
+                                    <i class="fas fa-user-check text-green-500 me-2"></i>
+                                    Mark Attendance:
                                 </legend>
-                                <div class="attendance-buttons">
-                                    <button type="button" id="presentBtn" class="attendance-btn present-btn" tabindex="0">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span>Present</span>
-                                    </button>
-                                    <button type="button" id="absentBtn" class="attendance-btn absent-btn" tabindex="0">
-                                        <i class="fas fa-times-circle"></i>
-                                        <span>Absent</span>
-                                    </button>
+                                <div class="row g-3">
+                                    <!-- Present Button -->
+                                    <div class="col-md-6">
+                                        <button type="button" 
+                                                id="presentBtn" 
+                                                class="btn btn-modern w-100 position-relative overflow-hidden gradient-success text-white border-0 py-3 px-4 rounded-lg shadow-lg transition-all duration-300 hover:scale-105 attendance-btn present-btn" 
+                                                tabindex="0">
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-check-circle text-xl me-3"></i>
+                                                <span class="fw-semibold text-lg">Present</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Absent Button -->
+                                    <div class="col-md-6">
+                                        <button type="button" 
+                                                id="absentBtn" 
+                                                class="btn btn-modern w-100 position-relative overflow-hidden gradient-danger text-white border-0 py-3 px-4 rounded-lg shadow-lg transition-all duration-300 hover:scale-105 attendance-btn absent-btn" 
+                                                tabindex="0">
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-times-circle text-xl me-3"></i>
+                                                <span class="fw-semibold text-lg">Absent</span>
+                                            </div>
+                                        </button>
+                                    </div>
                                 </div>
-                                <input type="hidden" id="attendanceStatus" name="attendanceStatus" required>
-                                <small id="attendance-help" class="form-help">Click Present or Absent to mark attendance</small>
                             </fieldset>
+                            <input type="hidden" id="attendanceStatus" name="attendanceStatus" required>
+                            <small id="attendance-help" class="form-text text-muted d-flex align-items-center mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Click Present or Absent to mark attendance
+                            </small>
                         </div>
 
-                        <!-- Date & Time (Editable) -->
-                        <div class="form-group">
-                            <label for="dateTime"><i class="fas fa-calendar-alt"></i> Date & Time: <small style="color: #3498db; font-weight: normal;">(Editable)</small></label>
-                            <input type="datetime-local" id="dateTime" name="dateTime" 
+                        <!-- Enhanced Date & Time Field -->
+                        <div class="mb-4">
+                            <label for="dateTime" class="form-label d-flex align-items-center fw-semibold text-gray-700 mb-3">
+                                <i class="fas fa-calendar-alt text-purple-500 me-2"></i>
+                                Date & Time: 
+                                <small class="text-blue-500 fw-normal ms-2">(Editable)</small>
+                            </label>
+                            <input type="datetime-local" 
+                                   id="dateTime" 
+                                   name="dateTime" 
+                                   class="form-control form-control-lg form-modern border-2 focus:ring-4 focus:ring-purple-200 focus:border-purple-500"
                                    aria-describedby="datetime-help" 
                                    aria-label="Attendance date and time"
                                    title="Click to edit date and time for past lectures">
-                            <small id="datetime-help" class="form-help">📅 Auto-set to current time, but you can edit to record past lectures or specific times</small>
+                            <small id="datetime-help" class="form-text text-muted d-flex align-items-center mt-2">
+                                <i class="fas fa-calendar-plus me-1"></i>
+                                Auto-set to current time, but you can edit to record past lectures or specific times
+                            </small>
                         </div>
 
-                        <!-- Location Fields -->
-                        <div class="location-group">
-                            <div class="form-group half">
-                                <label for="latitude"><i class="fas fa-globe"></i> Latitude:</label>
-                                <input type="text" id="latitude" name="latitude" readonly>
+                        <!-- Enhanced Location Fields -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="latitude" class="form-label d-flex align-items-center fw-semibold text-gray-700">
+                                    <i class="fas fa-globe text-red-500 me-2"></i>
+                                    Latitude:
+                                </label>
+                                <input type="text" 
+                                       id="latitude" 
+                                       name="latitude" 
+                                       class="form-control form-control-lg bg-gray-50 border-2" 
+                                       readonly>
                             </div>
-                            <div class="form-group half">
-                                <label for="longitude"><i class="fas fa-globe"></i> Longitude:</label>
+                            <div class="col-md-6">
+                                <label for="longitude" class="form-label d-flex align-items-center fw-semibold text-gray-700">
+                                    <i class="fas fa-globe text-blue-500 me-2"></i>
+                                    Longitude:
+                                </label>
+                                <input type="text" 
+                                       id="longitude" 
+                                       name="longitude" 
+                                       class="form-control form-control-lg bg-gray-50 border-2" 
+                                       readonly>
+                            </div>
+                        </div>
                                 <input type="text" id="longitude" name="longitude" readonly>
                             </div>
                         </div>
@@ -6182,7 +6478,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    <!-- End Main Application Container -->
 
     <script>
         // Global Variables
@@ -17013,6 +17309,156 @@ Current Status:
         console.log('🔐 Security: API keys are now protected from public exposure');
         console.log('💡 Run configureFirebaseSecurely() in console for setup help');
 
+    </script>
+    <!-- Bootstrap 5 JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Enhanced Framework Integration Script -->
+    <script>
+        // Enhanced Message System with Bootstrap Alerts
+        function showFrameworkMessage(message, type = 'info', duration = 5000) {
+            // Create message container if it doesn't exist
+            let container = document.getElementById('frameworkMessageContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'frameworkMessageContainer';
+                container.className = 'position-fixed bottom-0 end-0 p-3';
+                container.style.zIndex = '1050';
+                document.body.appendChild(container);
+            }
+            
+            const alertId = 'alert-' + Date.now();
+            
+            const alertTypes = {
+                'success': 'alert-success',
+                'error': 'alert-danger',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            };
+            
+            const icons = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-triangle',
+                'warning': 'fas fa-exclamation-circle',
+                'info': 'fas fa-info-circle'
+            };
+            
+            const alertHtml = `
+                <div id="${alertId}" class="alert ${alertTypes[type]} alert-dismissible fade show shadow-lg animate-fade-in" role="alert">
+                    <i class="${icons[type]} me-2"></i>
+                    <strong>${message}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', alertHtml);
+            
+            // Auto-remove after duration
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, duration);
+        }
+
+        // Enhanced Button Interactions for Attendance
+        function setupModernButtonInteractions() {
+            const presentBtn = document.getElementById('presentBtn');
+            const absentBtn = document.getElementById('absentBtn');
+            const statusInput = document.getElementById('attendanceStatus');
+
+            if (!presentBtn || !absentBtn || !statusInput) return;
+
+            function selectAttendance(button, status) {
+                // Remove selection from both buttons
+                [presentBtn, absentBtn].forEach(btn => {
+                    btn.classList.remove('ring-4', 'ring-offset-2', 'ring-blue-300', 'ring-green-300', 'ring-red-300', 'border-4');
+                    btn.style.transform = '';
+                    btn.style.boxShadow = '';
+                });
+                
+                // Add selection to clicked button with enhanced styling
+                const ringColor = status === 'Present' ? 'ring-green-300' : 'ring-red-300';
+                button.classList.add('ring-4', 'ring-offset-2', ringColor, 'border-4');
+                button.style.transform = 'scale(1.05)';
+                button.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.3)';
+                
+                // Add pulse animation
+                button.style.animation = 'pulseSuccess 0.6s ease-in-out';
+                setTimeout(() => {
+                    button.style.animation = '';
+                }, 600);
+                
+                statusInput.value = status;
+                
+                showFrameworkMessage(`✓ Marked as ${status}`, 'success', 2000);
+            }
+
+            presentBtn.addEventListener('click', () => selectAttendance(presentBtn, 'Present'));
+            absentBtn.addEventListener('click', () => selectAttendance(absentBtn, 'Absent'));
+        }
+
+        // Initialize modern enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            setupModernButtonInteractions();
+            
+            // Add smooth scrolling to all anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Add modern loading states to forms
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                        submitBtn.disabled = true;
+                        
+                        // Re-enable after 3 seconds (adjust as needed)
+                        setTimeout(() => {
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                        }, 3000);
+                    }
+                });
+            });
+
+            // Add modern hover effects to cards
+            document.querySelectorAll('.card, .glass-card, .glass-effect').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.transition = 'all 0.3s ease';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Welcome message with new framework features
+            setTimeout(() => {
+                showFrameworkMessage('🚀 Modern UI frameworks loaded! Enhanced with Bootstrap 5 + Tailwind CSS', 'success', 4000);
+            }, 1000);
+        });
+
+        // Override original showMessage to use the new framework version
+        if (typeof showMessage === 'undefined') {
+            window.showMessage = showFrameworkMessage;
+        }
     </script>
 </body>
 </html>
