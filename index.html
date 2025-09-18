@@ -1993,6 +1993,161 @@
             font-size: 1rem;
         }
 
+        /* Time-Based Analytics Styles */
+        .time-analytics-dashboard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .dashboard-header h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .dashboard-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .time-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .time-stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .time-stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .time-stat-card.on-time {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .time-stat-card.late {
+            border-left: 4px solid #f39c12;
+        }
+
+        .time-stat-card.absent {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.9;
+        }
+
+        .time-stat-card.on-time .stat-icon {
+            color: #2ecc71;
+        }
+
+        .time-stat-card.late .stat-icon {
+            color: #f39c12;
+        }
+
+        .time-stat-card.absent .stat-icon {
+            color: #e74c3c;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .stat-detail {
+            display: block;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .time-summary {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-item strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .good-rate {
+            color: #2ecc71;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .poor-rate {
+            color: #e74c3c;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .summary-item small {
+            display: block;
+            margin-top: 5px;
+            opacity: 0.8;
+            font-size: 0.8rem;
+        }
+
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
+            .time-stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-stat-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .time-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .date-analytics {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -11470,6 +11625,61 @@ ${environment.tips.slice(0, 3).join('\n')}
                     yPosition += 20;
                 }
                 
+                // Add time-based analytics section
+                if (yPosition > 250) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Time-Based Attendance Analytics
+                addSectionHeader(doc, 'TIME-BASED ATTENDANCE ANALYTICS', yPosition);
+                yPosition += 15;
+                
+                // Calculate time-based analytics from the filtered data
+                const timeAnalytics = calculateTimeBasedAnalyticsForPDF(filteredData);
+                
+                // Add analytics explanation
+                doc.setFontSize(10);
+                doc.text('Analysis of attendance timing patterns based on 1:00-1:15 PM on-time window:', 20, yPosition);
+                yPosition += 10;
+                
+                // Time analytics table
+                const timeTableData = [
+                    ['On-Time Records (1:00-1:15 PM)', timeAnalytics.onTimeRecords.toString()],
+                    ['Late Records (After 1:15 PM)', timeAnalytics.lateRecords.toString()],
+                    ['Absent Records', timeAnalytics.absentRecords.toString()],
+                    ['Total Records', timeAnalytics.totalRecords.toString()],
+                    ['Punctuality Rate', `${timeAnalytics.punctualityRate}%`]
+                ];
+                
+                doc.autoTable({
+                    head: [['Category', 'Count']],
+                    body: timeTableData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [52, 73, 94],
+                        textColor: 255,
+                        fontStyle: 'bold',
+                        fontSize: 10
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245]
+                    },
+                    columnStyles: {
+                        0: { halign: 'left', cellWidth: 100 },   // Category
+                        1: { halign: 'center', cellWidth: 50 }   // Count
+                    },
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3,
+                        overflow: 'linebreak'
+                    },
+                    margin: { top: 20, left: 8, right: 8 },
+                    showHead: 'everyPage'
+                });
+                yPosition = doc.lastAutoTable.finalY + 20;
+                
                 // Footer
                 addFooter(doc);
                 
@@ -11492,6 +11702,76 @@ File: ${fileName}`, 'success');
             }
         }
         
+        function calculateTimeBasedAnalyticsForPDF(filteredData) {
+            console.log('🕐 Calculating time-based analytics for PDF...');
+            
+            // Time thresholds: On-Time: 1:00-1:15 PM, Late: after 1:15 PM
+            const onTimeStart = "13:00"; // 1:00 PM in 24-hour format
+            const onTimeEnd = "13:15";   // 1:15 PM in 24-hour format
+            
+            let onTimeRecords = 0;
+            let lateRecords = 0;
+            let absentRecords = 0;
+            
+            // Process all filtered records
+            filteredData.forEach(record => {
+                const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
+                
+                if (status === 'absent' || status.includes('absent')) {
+                    absentRecords++;
+                } else if (status === 'present' || status.includes('present')) {
+                    // Get time from record (could be in record.time or extracted from datetime)
+                    let recordTime = record.time;
+                    
+                    // If no direct time field, try to extract from datetime/timestamp
+                    if (!recordTime && record.datetime) {
+                        const timePart = record.datetime.split(' ');
+                        if (timePart.length > 1) {
+                            recordTime = timePart[1];
+                        }
+                    }
+                    
+                    if (!recordTime && record.timestamp) {
+                        const timePart = record.timestamp.split(' ');
+                        if (timePart.length > 1) {
+                            recordTime = timePart[1];
+                        }
+                    }
+                    
+                    if (recordTime && isTimeInRange(recordTime, onTimeStart, onTimeEnd)) {
+                        onTimeRecords++;
+                    } else if (recordTime) {
+                        // Present but outside on-time window = Late
+                        lateRecords++;
+                    } else {
+                        // Present but no time data - count as on-time for backward compatibility
+                        onTimeRecords++;
+                    }
+                }
+            });
+            
+            // Calculate punctuality rate
+            const totalPresentRecords = onTimeRecords + lateRecords;
+            const punctualityRate = totalPresentRecords > 0 ? 
+                ((onTimeRecords / totalPresentRecords) * 100).toFixed(1) : '0.0';
+            
+            console.log('📊 PDF Time Analysis Results:', {
+                onTime: onTimeRecords,
+                late: lateRecords,
+                absent: absentRecords,
+                total: filteredData.length,
+                punctualityRate: punctualityRate
+            });
+            
+            return {
+                onTimeRecords,
+                lateRecords,
+                absentRecords,
+                totalRecords: filteredData.length,
+                punctualityRate
+            };
+        }
+
         function addSectionHeader(doc, title, yPosition) {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
@@ -12295,10 +12575,143 @@ File: ${fileName}`, 'success');
             updateChartsDisplay(detailedStats);
         }
 
+        function calculateTimeBasedAnalytics() {
+            console.log('🕐 Calculating time-based analytics...');
+            
+            // Time thresholds: On-Time: 1:00-1:15 PM, Late: after 1:15 PM
+            const onTimeStart = "13:00"; // 1:00 PM in 24-hour format
+            const onTimeEnd = "13:15";   // 1:15 PM in 24-hour format
+            
+            let onTimeRecords = 0;
+            let lateRecords = 0;
+            let absentRecords = 0;
+            
+            // Process all attendance records
+            attendanceData.forEach(record => {
+                if (record.attendanceStatus === 'absent') {
+                    absentRecords++;
+                } else if (record.attendanceStatus === 'present' && record.time) {
+                    // Parse the time from the record
+                    const recordTime = record.time;
+                    
+                    // Check if time is in on-time window (1:00-1:15 PM)
+                    if (isTimeInRange(recordTime, onTimeStart, onTimeEnd)) {
+                        onTimeRecords++;
+                    } else {
+                        // Present but outside on-time window = Late
+                        lateRecords++;
+                    }
+                }
+            });
+            
+            console.log('📊 Time Analysis Results:', {
+                onTime: onTimeRecords,
+                late: lateRecords,
+                absent: absentRecords,
+                total: attendanceData.length
+            });
+            
+            return {
+                onTimeRecords,
+                lateRecords,
+                absentRecords,
+                totalRecords: attendanceData.length
+            };
+        }
+        
+        function isTimeInRange(timeStr, startTime, endTime) {
+            // Convert time string to comparable format
+            // Handle various time formats (e.g., "1:05 PM", "13:05", "01:05:30 PM")
+            try {
+                let normalizedTime = timeStr;
+                
+                // Convert 12-hour to 24-hour format if needed
+                if (timeStr.includes('PM') || timeStr.includes('AM')) {
+                    const [time, period] = timeStr.split(/\s+(AM|PM)/i);
+                    let [hours, minutes] = time.split(':').map(num => parseInt(num));
+                    
+                    if (period.toUpperCase() === 'PM' && hours !== 12) {
+                        hours += 12;
+                    } else if (period.toUpperCase() === 'AM' && hours === 12) {
+                        hours = 0;
+                    }
+                    
+                    normalizedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                } else {
+                    // Already in 24-hour format, just extract HH:MM
+                    const timeParts = timeStr.split(':');
+                    normalizedTime = `${timeParts[0].padStart(2, '0')}:${timeParts[1].padStart(2, '0')}`;
+                }
+                
+                // Compare times as strings (HH:MM format)
+                return normalizedTime >= startTime && normalizedTime <= endTime;
+                
+            } catch (error) {
+                console.warn('⚠️ Error parsing time:', timeStr, error);
+                return false;
+            }
+        }
+
         function updateChartsDisplay(stats) {
             const container = document.getElementById('studentChartsContainer');
-            // Analytics dashboard section removed - use PDF export for detailed analytics
-            container.innerHTML = '';
+            
+            // Get time-based analytics
+            const timeAnalytics = calculateTimeBasedAnalytics();
+            
+            // Create analytics dashboard with time-based data
+            container.innerHTML = `
+                <div class="time-analytics-dashboard">
+                    <div class="dashboard-header">
+                        <h4><i class="fas fa-clock"></i> Time-Based Attendance Analytics</h4>
+                        <p>Analysis based on ${timeAnalytics.totalRecords} total records</p>
+                    </div>
+                    
+                    <div class="time-stats-grid">
+                        <div class="time-stat-card on-time">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-number">${timeAnalytics.onTimeRecords}</span>
+                                <span class="stat-label">On-Time Records</span>
+                                <span class="stat-detail">1:00 PM - 1:15 PM</span>
+                            </div>
+                        </div>
+                        
+                        <div class="time-stat-card late">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-number">${timeAnalytics.lateRecords}</span>
+                                <span class="stat-label">Late Records</span>
+                                <span class="stat-detail">After 1:15 PM</span>
+                            </div>
+                        </div>
+                        
+                        <div class="time-stat-card absent">
+                            <div class="stat-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-number">${timeAnalytics.absentRecords}</span>
+                                <span class="stat-label">Absent Records</span>
+                                <span class="stat-detail">No attendance</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="time-summary">
+                        <div class="summary-item">
+                            <strong>Punctuality Rate:</strong> 
+                            <span class="${timeAnalytics.onTimeRecords > timeAnalytics.lateRecords ? 'good-rate' : 'poor-rate'}">
+                                ${timeAnalytics.totalRecords > 0 ? ((timeAnalytics.onTimeRecords / (timeAnalytics.onTimeRecords + timeAnalytics.lateRecords)) * 100).toFixed(1) : 0}%
+                            </span>
+                            <small>(On-time vs Total Present Records)</small>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function calculateMathematicalInsights(student, allStudents) {
