@@ -11386,14 +11386,21 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const totalVacation = attendanceRatesWithWeights.reduce((sum, student) => sum + student.vacation, 0);
                 const unexcusedAbsent = totalAbsent - totalVacation;
                 
-                // Calculate rates
+                // Calculate rates using the same logic as View Records PDF
                 const rawAttendanceRate = totalStudents > 0 && globalDaysCovered > 0 ? 
                     ((presentRecords / (totalStudents * globalDaysCovered)) * 100).toFixed(1) : '0.0';
                 
-                const effectiveAttendanceRate = attendanceRatesWithWeights.length > 0 ? 
+                // Use the same effective attendance rate calculation as View Records PDF
+                // Formula: presentCount / (totalStudents * daysCovered - totalVacation) * 100
+                const expectedTotalAttendance = totalStudents * globalDaysCovered;
+                const effectiveTotalDays = expectedTotalAttendance - totalVacation;
+                const effectiveAttendanceRate = effectiveTotalDays > 0 ? 
+                    Math.round((presentRecords / effectiveTotalDays) * 100).toString() : '0';
+                
+                // Class Average Rate should be the average of individual student attendance rates
+                const classAverageRate = attendanceRatesWithWeights.length > 0 ? 
                     (attendanceRatesWithWeights.reduce((sum, student) => sum + student.rate, 0) / attendanceRatesWithWeights.length).toFixed(1) : '0.0';
                 
-                const classAverageRate = effectiveAttendanceRate; // Same as effective rate
                 const classAverageWeightedScore = attendanceRatesWithWeights.length > 0 ? 
                     (attendanceRatesWithWeights.reduce((sum, student) => sum + student.weightedScore, 0) / attendanceRatesWithWeights.length).toFixed(1) : '0.0';
                 
