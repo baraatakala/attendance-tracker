@@ -11357,7 +11357,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                         weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage) - (0.1 * latePercentage);
                     } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords > 0) {
                         // Case 4: Num-Excuse = 0, On-Time > 0, Late > 0
-                        weightedScore = (0.55 * rate) + (0.25 * effectiveDaysPercentage) + (0.1 * punctualityPercentage) - (0.1 * latePercentage);
+                        weightedScore = (0.6 * rate) + (0.25 * effectiveDaysPercentage) + (0.05 * punctualityPercentage) - (0.1 * latePercentage);
                     } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords === 0) {
                         // Case 5: Num-Excuse > 0, On-Time = 0, Late = 0
                         weightedScore = (0.7 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage);
