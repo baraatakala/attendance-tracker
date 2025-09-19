@@ -11292,29 +11292,87 @@ ${environment.tips.slice(0, 3).join('\n')}
                     const effectiveDaysCovered = globalDaysCovered - student.vacation;
                     const rate = effectiveDaysCovered > 0 ? (student.present / effectiveDaysCovered * 100) : 0;
                     
-                    // Calculate weighted score using the same formula as dashboard
+                    // Calculate time-based analytics for this student
+                    const calculateLateRecordsForStudent = (studentName) => {
+                        let lateCount = 0;
+                        const onTimeStart = "13:00"; // 1:00 PM
+                        const onTimeEnd = "13:15";   // 1:15 PM
+                        
+                        filteredData.forEach(record => {
+                            const recordStudent = record.studentName || record.studentId || 'Unknown';
+                            const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
+                            
+                            // Check if this record belongs to the student and is present
+                            if (recordStudent === studentName && (status === 'present' || status.includes('present'))) {
+                                // Get time from record
+                                let recordTime = record.time;
+                                
+                                // If no direct time field, try to extract from datetime/timestamp
+                                if (!recordTime && record.datetime) {
+                                    const timePart = record.datetime.split(' ');
+                                    if (timePart.length > 1) {
+                                        recordTime = timePart[1];
+                                    }
+                                }
+                                
+                                if (!recordTime && record.timestamp) {
+                                    const timePart = record.timestamp.split(' ');
+                                    if (timePart.length > 1) {
+                                        recordTime = timePart[1];
+                                    }
+                                }
+                                
+                                // Check if time is outside the on-time window (late)
+                                if (recordTime && !isTimeInRange(recordTime, onTimeStart, onTimeEnd)) {
+                                    lateCount++;
+                                }
+                            }
+                        });
+                        
+                        return lateCount;
+                    };
+                    
+                    const lateRecords = calculateLateRecordsForStudent(student.name);
+                    const onTimeRecords = student.present - lateRecords;
+                    
+                    // Calculate weighted score using comprehensive 8-case system
                     const daysCovered = globalDaysCovered;
                     const effectiveDays = daysCovered - student.vacation;
                     const effectiveDaysPercentage = daysCovered > 0 ? (effectiveDays / daysCovered * 100) : 0;
                     const excusePercentage = daysCovered > 0 ? (student.vacation / daysCovered * 100) : 0;
+                    const punctualityPercentage = student.present > 0 ? (onTimeRecords / student.present * 100) : 0;
+                    const latePercentage = student.present > 0 ? (lateRecords / student.present * 100) : 0;
                     
                     let weightedScore;
                     
-                    if (student.vacation === 0) {
-                        // If Num-Excuse is 0, use simplified formula:
-                        // 0.7 * Rate + 0.3 * (effective_days / Days Covered * 100)
-                        weightedScore = (
-                            0.7 * rate +
-                            0.3 * effectiveDaysPercentage
-                        );
+                    // Comprehensive 8-case weighted score system
+                    if (student.vacation === 0 && onTimeRecords === 0 && lateRecords === 0) {
+                        // Case 1: Num-Excuse = 0, On-Time = 0, Late = 0
+                        weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage);
+                    } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords === 0) {
+                        // Case 2: Num-Excuse = 0, On-Time > 0, Late = 0
+                        weightedScore = (0.6 * rate) + (0.25 * effectiveDaysPercentage) + (0.15 * punctualityPercentage);
+                    } else if (student.vacation === 0 && onTimeRecords === 0 && lateRecords > 0) {
+                        // Case 3: Num-Excuse = 0, On-Time = 0, Late > 0
+                        weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage) - (0.1 * latePercentage);
+                    } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords > 0) {
+                        // Case 4: Num-Excuse = 0, On-Time > 0, Late > 0
+                        weightedScore = (0.55 * rate) + (0.25 * effectiveDaysPercentage) + (0.1 * punctualityPercentage) - (0.1 * latePercentage);
+                    } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords === 0) {
+                        // Case 5: Num-Excuse > 0, On-Time = 0, Late = 0
+                        weightedScore = (0.7 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage);
+                    } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords === 0) {
+                        // Case 6: Num-Excuse > 0, On-Time > 0, Late = 0
+                        weightedScore = (0.6 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) + (0.1 * punctualityPercentage);
+                    } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords > 0) {
+                        // Case 7: Num-Excuse > 0, On-Time = 0, Late > 0
+                        weightedScore = (0.6 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) - (0.1 * latePercentage);
+                    } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords > 0) {
+                        // Case 8: Num-Excuse > 0, On-Time > 0, Late > 0
+                        weightedScore = (0.55 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) + (0.05 * punctualityPercentage) - (0.1 * latePercentage);
                     } else {
-                        // If Num-Excuse > 0, use original formula:
-                        // 0.7 * Rate + 0.2 * (effective_days / Days Covered * 100) + 0.1 * (num_excuse / Days Covered * 100)
-                        weightedScore = (
-                            0.7 * rate +
-                            0.2 * effectiveDaysPercentage +
-                            0.1 * excusePercentage
-                        );
+                        // Fallback to original simple formula if something goes wrong
+                        weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage);
                     }
                     
                     return {
@@ -12409,36 +12467,96 @@ File: ${fileName}`, 'success');
                 // Calculate attendance rate using effective days covered
                 const rate = effectiveDaysCovered > 0 ? (student.present / effectiveDaysCovered) * 100 : 0;
                 
-                // Calculate weighted score using the same logic as PDF export
+                // Calculate time-based analytics for this student
+                const calculateLateRecordsForStudent = (studentName) => {
+                    let lateCount = 0;
+                    const onTimeStart = "13:00"; // 1:00 PM
+                    const onTimeEnd = "13:15";   // 1:15 PM
+                    
+                    data.forEach(record => {
+                        const recordStudent = record.studentName || record.studentId || 'Unknown';
+                        const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
+                        
+                        // Check if this record belongs to the student and is present
+                        if (recordStudent === studentName && (status === 'present' || status.includes('present'))) {
+                            // Get time from record
+                            let recordTime = record.time;
+                            
+                            // If no direct time field, try to extract from datetime/timestamp
+                            if (!recordTime && record.datetime) {
+                                const timePart = record.datetime.split(' ');
+                                if (timePart.length > 1) {
+                                    recordTime = timePart[1];
+                                }
+                            }
+                            
+                            if (!recordTime && record.timestamp) {
+                                const timePart = record.timestamp.split(' ');
+                                if (timePart.length > 1) {
+                                    recordTime = timePart[1];
+                                }
+                            }
+                            
+                            // Check if time is outside the on-time window (late)
+                            if (recordTime && !isTimeInRange(recordTime, onTimeStart, onTimeEnd)) {
+                                lateCount++;
+                            }
+                        }
+                    });
+                    
+                    return lateCount;
+                };
+                
+                const lateRecords = calculateLateRecordsForStudent(student.name);
+                const onTimeRecords = student.present - lateRecords;
+                
+                // Calculate weighted score using comprehensive 8-case system
                 const effectiveDaysPercentage = globalDaysCovered > 0 ? (effectiveDaysCovered / globalDaysCovered * 100) : 0;
                 const excusePercentage = globalDaysCovered > 0 ? (student.vacation / globalDaysCovered * 100) : 0;
+                const punctualityPercentage = student.present > 0 ? (onTimeRecords / student.present * 100) : 0;
+                const latePercentage = student.present > 0 ? (lateRecords / student.present * 100) : 0;
                 
                 let weightedScore;
                 
-                if (student.vacation === 0) {
-                    // If Num-Excuse is 0, use simplified formula:
-                    // 0.7 * Rate + 0.3 * (effective_days / Days Covered * 100)
-                    weightedScore = (
-                        0.7 * rate +
-                        0.3 * effectiveDaysPercentage
-                    );
+                // Comprehensive 8-case weighted score system
+                if (student.vacation === 0 && onTimeRecords === 0 && lateRecords === 0) {
+                    // Case 1: Num-Excuse = 0, On-Time = 0, Late = 0
+                    weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage);
+                } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords === 0) {
+                    // Case 2: Num-Excuse = 0, On-Time > 0, Late = 0
+                    weightedScore = (0.6 * rate) + (0.25 * effectiveDaysPercentage) + (0.15 * punctualityPercentage);
+                } else if (student.vacation === 0 && onTimeRecords === 0 && lateRecords > 0) {
+                    // Case 3: Num-Excuse = 0, On-Time = 0, Late > 0
+                    weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage) - (0.1 * latePercentage);
+                } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords > 0) {
+                    // Case 4: Num-Excuse = 0, On-Time > 0, Late > 0
+                    weightedScore = (0.55 * rate) + (0.25 * effectiveDaysPercentage) + (0.1 * punctualityPercentage) - (0.1 * latePercentage);
+                } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords === 0) {
+                    // Case 5: Num-Excuse > 0, On-Time = 0, Late = 0
+                    weightedScore = (0.7 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage);
+                } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords === 0) {
+                    // Case 6: Num-Excuse > 0, On-Time > 0, Late = 0
+                    weightedScore = (0.6 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) + (0.1 * punctualityPercentage);
+                } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords > 0) {
+                    // Case 7: Num-Excuse > 0, On-Time = 0, Late > 0
+                    weightedScore = (0.6 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) - (0.1 * latePercentage);
+                } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords > 0) {
+                    // Case 8: Num-Excuse > 0, On-Time > 0, Late > 0
+                    weightedScore = (0.55 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) + (0.05 * punctualityPercentage) - (0.1 * latePercentage);
                 } else {
-                    // If Num-Excuse > 0, use original formula:
-                    // 0.7 * Rate + 0.2 * (effective_days / Days Covered * 100) + 0.1 * (num_excuse / Days Covered * 100)
-                    weightedScore = (
-                        0.7 * rate +
-                        0.2 * effectiveDaysPercentage +
-                        0.1 * excusePercentage
-                    );
+                    // Fallback to original simple formula if something goes wrong
+                    weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage);
                 }
-                
+
                 return {
                     ...student,
                     attendanceRate: rate.toFixed(1),
                     numericRate: rate,
                     weightedScore: Math.round(weightedScore * 10) / 10,
                     daysCovered: globalDaysCovered,
-                    effectiveDaysCovered: effectiveDaysCovered
+                    effectiveDaysCovered: effectiveDaysCovered,
+                    onTimeRecords: onTimeRecords,
+                    lateRecords: lateRecords
                 };
             });
             
