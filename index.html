@@ -11459,7 +11459,48 @@ ${environment.tips.slice(0, 3).join('\n')}
                     }))
                 });
                 
+                // Calculate late records for each student
+                const calculateLateRecordsForStudent = (studentName) => {
+                    let lateCount = 0;
+                    const onTimeStart = "13:00"; // 1:00 PM
+                    const onTimeEnd = "13:15";   // 1:15 PM
+                    
+                    filteredData.forEach(record => {
+                        const recordStudent = record.studentName || record.studentId || 'Unknown';
+                        const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
+                        
+                        // Check if this record belongs to the student and is present
+                        if (recordStudent === studentName && (status === 'present' || status.includes('present'))) {
+                            // Get time from record
+                            let recordTime = record.time;
+                            
+                            // If no direct time field, try to extract from datetime/timestamp
+                            if (!recordTime && record.datetime) {
+                                const timePart = record.datetime.split(' ');
+                                if (timePart.length > 1) {
+                                    recordTime = timePart[1];
+                                }
+                            }
+                            
+                            if (!recordTime && record.timestamp) {
+                                const timePart = record.timestamp.split(' ');
+                                if (timePart.length > 1) {
+                                    recordTime = timePart[1];
+                                }
+                            }
+                            
+                            // Check if time is outside the on-time window (late)
+                            if (recordTime && !isTimeInRange(recordTime, onTimeStart, onTimeEnd)) {
+                                lateCount++;
+                            }
+                        }
+                    });
+                    
+                    return lateCount;
+                };
+                
                 const attendanceTableData = attendanceRatesWithWeights.map((student, index) => {
+                    const lateRecords = calculateLateRecordsForStudent(student.name);
                     return [
                         (index + 1).toString(), // Add row number
                         student.name,
@@ -11468,13 +11509,14 @@ ${environment.tips.slice(0, 3).join('\n')}
                         student.vacation.toString(),
                         student.effectiveDaysCovered.toString(),
                         `${student.rate}%`,
-                        student.weightedScore.toString()
+                        student.weightedScore.toString(),
+                        lateRecords.toString() // New Late Records column
                     ];
                 });
                 
                 // Use autoTable for proper pagination instead of custom addTable
                 doc.autoTable({
-                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score']],
+                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score', 'Late Records']],
                     body: attendanceTableData,
                     startY: yPosition,
                     theme: 'striped',
@@ -11488,14 +11530,15 @@ ${environment.tips.slice(0, 3).join('\n')}
                         fillColor: [245, 245, 245]
                     },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 12 },   // # 
-                        1: { cellWidth: 44 },                    // Student Name
-                        2: { halign: 'center', cellWidth: 18 },  // Present
-                        3: { halign: 'center', cellWidth: 18 },  // Absent
-                        4: { halign: 'center', cellWidth: 22 },  // Num-Excuse
-                        5: { halign: 'center', cellWidth: 25 },  // Effective Days
-                        6: { halign: 'center', cellWidth: 20 },  // Rate
-                        7: { halign: 'center', cellWidth: 30 }   // Weighted Score
+                        0: { halign: 'center', cellWidth: 10 },   // # (reduced)
+                        1: { cellWidth: 35 },                    // Student Name (reduced)
+                        2: { halign: 'center', cellWidth: 16 },  // Present (reduced)
+                        3: { halign: 'center', cellWidth: 16 },  // Absent (reduced)
+                        4: { halign: 'center', cellWidth: 18 },  // Num-Excuse (reduced)
+                        5: { halign: 'center', cellWidth: 22 },  // Effective Days (reduced)
+                        6: { halign: 'center', cellWidth: 18 },  // Rate (reduced)
+                        7: { halign: 'center', cellWidth: 25 },  // Weighted Score (reduced)
+                        8: { halign: 'center', cellWidth: 20 }   // Late Records (new)
                     },
                     styles: {
                         fontSize: 9,
