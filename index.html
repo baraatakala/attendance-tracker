@@ -1149,7 +1149,303 @@
             opacity: 0.7;
         }
 
-        /* Action Buttons */
+        /* Modern Top Navigation Styles */
+        .top-navigation {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            margin: 0 0 30px 0;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+
+        .nav-brand {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-brand:hover {
+            color: #f8f9fa;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 30px;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #f8f9fa;
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.has-dropdown::after {
+            content: '▼';
+            font-size: 0.8rem;
+            margin-left: 5px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item:hover .nav-link.has-dropdown::after {
+            transform: rotate(180deg);
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding-left: 25px;
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #eee;
+            margin: 8px 0;
+        }
+
+        .dropdown-section {
+            padding: 8px 20px 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 0 15px;
+                height: 60px;
+            }
+            
+            .nav-brand {
+                font-size: 1.3rem;
+            }
+            
+            .nav-menu {
+                position: fixed;
+                top: 60px;
+                left: 0;
+                width: 100%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                flex-direction: column;
+                gap: 0;
+                padding: 20px 0;
+                transform: translateY(-100vh);
+                transition: transform 0.3s ease;
+                z-index: 999;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            }
+
+            .nav-menu.active {
+                transform: translateY(0);
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .nav-item {
+                width: 100%;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .nav-item:last-child {
+                border-bottom: none;
+            }
+
+            .nav-link {
+                padding: 15px 30px;
+                justify-content: flex-start;
+                border-radius: 0;
+            }
+
+            .nav-link:hover {
+                transform: none;
+                padding-left: 35px;
+            }
+
+            .dropdown-menu {
+                position: static;
+                background: rgba(255, 255, 255, 0.95);
+                box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+                border-radius: 0;
+                margin: 0;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                display: none;
+                border: none;
+            }
+
+            .nav-item.dropdown-active .dropdown-menu {
+                display: block;
+            }
+
+            .dropdown-item {
+                padding: 12px 50px;
+                color: #333;
+                font-size: 0.9rem;
+            }
+
+            .dropdown-item:hover {
+                padding-left: 55px;
+            }
+
+            .dropdown-section {
+                padding: 8px 50px 4px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-container {
+                padding: 0 10px;
+                height: 55px;
+            }
+            
+            .nav-brand {
+                font-size: 1.1rem;
+            }
+            
+            .nav-menu {
+                top: 55px;
+            }
+            
+            .dropdown-item {
+                padding: 10px 40px;
+            }
+            
+            .dropdown-item:hover {
+                padding-left: 45px;
+            }
+            
+            .dropdown-section {
+                padding: 6px 40px 3px;
+            }
+        }
+
+        /* Smooth scrolling for anchor links */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Enhanced dropdown animations */
+        .dropdown-menu {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Focus states for accessibility */
+        .nav-link:focus,
+        .dropdown-item:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
+        }
+
+        /* Action Buttons - Updated for dropdown compatibility */
         .actions-section {
             margin: 20px 0;
         }
@@ -5608,70 +5904,79 @@
                 </div>
             </section>
 
-            <!-- Action Buttons -->
-            <section class="actions-section">
-                <div class="section-header collapsible-header" onclick="toggleSection('actions-content')">
-                    <h3><i class="fas fa-tools"></i> Actions & Reports</h3>
-                    <i class="fas fa-chevron-down toggle-icon" id="actions-content-icon"></i>
-                </div>
-                <div id="actions-content" class="collapsible-content collapsed">
-                <div class="action-buttons">
-                    <button id="viewRecordsBtn" class="action-btn primary">
-                        <i class="fas fa-eye"></i> View Records
+            <!-- Modern Top Navigation -->
+            <nav class="top-navigation">
+                <div class="nav-container">
+                    <a href="#" class="nav-brand">
+                        <i class="fas fa-clipboard-check"></i>
+                        Attendance Tracker
+                    </a>
+                    
+                    <ul class="nav-menu" id="navMenu">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link has-dropdown">
+                                <i class="fas fa-tools"></i>
+                                Actions & Reports
+                            </a>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-section">Quick Actions</div>
+                                <button class="dropdown-item" id="viewRecordsBtn">
+                                    <i class="fas fa-eye"></i> View Records
+                                </button>
+                                <button class="dropdown-item" id="viewAnalyticsBtn">
+                                    <i class="fas fa-chart-line"></i> View Analytics
+                                </button>
+                                <button class="dropdown-item" id="viewPenaltiesBtn">
+                                    <i class="fas fa-exclamation-triangle"></i> View Penalties
+                                </button>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-section">Export & Download</div>
+                                <button class="dropdown-item" id="downloadBtn">
+                                    <i class="fas fa-download"></i> Download Excel
+                                </button>
+                                <button class="dropdown-item" id="openEmailFormBtn" onclick="testEmailForm()">
+                                    <i class="fas fa-envelope-open"></i> Create Email Report
+                                </button>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-section">System</div>
+                                <button class="dropdown-item" id="clearBtn" onclick="clearAllData()" style="display: none !important; visibility: hidden !important;">
+                                    <i class="fas fa-trash"></i> Clear Data
+                                </button>
+                            </div>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a href="#" class="nav-link has-dropdown">
+                                <i class="fas fa-cloud"></i>
+                                Cloud Sync
+                            </a>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-section">Firebase Cloud Sync</div>
+                                <button class="dropdown-item" id="toggleFirebaseBtn" onclick="toggleFirebaseMode()">
+                                    <i class="fas fa-toggle-on"></i> 
+                                    <span id="firebaseStatusText">Enable Cloud Sync</span>
+                                </button>
+                                <button class="dropdown-item" id="syncNowBtn" onclick="syncWithFirebase()">
+                                    <i class="fas fa-sync"></i> Sync Now
+                                </button>
+                                <button class="dropdown-item" onclick="showFirebaseStatus()">
+                                    <i class="fas fa-info-circle"></i> Connection Status
+                                </button>
+                                <div class="dropdown-divider"></div>
+                                <div id="firebaseStatusInfo" style="padding: 8px 20px; font-size: 12px; color: #666; background: #f8f9fa; margin: 5px 10px; border-radius: 6px;">
+                                    <div>🔗 Status: <span id="connectionStatus">Checking...</span></div>
+                                    <div>Sync Queue: <span id="syncQueueCount">0</span> pending</div>
+                                    <div>Mode: <span id="currentMode">Local Only</span></div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <i class="fas fa-bars"></i>
                     </button>
-                    <button id="viewAnalyticsBtn" class="action-btn info">
-                        <i class="fas fa-chart-line"></i> View Analytics
-                    </button>
-                    <button id="viewPenaltiesBtn" class="action-btn warning">
-                        <i class="fas fa-exclamation-triangle"></i> View Penalties
-                    </button>
-                    <button id="downloadBtn" class="action-btn success">
-                        <i class="fas fa-download"></i> Download Excel
-                    </button>
-                    <button id="clearBtn" class="action-btn danger" onclick="clearAllData()" style="display: none !important; visibility: hidden !important;">
-                        <i class="fas fa-trash"></i> Clear Data
-                    </button>
                 </div>
-
-                <!-- Firebase Cloud Sync Section -->
-                <div class="firebase-section" style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <h3 style="margin: 0 0 15px 0; color: white; font-size: 18px;">
-                        <i class="fas fa-cloud"></i> Firebase Cloud Sync
-                    </h3>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
-                        <button id="toggleFirebaseBtn" class="action-btn" style="background: #4CAF50; color: white;" onclick="toggleFirebaseMode()">
-                            <i class="fas fa-toggle-on"></i> <span id="firebaseStatusText">Enable Cloud Sync</span>
-                        </button>
-                        <button id="syncNowBtn" class="action-btn" style="background: #2196F3; color: white;" onclick="syncWithFirebase()">
-                            <i class="fas fa-sync"></i> Sync Now
-                        </button>
-                        <button class="action-btn" style="background: #FF9800; color: white;" onclick="showFirebaseStatus()">
-                            <i class="fas fa-info-circle"></i> Status
-                        </button>
-                    </div>
-                    <div id="firebaseStatusInfo" style="font-size: 12px; color: #e8f4fd; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px;">
-                        <div>🔗 Status: <span id="connectionStatus">Checking...</span></div>
-                        <div>Sync Queue: <span id="syncQueueCount">0</span> pending</div>
-                        <div>Mode: <span id="currentMode">Local Only</span></div>
-                    </div>
-                </div>
-                
-                <!-- Email Reporting Section -->
-                <div class="email-report-section" style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
-                    <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">
-                        <i class="fas fa-envelope"></i> Email Reports
-                    </h3>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button id="openEmailFormBtn" class="action-btn primary" style="white-space: nowrap;" onclick="testEmailForm()">
-                            <i class="fas fa-envelope-open"></i> Create Email Report
-                        </button>
-                    </div>
-                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
-                        Generate professional attendance reports for managers and administrators.
-                    </p>
-                </div>
-                </div>
-            </section>
+            </nav>
 
             <!-- Records Display -->
             <section id="recordsSection" class="records-section" style="display: none;">
@@ -7002,10 +7307,76 @@
             initializeTableSorting();
             initializeApp();
             initializeAnalyticsUI();
+            initializeTopNavigation();
             
             // Initialize chart filter keyboard shortcuts
             setupChartFilterKeyboardShortcuts();
         });
+
+        // Modern Top Navigation Functions
+        function initializeTopNavigation() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const navMenu = document.getElementById('navMenu');
+            
+            // Mobile menu toggle
+            if (mobileMenuToggle && navMenu) {
+                mobileMenuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navMenu.classList.toggle('active');
+                    
+                    // Toggle hamburger icon
+                    const icon = mobileMenuToggle.querySelector('i');
+                    if (navMenu.classList.contains('active')) {
+                        icon.className = 'fas fa-times';
+                    } else {
+                        icon.className = 'fas fa-bars';
+                    }
+                });
+            }
+            
+            // Mobile dropdown handling
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                const navLink = item.querySelector('.nav-link.has-dropdown');
+                if (navLink) {
+                    navLink.addEventListener('click', function(e) {
+                        // Only prevent default on mobile
+                        if (window.innerWidth <= 768) {
+                            e.preventDefault();
+                            item.classList.toggle('dropdown-active');
+                        }
+                    });
+                }
+            });
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.top-navigation')) {
+                    navMenu.classList.remove('active');
+                    const icon = mobileMenuToggle.querySelector('i');
+                    icon.className = 'fas fa-bars';
+                    
+                    // Close all mobile dropdowns
+                    navItems.forEach(item => {
+                        item.classList.remove('dropdown-active');
+                    });
+                }
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    navMenu.classList.remove('active');
+                    const icon = mobileMenuToggle.querySelector('i');
+                    icon.className = 'fas fa-bars';
+                    
+                    // Remove mobile dropdown states
+                    navItems.forEach(item => {
+                        item.classList.remove('dropdown-active');
+                    });
+                }
+            });
+        }
 
         function initializeAnalyticsUI() {
             // Initialize collapsible sections - keep date analytics collapsed by default
@@ -10147,6 +10518,11 @@ ${environment.tips.slice(0, 3).join('\n')}
                 elements.viewRecordsBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Records';
                 displayRecords();
                 updateStatistics();
+                
+                // Automatically scroll to the records section with a small delay to ensure content is rendered
+                setTimeout(() => {
+                    scrollToTop();
+                }, 100);
             }
         }
 
@@ -11285,11 +11661,12 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 // Calculate percentages using effective days covered (same as dashboard)
                 const attendanceRatesWithWeights = Object.values(studentStats).map(student => {
-                    // Calculate actual absent days: Total days - Present days - Vacation days
-                    const actualAbsent = globalDaysCovered - student.present - student.vacation;
-                    
                     // Calculate effective days covered (excluding vacation days)
                     const effectiveDaysCovered = globalDaysCovered - student.vacation;
+                    
+                    // Calculate actual absent days: Effective Days - Present days (CORRECTED)
+                    const actualAbsent = effectiveDaysCovered - student.present;
+                    
                     const rate = effectiveDaysCovered > 0 ? (student.present / effectiveDaysCovered * 100) : 0;
                     
                     // Calculate time-based analytics for this student
@@ -11557,9 +11934,99 @@ ${environment.tips.slice(0, 3).join('\n')}
                     return lateCount;
                 };
                 
+                // Calculate Consistency Index for each student
+                const calculateConsistencyIndex = (studentName, allClassDates, filteredData) => {
+                    // Create daily attendance pattern (1=present, 0=unexcused absent) 
+                    // EXCLUDE excused absences entirely from consistency calculation
+                    const dailyPattern = [];
+                    const includedDates = []; // Track which dates were included
+                    
+                    allClassDates.forEach(date => {
+                        // Check for any record for this student on this date
+                        const studentRecord = filteredData.find(record => {
+                            const recordStudent = record.studentName || record.studentId || 'Unknown';
+                            const recordDate = record.datetime ? record.datetime.split(' ')[0] : 
+                                             record.date || record.timestamp?.split(' ')[0] || '';
+                            
+                            return recordStudent === studentName && recordDate === date;
+                        });
+                        
+                        if (studentRecord) {
+                            const status = (studentRecord.attendanceStatus || studentRecord.action || '').toLowerCase().trim();
+                            
+                            if (status === 'present' || status.includes('present')) {
+                                // Present - full attendance value
+                                dailyPattern.push(1);
+                                includedDates.push(date);
+                            } else if (status === 'absent' || status.includes('absent')) {
+                                // Check if this absence is excused (has vacation notes)
+                                const notes = (studentRecord.notes || '').toLowerCase();
+                                if (isExcusedAbsence(notes)) {
+                                    // EXCLUDE excused absences from consistency calculation
+                                    // (skip - don't add to pattern)
+                                } else {
+                                    // Unexcused absent (recorded as absent without vacation notes)
+                                    dailyPattern.push(0);
+                                    includedDates.push(date);
+                                }
+                            } else {
+                                // Unknown status - treat as unexcused absent
+                                dailyPattern.push(0);
+                                includedDates.push(date);
+                            }
+                        } else {
+                            // No record at all - unexcused absent (didn't show up, nothing recorded)
+                            dailyPattern.push(0);
+                            includedDates.push(date);
+                        }
+                    });
+                    
+                    // Need at least 2 data points to calculate meaningful consistency
+                    if (dailyPattern.length < 2) {
+                        console.log(`📊 CI calculation for ${studentName}: Insufficient data (${dailyPattern.length} days), returning 1.0`);
+                        return 1.0; // Perfect consistency if only 1 day or no applicable days
+                    }
+                    
+                    // Calculate CI = 1 - (σ/μ) where σ is standard deviation and μ is mean
+                    const mean = dailyPattern.reduce((sum, val) => sum + val, 0) / dailyPattern.length;
+                    
+                    if (mean === 0) {
+                        console.log(`📊 CI calculation for ${studentName}: All unexcused absences, returning 1.0`);
+                        return 1.0; // Perfect consistency in being absent (though poor attendance)
+                    }
+                    
+                    const variance = dailyPattern.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / dailyPattern.length;
+                    const standardDeviation = Math.sqrt(variance);
+                    
+                    const ci = Math.max(0, 1 - (standardDeviation / mean));
+                    
+                    console.log(`📊 CI calculation for ${studentName}:`, {
+                        totalDates: allClassDates.length,
+                        includedDates: includedDates.length,
+                        excludedExcused: allClassDates.length - includedDates.length,
+                        pattern: dailyPattern,
+                        mean: mean.toFixed(3),
+                        stdDev: standardDeviation.toFixed(3),
+                        ci: ci.toFixed(3),
+                        interpretation: 'NEW: 1=Present, 0=Unexcused Absent. Excused absences EXCLUDED from calculation.'
+                    });
+                    
+                    return ci;
+                };
+                
+                // Find all class dates from filtered data, sorted chronologically
+                const allClassDates = [...new Set(filteredData.map(record => {
+                    return record.datetime ? record.datetime.split(' ')[0] : 
+                           record.date || record.timestamp?.split(' ')[0] || '';
+                }).filter(date => date))].sort();
+                
+                console.log('📅 All class dates detected:', allClassDates);
+                
                 const attendanceTableData = attendanceRatesWithWeights.map((student, index) => {
                     const lateRecords = calculateLateRecordsForStudent(student.name);
                     const onTimeRecords = student.present - lateRecords; // On-Time = Present - Late Records
+                    const consistencyIndex = calculateConsistencyIndex(student.name, allClassDates, filteredData);
+                    
                     return [
                         (index + 1).toString(), // Add row number
                         student.name,
@@ -11570,13 +12037,14 @@ ${environment.tips.slice(0, 3).join('\n')}
                         `${student.rate}%`,
                         student.weightedScore.toString(),
                         lateRecords.toString(), // Late Records column
-                        onTimeRecords.toString() // New On-Time column
+                        onTimeRecords.toString(), // On-Time column
+                        consistencyIndex.toFixed(3) // New Consistency Index column
                     ];
                 });
                 
                 // Use autoTable for proper pagination instead of custom addTable
                 doc.autoTable({
-                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score', 'Late Records', 'On-Time']],
+                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score', 'Late Records', 'On-Time', 'CI']],
                     body: attendanceTableData,
                     startY: yPosition,
                     theme: 'striped',
@@ -11591,15 +12059,16 @@ ${environment.tips.slice(0, 3).join('\n')}
                     },
                     columnStyles: {
                         0: { halign: 'center', cellWidth: 8 },    // # (reduced further)
-                        1: { cellWidth: 32 },                    // Student Name (reduced further)
-                        2: { halign: 'center', cellWidth: 14 },  // Present (reduced)
-                        3: { halign: 'center', cellWidth: 14 },  // Absent (reduced)
-                        4: { halign: 'center', cellWidth: 16 },  // Num-Excuse (reduced)
-                        5: { halign: 'center', cellWidth: 20 },  // Effective Days (reduced)
-                        6: { halign: 'center', cellWidth: 16 },  // Rate (reduced)
-                        7: { halign: 'center', cellWidth: 22 },  // Weighted Score (reduced)
-                        8: { halign: 'center', cellWidth: 18 },  // Late Records (reduced)
-                        9: { halign: 'center', cellWidth: 18 }   // On-Time (new)
+                        1: { cellWidth: 28 },                    // Student Name (reduced to fit CI)
+                        2: { halign: 'center', cellWidth: 12 },  // Present (reduced)
+                        3: { halign: 'center', cellWidth: 12 },  // Absent (reduced)
+                        4: { halign: 'center', cellWidth: 14 },  // Num-Excuse (reduced)
+                        5: { halign: 'center', cellWidth: 18 },  // Effective Days (reduced)
+                        6: { halign: 'center', cellWidth: 14 },  // Rate (reduced)
+                        7: { halign: 'center', cellWidth: 20 },  // Weighted Score (reduced)
+                        8: { halign: 'center', cellWidth: 16 },  // Late Records (reduced)
+                        9: { halign: 'center', cellWidth: 16 },  // On-Time (reduced)
+                        10: { halign: 'center', cellWidth: 16 }  // CI (new)
                     },
                     styles: {
                         fontSize: 9,
@@ -11646,6 +12115,29 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     data.cell.styles.fontStyle = 'bold';
                                 } else {
                                     // Significantly below average (>10 points below)
+                                    data.cell.styles.textColor = [139, 0, 0]; // Dark Red
+                                    data.cell.styles.fontStyle = 'bold';
+                                }
+                            }
+                            
+                            // Color coding for Consistency Index (CI)
+                            if (data.column.index === 10) { // CI column
+                                const ci = parseFloat(data.cell.raw);
+                                if (ci >= 0.8) {
+                                    // High consistency (80-100%)
+                                    data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
+                                    data.cell.styles.fontStyle = 'bold';
+                                } else if (ci >= 0.6) {
+                                    // Good consistency (60-79%)
+                                    data.cell.styles.textColor = [46, 204, 113]; // Light Green
+                                } else if (ci >= 0.4) {
+                                    // Moderate consistency (40-59%)
+                                    data.cell.styles.textColor = [243, 156, 18]; // Orange
+                                } else if (ci >= 0.2) {
+                                    // Low consistency (20-39%)
+                                    data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                                } else {
+                                    // Very low consistency (0-19%)
                                     data.cell.styles.textColor = [139, 0, 0]; // Dark Red
                                     data.cell.styles.fontStyle = 'bold';
                                 }
