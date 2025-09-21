@@ -11611,12 +11611,45 @@ ${environment.tips.slice(0, 3).join('\n')}
                     tableWidth: 'auto',
                     showHead: 'everyPage',
                     didParseCell: function(data) {
-                        // Color coding for rates
-                        if (data.column.index === 6 && data.cell.raw.includes('%')) { // Rate column
-                            const rate = parseFloat(data.cell.raw);
-                            if (rate >= 80) data.cell.styles.textColor = [46, 204, 113]; // Green
-                            else if (rate >= 60) data.cell.styles.textColor = [243, 156, 18]; // Orange
-                            else data.cell.styles.textColor = [231, 76, 60]; // Red
+                        // Only apply color coding to body cells, not header cells
+                        if (data.section === 'body') {
+                            // Color coding for rates
+                            if (data.column.index === 6 && data.cell.raw.includes('%')) { // Rate column
+                                const rate = parseFloat(data.cell.raw);
+                                if (rate >= 80) data.cell.styles.textColor = [46, 204, 113]; // Green
+                                else if (rate >= 60) data.cell.styles.textColor = [243, 156, 18]; // Orange
+                                else data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                            }
+                            
+                            // Color coding for weighted scores based on class average
+                            if (data.column.index === 7) { // Weighted Score column
+                                const weightedScore = parseFloat(data.cell.raw);
+                                const classAverage = parseFloat(classAverageWeightedScore);
+                                
+                                if (weightedScore > classAverage + 10) {
+                                    // Significantly above average (>10 points above)
+                                    data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
+                                    data.cell.styles.fontStyle = 'bold';
+                                } else if (weightedScore > classAverage + 5) {
+                                    // Well above average (5-10 points above)
+                                    data.cell.styles.textColor = [34, 139, 34]; // Dark Green
+                                    data.cell.styles.fontStyle = 'bold';
+                                } else if (weightedScore > classAverage) {
+                                    // Above average (0-5 points above)
+                                    data.cell.styles.textColor = [46, 204, 113]; // Light Green
+                                } else if (weightedScore >= classAverage - 5) {
+                                    // Near average (within 5 points below)
+                                    data.cell.styles.textColor = [255, 140, 0]; // Dark Orange
+                                } else if (weightedScore >= classAverage - 10) {
+                                    // Below average (5-10 points below)
+                                    data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                                    data.cell.styles.fontStyle = 'bold';
+                                } else {
+                                    // Significantly below average (>10 points below)
+                                    data.cell.styles.textColor = [139, 0, 0]; // Dark Red
+                                    data.cell.styles.fontStyle = 'bold';
+                                }
+                            }
                         }
                     }
                 });
