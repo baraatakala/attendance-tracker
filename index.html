@@ -11360,16 +11360,16 @@ ${environment.tips.slice(0, 3).join('\n')}
                         weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) + (0.05 * punctualityPercentage) - (0.05 * latePercentage);
                     } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords === 0) {
                         // Case 5: Num-Excuse > 0, On-Time = 0, Late = 0
-                        weightedScore = (0.7 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage);
+                        weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage) - (0.05 * excusePercentage);
                     } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords === 0) {
                         // Case 6: Num-Excuse > 0, On-Time > 0, Late = 0
-                        weightedScore = (0.65 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) - (0.05 * excusePercentage) + (0.05 * punctualityPercentage);
                     } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords > 0) {
                         // Case 7: Num-Excuse > 0, On-Time = 0, Late > 0
-                        weightedScore = (0.7 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) - (0.05 * latePercentage);
+                        weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage) - (0.05 * excusePercentage) - (0.05 * latePercentage);
                     } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords > 0) {
                         // Case 8: Num-Excuse > 0, On-Time > 0, Late > 0
-                        weightedScore = (0.65 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) + (0.05 * punctualityPercentage) - (0.05 * latePercentage);
+                        weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) - (0.05 * excusePercentage) + (0.05 * punctualityPercentage) - (0.05 * latePercentage);
                     } else {
                         // Fallback to original simple formula if something goes wrong
                         weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage);
@@ -12533,16 +12533,16 @@ File: ${fileName}`, 'success');
                     weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) + (0.05 * punctualityPercentage) - (0.05 * latePercentage);
                 } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords === 0) {
                     // Case 5: Num-Excuse > 0, On-Time = 0, Late = 0
-                    weightedScore = (0.7 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage);
+                    weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage) - (0.05 * excusePercentage);
                 } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords === 0) {
                     // Case 6: Num-Excuse > 0, On-Time > 0, Late = 0
-                    weightedScore = (0.65 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) - (0.05 * excusePercentage) + (0.05 * punctualityPercentage);
                 } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords > 0) {
                     // Case 7: Num-Excuse > 0, On-Time = 0, Late > 0
-                    weightedScore = (0.7 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) - (0.05 * latePercentage);
+                    weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage) - (0.05 * excusePercentage) - (0.05 * latePercentage);
                 } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords > 0) {
                     // Case 8: Num-Excuse > 0, On-Time > 0, Late > 0
-                    weightedScore = (0.65 * rate) + (0.2 * effectiveDaysPercentage) + (0.1 * excusePercentage) + (0.05 * punctualityPercentage) - (0.05 * latePercentage);
+                    weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) - (0.05 * excusePercentage) + (0.05 * punctualityPercentage) - (0.05 * latePercentage);
                 } else {
                     // Fallback to original simple formula if something goes wrong
                     weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage);
