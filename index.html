@@ -11659,6 +11659,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                     const onTimeRecords = student.present - lateRecords; // On-Time = Present - Late Records
                     const consistencyIndex = calculateConsistencyIndex(student.name, allClassDates, filteredData);
                     
+                    // Calculate Engagement Index (EI) = (0.5 × Rate) + (0.3 × Punctuality) + (0.2 × CI)
+                    const punctualityRate = student.present > 0 ? (onTimeRecords / student.present) * 100 : 0;
+                    const engagementIndex = (0.5 * student.rate) + (0.3 * punctualityRate) + (0.2 * consistencyIndex * 100);
+                    
+                    console.log(`📈 EI calculation for ${student.name}:`, {
+                        rate: student.rate,
+                        punctualityRate: punctualityRate.toFixed(1),
+                        ci: consistencyIndex.toFixed(3),
+                        ei: engagementIndex.toFixed(1),
+                        formula: `(0.5 × ${student.rate}) + (0.3 × ${punctualityRate.toFixed(1)}) + (0.2 × ${(consistencyIndex * 100).toFixed(1)})`
+                    });
+                    
                     return [
                         (index + 1).toString(), // Add row number
                         student.name,
@@ -11670,13 +11682,14 @@ ${environment.tips.slice(0, 3).join('\n')}
                         student.weightedScore.toString(),
                         lateRecords.toString(), // Late Records column
                         onTimeRecords.toString(), // On-Time column
-                        consistencyIndex.toFixed(3) // New Consistency Index column
+                        consistencyIndex.toFixed(3), // Consistency Index column
+                        engagementIndex.toFixed(1) // New Engagement Index column
                     ];
                 });
                 
                 // Use autoTable for proper pagination instead of custom addTable
                 doc.autoTable({
-                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score', 'Late Records', 'On-Time', 'CI']],
+                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score', 'Late Records', 'On-Time', 'CI', 'EI']],
                     body: attendanceTableData,
                     startY: yPosition,
                     theme: 'striped',
@@ -11690,17 +11703,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                         fillColor: [245, 245, 245]
                     },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 8 },    // # (reduced further)
-                        1: { cellWidth: 28 },                    // Student Name (reduced to fit CI)
-                        2: { halign: 'center', cellWidth: 12 },  // Present (reduced)
-                        3: { halign: 'center', cellWidth: 12 },  // Absent (reduced)
-                        4: { halign: 'center', cellWidth: 14 },  // Num-Excuse (reduced)
-                        5: { halign: 'center', cellWidth: 18 },  // Effective Days (reduced)
-                        6: { halign: 'center', cellWidth: 14 },  // Rate (reduced)
-                        7: { halign: 'center', cellWidth: 20 },  // Weighted Score (reduced)
-                        8: { halign: 'center', cellWidth: 16 },  // Late Records (reduced)
-                        9: { halign: 'center', cellWidth: 16 },  // On-Time (reduced)
-                        10: { halign: 'center', cellWidth: 16 }  // CI (new)
+                        0: { halign: 'center', cellWidth: 10 },   // # (increased)
+                        1: { cellWidth: 32 },                     // Student Name (increased)
+                        2: { halign: 'center', cellWidth: 13 },   // Present (increased)
+                        3: { halign: 'center', cellWidth: 13 },   // Absent (increased)
+                        4: { halign: 'center', cellWidth: 15 },   // Num-Excuse (increased)
+                        5: { halign: 'center', cellWidth: 18 },   // Effective Days (increased)
+                        6: { halign: 'center', cellWidth: 15 },   // Rate (increased)
+                        7: { halign: 'center', cellWidth: 20 },   // Weighted Score (increased)
+                        8: { halign: 'center', cellWidth: 16 },   // Late Records (increased)
+                        9: { halign: 'center', cellWidth: 16 },   // On-Time (increased)
+                        10: { halign: 'center', cellWidth: 16 },  // CI (increased)
+                        11: { halign: 'center', cellWidth: 16 }   // EI (increased)
                     },
                     styles: {
                         fontSize: 9,
@@ -11708,7 +11722,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                         overflow: 'linebreak',
                         cellWidth: 'wrap'
                     },
-                    margin: { top: 20, left: 8, right: 8 },
+                    margin: { top: 20, left: 2, right: 2 },
                     tableWidth: 'auto',
                     showHead: 'everyPage',
                     didParseCell: function(data) {
@@ -11770,6 +11784,33 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     data.cell.styles.textColor = [220, 20, 20]; // Bright Red
                                 } else {
                                     // Very low consistency (0-19%)
+                                    data.cell.styles.textColor = [139, 0, 0]; // Dark Red
+                                    data.cell.styles.fontStyle = 'bold';
+                                }
+                            }
+                            
+                            // Color coding for Engagement Index (EI)
+                            if (data.column.index === 11) { // EI column
+                                const ei = parseFloat(data.cell.raw);
+                                if (ei >= 85) {
+                                    // Excellent engagement (85-100)
+                                    data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
+                                    data.cell.styles.fontStyle = 'bold';
+                                } else if (ei >= 75) {
+                                    // Very good engagement (75-84)
+                                    data.cell.styles.textColor = [34, 139, 34]; // Dark Green
+                                    data.cell.styles.fontStyle = 'bold';
+                                } else if (ei >= 65) {
+                                    // Good engagement (65-74)
+                                    data.cell.styles.textColor = [46, 204, 113]; // Light Green
+                                } else if (ei >= 55) {
+                                    // Moderate engagement (55-64)
+                                    data.cell.styles.textColor = [243, 156, 18]; // Orange
+                                } else if (ei >= 45) {
+                                    // Low engagement (45-54)
+                                    data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                                } else {
+                                    // Very low engagement (0-44)
                                     data.cell.styles.textColor = [139, 0, 0]; // Dark Red
                                     data.cell.styles.fontStyle = 'bold';
                                 }
