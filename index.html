@@ -11659,16 +11659,16 @@ ${environment.tips.slice(0, 3).join('\n')}
                     const onTimeRecords = student.present - lateRecords; // On-Time = Present - Late Records
                     const consistencyIndex = calculateConsistencyIndex(student.name, allClassDates, filteredData);
                     
-                    // Calculate Engagement Index (EI) = (0.5 × Rate) + (0.3 × Punctuality) + (0.2 × CI)
+                    // Calculate Engagement Index (EI) = (0.8 × Rate) + (0.1 × Punctuality) + (0.1 × CI)
                     const punctualityRate = student.present > 0 ? (onTimeRecords / student.present) * 100 : 0;
-                    const engagementIndex = (0.5 * student.rate) + (0.3 * punctualityRate) + (0.2 * consistencyIndex * 100);
+                    const engagementIndex = (0.8 * student.rate) + (0.1 * punctualityRate) + (0.1 * consistencyIndex * 100);
                     
                     console.log(`📈 EI calculation for ${student.name}:`, {
                         rate: student.rate,
                         punctualityRate: punctualityRate.toFixed(1),
                         ci: consistencyIndex.toFixed(3),
                         ei: engagementIndex.toFixed(1),
-                        formula: `(0.5 × ${student.rate}) + (0.3 × ${punctualityRate.toFixed(1)}) + (0.2 × ${(consistencyIndex * 100).toFixed(1)})`
+                        formula: `(0.8 × ${student.rate}) + (0.1 × ${punctualityRate.toFixed(1)}) + (0.1 × ${(consistencyIndex * 100).toFixed(1)})`
                     });
                     
                     return [
