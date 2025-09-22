@@ -11623,18 +11623,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                         return 1.0; // Perfect consistency if only 1 day or no applicable days
                     }
                     
-                    // Calculate CI using ROBUST FORMULA: CI = 1 - (σ/σ_max)
-                    // where σ_max = 0.5 for binary data (maximum possible std dev for 0/1 sequences)
+                    // Calculate CI = 1 - (σ/μ) where σ is standard deviation and μ is mean
                     const mean = dailyPattern.reduce((sum, val) => sum + val, 0) / dailyPattern.length;
                     
-                    // Calculate population standard deviation (using N, not N-1)
+                    if (mean === 0) {
+                        console.log(`📊 CI calculation for ${studentName}: All unexcused absences, returning 1.0`);
+                        return 1.0; // Perfect consistency in being absent (though poor attendance)
+                    }
+                    
                     const variance = dailyPattern.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / dailyPattern.length;
                     const standardDeviation = Math.sqrt(variance);
                     
-                    // Robust CI formula: CI = 1 - (σ/0.5)
-                    // Always gives results between 0 and 1, independent of mean
-                    const sigma_max = 0.5; // Maximum possible std dev for binary sequences
-                    const ci = Math.max(0, 1 - (standardDeviation / sigma_max));
+                    const ci = Math.max(0, 1 - (standardDeviation / mean));
                     
                     console.log(`📊 CI calculation for ${studentName}:`, {
                         sortedDates: sortedClassDates,
@@ -11649,11 +11649,9 @@ ${environment.tips.slice(0, 3).join('\n')}
                             attendance: dailyPattern[index] !== undefined ? dailyPattern[index] : 'excluded'
                         })),
                         mean: mean.toFixed(3),
-                        standardDeviation: standardDeviation.toFixed(3),
-                        sigma_max: sigma_max,
-                        formula: `CI = 1 - (${standardDeviation.toFixed(3)}/${sigma_max}) = ${ci.toFixed(3)}`,
-                        finalCI: ci.toFixed(3),
-                        interpretation: 'ROBUST CI: Uses σ_max=0.5 for binary data. Always gives values 0-1, independent of mean.'
+                        stdDev: standardDeviation.toFixed(3),
+                        ci: ci.toFixed(3),
+                        interpretation: 'SMART PATTERN: Chronologically sorted dates, 1=Present, 0=Unexcused Absent. Excused absences EXCLUDED.'
                     });
                     
                     return ci;
