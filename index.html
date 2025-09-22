@@ -11624,6 +11624,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                     }
                     
                     // Calculate CI = 1 - (σ/μ) where σ is standard deviation and μ is mean
+                    // Using proper statistical formula for consistency measurement
                     const mean = dailyPattern.reduce((sum, val) => sum + val, 0) / dailyPattern.length;
                     
                     if (mean === 0) {
