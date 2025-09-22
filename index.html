@@ -11570,10 +11570,14 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const calculateConsistencyIndex = (studentName, allClassDates, filteredData) => {
                     // Create daily attendance pattern (1=present, 0=unexcused absent) 
                     // EXCLUDE excused absences entirely from consistency calculation
+                    // USE SAME SMART PATTERN CONSTRUCTION as Trends column
                     const dailyPattern = [];
                     const includedDates = []; // Track which dates were included
                     
-                    allClassDates.forEach(date => {
+                    // Ensure dates are properly sorted chronologically (same as Trends)
+                    const sortedClassDates = [...allClassDates].sort((a, b) => new Date(a) - new Date(b));
+                    
+                    sortedClassDates.forEach(date => {
                         // Check for any record for this student on this date
                         const studentRecord = filteredData.find(record => {
                             const recordStudent = record.studentName || record.studentId || 'Unknown';
@@ -11592,7 +11596,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                                 includedDates.push(date);
                             } else if (status === 'absent' || status.includes('absent')) {
                                 // Check if this absence is excused (has vacation notes)
-                                const notes = (studentRecord.notes || '').toLowerCase();
+                                const notes = studentRecord.notes || '';
                                 if (isExcusedAbsence(notes)) {
                                     // EXCLUDE excused absences from consistency calculation
                                     // (skip - don't add to pattern)
@@ -11633,14 +11637,21 @@ ${environment.tips.slice(0, 3).join('\n')}
                     const ci = Math.max(0, 1 - (standardDeviation / mean));
                     
                     console.log(`📊 CI calculation for ${studentName}:`, {
-                        totalDates: allClassDates.length,
+                        sortedDates: sortedClassDates,
+                        totalDates: sortedClassDates.length,
                         includedDates: includedDates.length,
-                        excludedExcused: allClassDates.length - includedDates.length,
+                        excludedExcused: sortedClassDates.length - includedDates.length,
                         pattern: dailyPattern,
+                        patternString: `[${dailyPattern.join(' ')}]`, // Same format as Trends
+                        dateMapping: sortedClassDates.map((date, index) => ({
+                            day: index + 1,
+                            date: date,
+                            attendance: dailyPattern[index] !== undefined ? dailyPattern[index] : 'excluded'
+                        })),
                         mean: mean.toFixed(3),
                         stdDev: standardDeviation.toFixed(3),
                         ci: ci.toFixed(3),
-                        interpretation: 'NEW: 1=Present, 0=Unexcused Absent. Excused absences EXCLUDED from calculation.'
+                        interpretation: 'SMART PATTERN: Chronologically sorted dates, 1=Present, 0=Unexcused Absent. Excused absences EXCLUDED.'
                     });
                     
                     return ci;
@@ -11796,7 +11807,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                         fillColor: [52, 73, 94],
                         textColor: 255,
                         fontStyle: 'bold',
-                        fontSize: 10
+                        fontSize: 7  // Reduced from 10 to 7 for better header fit
                     },
                     alternateRowStyles: {
                         fillColor: [245, 245, 245]
