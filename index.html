@@ -11646,23 +11646,19 @@ ${environment.tips.slice(0, 3).join('\n')}
                     return ci;
                 };
                 
-                // Find all class dates from filtered data, sorted chronologically
-                const allClassDates = [...new Set(filteredData.map(record => {
-                    return record.datetime ? record.datetime.split(' ')[0] : 
-                           record.date || record.timestamp?.split(' ')[0] || '';
-                }).filter(date => date))].sort();
-                
-                console.log('📅 All class dates detected:', allClassDates);
-                
-                // Calculate Trend Score using linear regression on daily attendance (FIXED VERSION)
-                const calculateTrendScore = (studentName, allClassDates, filteredData) => {
-                    // Create daily attendance pattern EXCLUDING excused absences like CI calculation
-                    const dailyAttendance = [];
-                    const dayNumbers = [];
-                    const includedDates = []; // Track which dates were included
+                // Calculate attendance trend for a student using linear regression
+                // EXCLUDE records with notes (excused absences) from trend calculation
+                const calculateAttendanceTrend = (studentName, allClassDates, filteredData) => {
+                    // Create attendance pattern array (1=Present, 0=Absent) for all class dates
+                    // EXCLUDE excused absences (with notes) from trend analysis
+                    const attendancePattern = [];
+                    const includedDates = []; // Track which dates were included in trend
                     
-                    allClassDates.forEach((date, dayIndex) => {
-                        // Check for any record for this student on this date
+                    // Ensure dates are properly sorted chronologically
+                    const sortedClassDates = [...allClassDates].sort((a, b) => new Date(a) - new Date(b));
+                    
+                    sortedClassDates.forEach(date => {
+                        // Check if student has any record for this date
                         const studentRecord = filteredData.find(record => {
                             const recordStudent = record.studentName || record.studentId || 'Unknown';
                             const recordDate = record.datetime ? record.datetime.split(' ')[0] : 
@@ -11675,85 +11671,90 @@ ${environment.tips.slice(0, 3).join('\n')}
                             const status = (studentRecord.attendanceStatus || studentRecord.action || '').toLowerCase().trim();
                             
                             if (status === 'present' || status.includes('present')) {
-                                // Present - include in trend analysis
-                                dailyAttendance.push(100); // 100% for present day
-                                dayNumbers.push(dayIndex + 1); // Day number (1, 2, 3, ...)
+                                attendancePattern.push(1); // Present
                                 includedDates.push(date);
                             } else if (status === 'absent' || status.includes('absent')) {
-                                // Check if this absence is excused (has vacation notes)
-                                const notes = (studentRecord.notes || '').toLowerCase();
+                                // Check if this absence is excused (has notes)
+                                const notes = studentRecord.notes || '';
                                 if (isExcusedAbsence(notes)) {
-                                    // EXCLUDE excused absences from trend calculation (like CI)
+                                    // EXCLUDE excused absences from trend calculation
                                     // (skip - don't add to pattern)
                                 } else {
-                                    // Unexcused absent - include in trend analysis
-                                    dailyAttendance.push(0); // 0% for absent day
-                                    dayNumbers.push(dayIndex + 1);
+                                    // Unexcused absent (recorded as absent without excused notes)
+                                    attendancePattern.push(0);
                                     includedDates.push(date);
                                 }
                             } else {
                                 // Unknown status - treat as unexcused absent
-                                dailyAttendance.push(0);
-                                dayNumbers.push(dayIndex + 1);
+                                attendancePattern.push(0);
                                 includedDates.push(date);
                             }
                         } else {
-                            // No record at all - unexcused absent
-                            dailyAttendance.push(0);
-                            dayNumbers.push(dayIndex + 1);
+                            // No record found = unexcused absent (not recorded)
+                            attendancePattern.push(0);
                             includedDates.push(date);
                         }
                     });
                     
-                    // Need at least 3 data points for meaningful trend analysis
-                    if (dailyAttendance.length < 3) {
-                        console.log(`📈 Trend calculation for ${studentName}: Insufficient data (${dailyAttendance.length} days), returning 0`);
-                        return 0.0;
-                    }
+                    // Linear regression to calculate trend (only on included dates)
+                    const n = attendancePattern.length;
+                    if (n < 2) return 'FLAT'; // Need at least 2 points for trend
                     
-                    // Linear regression: T(t) = a + b*t, where b (slope) is our Trend Score
-                    const n = dailyAttendance.length;
-                    const sumT = dayNumbers.reduce((sum, day) => sum + day, 0); // Sum of day numbers
-                    const sumA = dailyAttendance.reduce((sum, att) => sum + att, 0); // Sum of attendance
-                    const meanT = sumT / n; // Average day number
-                    const meanA = sumA / n; // Average attendance rate
+                    // Sequential day numbers
+                    const days = Array.from({ length: n }, (_, i) => i + 1);
                     
-                    // Calculate slope: b = Σ(ti - t̄)(Ai - Ā) / Σ(ti - t̄)²
+                    // Calculate means
+                    const t_mean = days.reduce((sum, val) => sum + val, 0) / n;
+                    const a_mean = attendancePattern.reduce((sum, val) => sum + val, 0) / n;
+                    
+                    // Calculate numerator and denominator for slope
                     let numerator = 0;
                     let denominator = 0;
                     
                     for (let i = 0; i < n; i++) {
-                        const tDev = dayNumbers[i] - meanT; // (ti - t̄)
-                        const aDev = dailyAttendance[i] - meanA; // (Ai - Ā)
-                        numerator += tDev * aDev;
-                        denominator += tDev * tDev;
+                        numerator += (days[i] - t_mean) * (attendancePattern[i] - a_mean);
+                        denominator += (days[i] - t_mean) ** 2;
                     }
                     
-                    const trendScore = denominator !== 0 ? numerator / denominator : 0;
+                    // Calculate slope
+                    const slope = denominator !== 0 ? numerator / denominator : 0;
+                    const trend_score = slope * 100;
                     
-                    console.log(`📈 Trend calculation for ${studentName}:`, {
-                        totalClassDates: allClassDates.length,
+                    console.log(`📊 Trend calculation for ${studentName}:`, {
+                        sortedDates: sortedClassDates,
+                        totalDates: sortedClassDates.length,
                         includedDates: includedDates.length,
-                        excludedExcused: allClassDates.length - includedDates.length,
-                        dailyAttendance: dailyAttendance,
-                        dayNumbers: dayNumbers,
-                        meanDay: meanT.toFixed(2),
-                        meanAttendance: meanA.toFixed(1),
-                        trendScore: trendScore.toFixed(2),
-                        interpretation: trendScore > 2 ? 'Strong Improvement' : 
-                                      trendScore > 0.5 ? 'Improving' : 
-                                      trendScore < -2 ? 'Strong Decline' : 
-                                      trendScore < -0.5 ? 'Declining' : 'Stable'
+                        excludedExcused: sortedClassDates.length - includedDates.length,
+                        pattern: attendancePattern,
+                        patternString: `[${attendancePattern.join(' ')}]`, // MATLAB format
+                        dateMapping: sortedClassDates.map((date, index) => ({
+                            day: index + 1,
+                            date: date,
+                            attendance: attendancePattern[index] !== undefined ? attendancePattern[index] : 'excluded'
+                        })),
+                        slope: slope.toFixed(6),
+                        trendScore: trend_score.toFixed(2),
+                        matlabComparison: `Pattern: [${attendancePattern.join(' ')}] => Trend Score: ${trend_score.toFixed(2)}`,
+                        interpretation: 'EXCLUDES excused absences (with notes) from trend calculation'
                     });
                     
-                    return trendScore;
+                    // Return the numerical trend score (rounded to 1 decimal place)
+                    return trend_score.toFixed(1);
                 };
+
+                // Find all class dates from filtered data, sorted chronologically
+                const allClassDates = [...new Set(filteredData.map(record => {
+                    return record.datetime ? record.datetime.split(' ')[0] : 
+                           record.date || record.timestamp?.split(' ')[0] || '';
+                }).filter(date => date))].sort();
+                
+                console.log('📅 All class dates detected:', allClassDates);
                 
                 const attendanceTableData = attendanceRatesWithWeights.map((student, index) => {
                     const lateRecords = calculateLateRecordsForStudent(student.name);
                     const onTimeRecords = student.present - lateRecords; // On-Time = Present - Late Records
                     const consistencyIndex = calculateConsistencyIndex(student.name, allClassDates, filteredData);
-                    const trendScore = calculateTrendScore(student.name, allClassDates, filteredData);
+                    const attendanceTrend = calculateAttendanceTrend(student.name, allClassDates, filteredData);
                     
                     // Calculate Engagement Index (EI) = (0.8 × Rate) + (0.1 × Punctuality) + (0.1 × CI)
                     const punctualityRate = student.present > 0 ? (onTimeRecords / student.present) * 100 : 0;
@@ -11764,7 +11765,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                         punctualityRate: punctualityRate.toFixed(1),
                         ci: consistencyIndex.toFixed(3),
                         ei: engagementIndex.toFixed(1),
-                        trendScore: trendScore.toFixed(2),
+                        trend: attendanceTrend,
                         formula: `(0.8 × ${student.rate}) + (0.1 × ${punctualityRate.toFixed(1)}) + (0.1 × ${(consistencyIndex * 100).toFixed(1)})`
                     });
                     
@@ -11781,7 +11782,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                         onTimeRecords.toString(), // On-Time column
                         consistencyIndex.toFixed(3), // Consistency Index column
                         engagementIndex.toFixed(1), // Engagement Index column
-                        trendScore.toFixed(2) // New Trend Score column
+                        attendanceTrend // New Trend column
                     ];
                 });
                 
@@ -11805,15 +11806,15 @@ ${environment.tips.slice(0, 3).join('\n')}
                         1: { cellWidth: 28 },                     // Student Name (reduced)
                         2: { halign: 'center', cellWidth: 12 },   // Present (reduced)
                         3: { halign: 'center', cellWidth: 12 },   // Absent (reduced)
-                        4: { halign: 'center', cellWidth: 14 },   // Num-Excuse (reduced)
+                        4: { halign: 'center', cellWidth: 13 },   // Num-Excuse (reduced)
                         5: { halign: 'center', cellWidth: 16 },   // Effective Days (reduced)
-                        6: { halign: 'center', cellWidth: 14 },   // Rate (reduced)
+                        6: { halign: 'center', cellWidth: 13 },   // Rate (reduced)
                         7: { halign: 'center', cellWidth: 18 },   // Weighted Score (reduced)
                         8: { halign: 'center', cellWidth: 14 },   // Late Records (reduced)
                         9: { halign: 'center', cellWidth: 14 },   // On-Time (reduced)
                         10: { halign: 'center', cellWidth: 14 },  // CI (reduced)
                         11: { halign: 'center', cellWidth: 14 },  // EI (reduced)
-                        12: { halign: 'center', cellWidth: 16 }   // Trend Score (new)
+                        12: { halign: 'center', cellWidth: 14 }   // Trend (new)
                     },
                     styles: {
                         fontSize: 9,
@@ -11910,37 +11911,6 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     data.cell.styles.textColor = [220, 20, 20]; // Bright Red
                                 } else {
                                     // Very low engagement (0-44)
-                                    data.cell.styles.textColor = [139, 0, 0]; // Dark Red
-                                    data.cell.styles.fontStyle = 'bold';
-                                }
-                            }
-                            
-                            // Color coding for Trend Score (TS)
-                            if (data.column.index === 12) { // Trend Score column
-                                const trend = parseFloat(data.cell.raw);
-                                if (trend > 5) {
-                                    // Strongly improving (>5% per day)
-                                    data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
-                                    data.cell.styles.fontStyle = 'bold';
-                                } else if (trend > 2) {
-                                    // Improving (2-5% per day)
-                                    data.cell.styles.textColor = [34, 139, 34]; // Dark Green
-                                    data.cell.styles.fontStyle = 'bold';
-                                } else if (trend > 0.5) {
-                                    // Slightly improving (0.5-2% per day)
-                                    data.cell.styles.textColor = [46, 204, 113]; // Light Green
-                                } else if (trend >= -0.5) {
-                                    // Stable (-0.5 to +0.5% per day)
-                                    data.cell.styles.textColor = [52, 73, 94]; // Dark Blue-Gray (neutral)
-                                } else if (trend >= -2) {
-                                    // Slightly declining (-2 to -0.5% per day)
-                                    data.cell.styles.textColor = [243, 156, 18]; // Orange
-                                } else if (trend >= -5) {
-                                    // Declining (-5 to -2% per day)
-                                    data.cell.styles.textColor = [220, 20, 20]; // Bright Red
-                                    data.cell.styles.fontStyle = 'bold';
-                                } else {
-                                    // Strongly declining (<-5% per day)
                                     data.cell.styles.textColor = [139, 0, 0]; // Dark Red
                                     data.cell.styles.fontStyle = 'bold';
                                 }
