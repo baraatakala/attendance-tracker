@@ -11658,18 +11658,21 @@ ${environment.tips.slice(0, 3).join('\n')}
                     return ci;
                 };
                 
-                // Calculate attendance trend for a student using linear regression
-                // EXCLUDE records with notes (excused absences) from trend calculation
+                // Calculate attendance trend using weekly/cumulative attendance rates
+                // Much more meaningful than raw presence/absence (1/0) patterns
                 const calculateAttendanceTrend = (studentName, allClassDates, filteredData) => {
-                    // Create attendance pattern array (1=Present, 0=Absent) for all class dates
-                    // EXCLUDE excused absences (with notes) from trend analysis
-                    const attendancePattern = [];
+                    // Create cumulative attendance rates over time (NOT raw 1/0 pattern)
+                    // This gives meaningful trend data like [100%, 100%, 100%, 75%, 60%, 66.7%, 71.4%]
+                    const weeklyRates = [];
                     const includedDates = []; // Track which dates were included in trend
                     
                     // Ensure dates are properly sorted chronologically
                     const sortedClassDates = [...allClassDates].sort((a, b) => new Date(a) - new Date(b));
                     
-                    sortedClassDates.forEach(date => {
+                    let cumulativePresent = 0;
+                    let cumulativeTotal = 0;
+                    
+                    sortedClassDates.forEach((date, index) => {
                         // Check if student has any record for this date
                         const studentRecord = filteredData.find(record => {
                             const recordStudent = record.studentName || record.studentId || 'Unknown';
@@ -11679,79 +11682,145 @@ ${environment.tips.slice(0, 3).join('\n')}
                             return recordStudent === studentName && recordDate === date;
                         });
                         
+                        let isPresent = false;
+                        let shouldInclude = true;
+                        
                         if (studentRecord) {
                             const status = (studentRecord.attendanceStatus || studentRecord.action || '').toLowerCase().trim();
                             
                             if (status === 'present' || status.includes('present')) {
-                                attendancePattern.push(1); // Present
-                                includedDates.push(date);
+                                isPresent = true;
                             } else if (status === 'absent' || status.includes('absent')) {
                                 // Check if this absence is excused (has notes)
                                 const notes = studentRecord.notes || '';
                                 if (isExcusedAbsence(notes)) {
                                     // EXCLUDE excused absences from trend calculation
-                                    // (skip - don't add to pattern)
+                                    shouldInclude = false;
                                 } else {
-                                    // Unexcused absent (recorded as absent without excused notes)
-                                    attendancePattern.push(0);
-                                    includedDates.push(date);
+                                    isPresent = false; // Unexcused absent
                                 }
                             } else {
-                                // Unknown status - treat as unexcused absent
-                                attendancePattern.push(0);
-                                includedDates.push(date);
+                                isPresent = false; // Unknown status - treat as absent
                             }
                         } else {
-                            // No record found = unexcused absent (not recorded)
-                            attendancePattern.push(0);
+                            isPresent = false; // No record found = absent
+                        }
+                        
+                        if (shouldInclude) {
+                            cumulativeTotal++;
+                            if (isPresent) cumulativePresent++;
+                            
+                            // Calculate cumulative attendance rate up to this point
+                            const rate = cumulativeTotal > 0 ? (cumulativePresent / cumulativeTotal) * 100 : 0;
+                            weeklyRates.push(rate);
                             includedDates.push(date);
                         }
                     });
                     
-                    // Linear regression to calculate trend (only on included dates)
-                    const n = attendancePattern.length;
+                    // Linear regression on attendance rates (MATLAB-compatible)
+                    const n = weeklyRates.length;
                     if (n < 2) return 'FLAT'; // Need at least 2 points for trend
                     
-                    // Sequential day numbers
-                    const days = Array.from({ length: n }, (_, i) => i + 1);
+                    // Sequential week numbers (1, 2, 3, ...)
+                    const weeks = Array.from({ length: n }, (_, i) => i + 1);
                     
                     // Calculate means
-                    const t_mean = days.reduce((sum, val) => sum + val, 0) / n;
-                    const a_mean = attendancePattern.reduce((sum, val) => sum + val, 0) / n;
+                    const weeks_mean = weeks.reduce((sum, val) => sum + val, 0) / n;
+                    const rates_mean = weeklyRates.reduce((sum, val) => sum + val, 0) / n;
                     
                     // Calculate numerator and denominator for slope
                     let numerator = 0;
                     let denominator = 0;
                     
                     for (let i = 0; i < n; i++) {
-                        numerator += (days[i] - t_mean) * (attendancePattern[i] - a_mean);
-                        denominator += (days[i] - t_mean) ** 2;
+                        numerator += (weeks[i] - weeks_mean) * (weeklyRates[i] - rates_mean);
+                        denominator += (weeks[i] - weeks_mean) ** 2;
                     }
                     
-                    // Calculate slope
+                    // Calculate slope (% change per week) and intercept
                     const slope = denominator !== 0 ? numerator / denominator : 0;
-                    const trend_score = slope * 100;
+                    const intercept = rates_mean - (slope * weeks_mean);
                     
-                    console.log(`📊 Trend calculation for ${studentName}:`, {
+                    // Calculate fitted values for R-squared
+                    const fitted = weeks.map(week => slope * week + intercept);
+                    
+                    // Calculate R-squared (fit quality)
+                    const SSres = weeklyRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0);
+                    const SStot = weeklyRates.reduce((sum, rate) => sum + Math.pow(rate - rates_mean, 2), 0);
+                    const rSquared = SStot !== 0 ? 1 - (SSres / SStot) : 1;
+                    
+                    // Overall statistics
+                    const overallChange = weeklyRates.length > 0 ? weeklyRates[weeklyRates.length - 1] - weeklyRates[0] : 0;
+                    const minRate = Math.min(...weeklyRates);
+                    const maxRate = Math.max(...weeklyRates);
+                    
+                    // Moving average (3-week window, MATLAB-compatible)
+                    const windowSize = Math.min(3, n);
+                    const movingAvg = [];
+                    for (let i = 0; i < n; i++) {
+                        const start = Math.max(0, i - Math.floor(windowSize / 2));
+                        const end = Math.min(n, start + windowSize);
+                        const window = weeklyRates.slice(start, end);
+                        const avg = window.reduce((sum, val) => sum + val, 0) / window.length;
+                        movingAvg.push(avg);
+                    }
+                    
+                    // Trend classification based on slope and R-squared
+                    let trendClassification;
+                    if (rSquared < 0.3) {
+                        trendClassification = 'VOLATILE'; // Poor fit - inconsistent pattern
+                    } else if (slope > 2) {
+                        trendClassification = 'IMPROVING'; // Strong upward trend
+                    } else if (slope < -2) {
+                        trendClassification = 'DECLINING'; // Strong downward trend
+                    } else {
+                        trendClassification = 'STABLE'; // Minimal change
+                    }
+                    
+                    console.log(`📊 Advanced Trend Analysis for ${studentName}:`, {
                         sortedDates: sortedClassDates,
                         totalDates: sortedClassDates.length,
                         includedDates: includedDates.length,
                         excludedExcused: sortedClassDates.length - includedDates.length,
-                        pattern: attendancePattern,
-                        patternString: `[${attendancePattern.join(' ')}]`, // MATLAB format
-                        dateMapping: sortedClassDates.map((date, index) => ({
-                            day: index + 1,
+                        weeklyRates: weeklyRates.map(rate => rate.toFixed(1)),
+                        ratesString: `[${weeklyRates.map(rate => rate.toFixed(1)).join(', ')}]`, // MATLAB format
+                        
+                        // Linear regression results
+                        slope: slope.toFixed(4),
+                        intercept: intercept.toFixed(2),
+                        rSquared: rSquared.toFixed(3),
+                        
+                        // Overall statistics
+                        avgRate: rates_mean.toFixed(2),
+                        minRate: minRate.toFixed(1),
+                        maxRate: maxRate.toFixed(1),
+                        overallChange: overallChange.toFixed(1),
+                        
+                        // Advanced analysis
+                        movingAverage: movingAvg.map(avg => avg.toFixed(1)),
+                        trendClassification: trendClassification,
+                        fitQuality: rSquared >= 0.7 ? 'EXCELLENT' : rSquared >= 0.5 ? 'GOOD' : rSquared >= 0.3 ? 'FAIR' : 'POOR',
+                        
+                        dateMapping: includedDates.map((date, index) => ({
+                            week: index + 1,
                             date: date,
-                            attendance: attendancePattern[index] !== undefined ? attendancePattern[index] : 'excluded'
+                            cumulativeRate: weeklyRates[index].toFixed(1) + '%',
+                            movingAvg: movingAvg[index].toFixed(1) + '%'
                         })),
-                        slope: slope.toFixed(6),
-                        trendScore: trend_score.toFixed(2),
-                        matlabComparison: `Pattern: [${attendancePattern.join(' ')}] => Trend Score: ${trend_score.toFixed(2)}`,
-                        interpretation: 'EXCLUDES excused absences (with notes) from trend calculation'
+                        
+                        // MATLAB comparison output
+                        matlabComparison: `Weekly Rates: [${weeklyRates.map(rate => rate.toFixed(1)).join(', ')}] => Slope: ${slope.toFixed(4)}%/week, R²: ${rSquared.toFixed(3)}`,
+                        interpretation: `${trendClassification} (${slope > 0 ? '+' : ''}${slope.toFixed(2)}%/week, R²=${rSquared.toFixed(2)})`
                     });
                     
-                    // Return the numerical trend score (rounded to 1 decimal place)
-                    return trend_score.toFixed(1);
+                    // Return comprehensive trend score with metadata
+                    return {
+                        slope: parseFloat(slope.toFixed(2)),
+                        rSquared: parseFloat(rSquared.toFixed(3)),
+                        classification: trendClassification,
+                        overallChange: parseFloat(overallChange.toFixed(1)),
+                        displayValue: `${slope > 0 ? '+' : ''}${slope.toFixed(1)}%/wk`
+                    };
                 };
 
                 // Find all class dates from filtered data, sorted chronologically
@@ -11794,7 +11863,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                         onTimeRecords.toString(), // On-Time column
                         consistencyIndex.toFixed(3), // Consistency Index column
                         engagementIndex.toFixed(1), // Engagement Index column
-                        attendanceTrend // New Trend column
+                        typeof attendanceTrend === 'object' ? attendanceTrend.displayValue : attendanceTrend // Advanced Trend column with R² info
                     ];
                 });
                 
@@ -11925,6 +11994,44 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     // Very low engagement (0-44)
                                     data.cell.styles.textColor = [139, 0, 0]; // Dark Red
                                     data.cell.styles.fontStyle = 'bold';
+                                }
+                            }
+                            
+                            // Color coding for Advanced Trend Analysis (column 12)
+                            if (data.column.index === 12) { // Trend column
+                                const trendText = data.cell.raw.toString();
+                                
+                                if (trendText.includes('+')) {
+                                    // Positive trend (improving)
+                                    const slope = parseFloat(trendText.match(/[+-]?\d+\.?\d*/)[0]);
+                                    if (slope >= 5) {
+                                        // Strong improvement (≥5%/week)
+                                        data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
+                                        data.cell.styles.fontStyle = 'bold';
+                                    } else if (slope >= 2) {
+                                        // Moderate improvement (2-4.9%/week)
+                                        data.cell.styles.textColor = [34, 139, 34]; // Dark Green
+                                    } else {
+                                        // Slight improvement (0.1-1.9%/week)
+                                        data.cell.styles.textColor = [46, 204, 113]; // Light Green
+                                    }
+                                } else if (trendText.includes('-')) {
+                                    // Negative trend (declining)
+                                    const slope = Math.abs(parseFloat(trendText.match(/[+-]?\d+\.?\d*/)[0]));
+                                    if (slope >= 5) {
+                                        // Strong decline (≥5%/week decline)
+                                        data.cell.styles.textColor = [139, 0, 0]; // Dark Red
+                                        data.cell.styles.fontStyle = 'bold';
+                                    } else if (slope >= 2) {
+                                        // Moderate decline (2-4.9%/week decline)
+                                        data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                                    } else {
+                                        // Slight decline (0.1-1.9%/week decline)
+                                        data.cell.styles.textColor = [255, 140, 0]; // Dark Orange
+                                    }
+                                } else {
+                                    // Stable trend (near 0%/week)
+                                    data.cell.styles.textColor = [100, 100, 100]; // Gray
                                 }
                             }
                         }
