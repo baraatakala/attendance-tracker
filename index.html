@@ -5843,6 +5843,45 @@
                 border: 1px solid #ddd;
                 border-radius: 6px;
             }
+
+            /* Mobile Navigation Toolbar */
+            .batch-mobile-nav {
+                position: sticky !important;
+                top: 5px !important;
+                z-index: 1000 !important;
+                margin-bottom: 10px !important;
+                padding: 8px !important;
+            }
+
+            .batch-mobile-nav input[type="text"] {
+                font-size: 16px !important; /* Prevent iOS zoom */
+                padding: 10px !important;
+            }
+
+            .nav-btn {
+                font-size: 12px !important;
+                padding: 8px 10px !important;
+                white-space: nowrap !important;
+                min-width: auto !important;
+            }
+
+            /* Navigation button scrolling */
+            .batch-mobile-nav > div:last-child {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding-bottom: 8px !important;
+            }
+
+            /* Compact mode styles */
+            .batch-student-row.compact {
+                padding: 8px !important;
+                margin-bottom: 5px !important;
+            }
+
+            .batch-student-row.compact .student-time-override,
+            .batch-student-row.compact .student-notes-override {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -6043,10 +6082,61 @@
                                     <i class="fas fa-info-circle"></i> <span id="selectedStudentCount">0</span> students selected
                                 </div>
                             </div>
+                            
+                            <!-- Mobile Navigation Toolbar -->
+                            <div class="batch-mobile-nav" style="background: #34495e; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; position: sticky; top: 10px; z-index: 100;">
+                                <!-- Search and Filter Row -->
+                                <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <input type="text" id="studentSearchInput" placeholder="🔍 Search students..." 
+                                               onkeyup="filterStudents()" 
+                                               style="width: 100%; padding: 8px; border: none; border-radius: 4px; font-size: 14px;">
+                                    </div>
+                                    <button type="button" class="nav-btn" onclick="toggleCompactMode()" 
+                                            style="background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
+                                        <i class="fas fa-compress" id="compactModeIcon"></i> <span id="compactModeText">Compact</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Quick Navigation Row -->
+                                <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;">
+                                    <button type="button" class="nav-btn" onclick="scrollToSection('batch-global-settings')" 
+                                            style="background: #9b59b6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 12px;">
+                                        <i class="fas fa-cog"></i> Settings
+                                    </button>
+                                    <button type="button" class="nav-btn" onclick="scrollToSection('batch-actions')" 
+                                            style="background: #e67e22; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 12px;">
+                                        <i class="fas fa-bolt"></i> Actions
+                                    </button>
+                                    <button type="button" class="nav-btn" onclick="scrollToSection('batch-student-table-container')" 
+                                            style="background: #27ae60; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 12px;">
+                                        <i class="fas fa-list"></i> Students
+                                    </button>
+                                    <button type="button" class="nav-btn" onclick="scrollToSection('batch-submit-section')" 
+                                            style="background: #c0392b; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 12px;">
+                                        <i class="fas fa-save"></i> Submit
+                                    </button>
+                                    <button type="button" class="nav-btn" onclick="scrollToTop()" 
+                                            style="background: #7f8c8d; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 12px;">
+                                        <i class="fas fa-arrow-up"></i> Top
+                                    </button>
+                                </div>
+                                
+                                <!-- Progress Bar -->
+                                <div style="margin-top: 10px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 3px;">
+                                        <span>Progress: <span id="batchProgress">0</span>/<span id="batchTotal">0</span></span>
+                                        <span id="batchPercentage">0%</span>
+                                    </div>
+                                    <div style="background: #555; height: 4px; border-radius: 2px; overflow: hidden;">
+                                        <div id="batchProgressBar" style="background: #2ecc71; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Batch Mode Global Settings -->
-                        <div class="batch-global-settings" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <div class="batch-global-settings" id="batch-global-settings" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                             <h4 style="margin: 0 0 15px 0; color: #2c3e50;"><i class="fas fa-cog"></i> Global Settings (Applied to All Selected Students)</h4>
                             
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
@@ -6069,7 +6159,7 @@
                             </div>
 
                             <!-- Batch Actions -->
-                            <div class="batch-actions batch-actions-row" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <div class="batch-actions batch-actions-row" id="batch-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                                 <h5 style="margin: 0; color: #34495e; width: 100%; margin-bottom: 10px;">Quick Actions:</h5>
                                 <button type="button" class="batch-action-btn" onclick="markAllStudents('present')" style="background: #27ae60; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1; min-width: 120px;">
                                     <i class="fas fa-check-circle"></i> Mark All Present
@@ -6087,7 +6177,7 @@
                         </div>
 
                         <!-- Student List Table -->
-                        <div class="batch-student-table-container" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                        <div class="batch-student-table-container" id="batch-student-table-container" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
                             <div class="table-header" style="background: #34495e; color: white; padding: 10px; font-weight: bold;">
                                 <div style="display: grid; grid-template-columns: 50px 1fr 120px 120px 150px; gap: 10px; align-items: center;">
                                     <span>Select</span>
@@ -6103,7 +6193,7 @@
                         </div>
 
                         <!-- Batch Submit Button -->
-                        <div class="batch-submit-section" style="margin-top: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px; text-align: center;">
+                        <div class="batch-submit-section" id="batch-submit-section" style="margin-top: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px; text-align: center;">
                             <button type="button" id="submitBatchAttendance" class="batch-submit-btn" onclick="submitBatchAttendance()" 
                                     style="background: #2ecc71; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; min-width: 200px;">
                                 <i class="fas fa-save"></i> Save Attendance for <span id="submitButtonCount">0</span> Students
@@ -10885,6 +10975,9 @@ ${environment.tips.slice(0, 3).join('\n')}
                     submitBtn.style.backgroundColor = '#95a5a6';
                 }
             }
+            
+            // Update progress bar
+            updateBatchProgress();
         }
 
         async function submitBatchAttendance() {
@@ -18378,6 +18471,139 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
         window.handleNotesOverride = handleNotesOverride;
         window.submitBatchAttendance = submitBatchAttendance;
         
+        // Batch Navigation Functions Exports
+        window.scrollToSection = scrollToSection;
+        window.filterStudents = filterStudents;
+        window.toggleCompactMode = toggleCompactMode;
+        window.updateBatchProgress = updateBatchProgress;
+        window.initializeBatchProgress = initializeBatchProgress;
+        
+        // Batch Attendance Navigation Functions
+        function scrollToSection(sectionId) {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                // Add visual feedback
+                element.style.transition = 'background-color 0.3s ease';
+                const originalBg = element.style.backgroundColor;
+                element.style.backgroundColor = '#fff3cd';
+                setTimeout(() => {
+                    element.style.backgroundColor = originalBg;
+                }, 1000);
+            }
+        }
+
+        function filterStudents() {
+            const searchTerm = document.getElementById('studentSearchInput').value.toLowerCase();
+            const studentRows = document.querySelectorAll('.batch-student-row');
+            let visibleCount = 0;
+            
+            studentRows.forEach(row => {
+                const studentName = row.querySelector('.student-name').textContent.toLowerCase();
+                const isVisible = studentName.includes(searchTerm);
+                row.style.display = isVisible ? '' : 'none';
+                if (isVisible) visibleCount++;
+            });
+            
+            // Update total count in progress bar
+            updateBatchProgress();
+            
+            // Show message if no results
+            const tableBody = document.getElementById('batchStudentTableBody');
+            let noResultsMsg = document.querySelector('.no-search-results');
+            
+            if (visibleCount === 0 && searchTerm.trim() !== '') {
+                if (!noResultsMsg) {
+                    noResultsMsg = document.createElement('div');
+                    noResultsMsg.className = 'no-search-results';
+                    noResultsMsg.style.cssText = 'padding: 20px; text-align: center; color: #7f8c8d; font-style: italic;';
+                    noResultsMsg.innerHTML = '<i class="fas fa-search"></i> No students found matching "' + searchTerm + '"';
+                    tableBody.appendChild(noResultsMsg);
+                }
+            } else if (noResultsMsg) {
+                noResultsMsg.remove();
+            }
+        }
+
+        let isCompactMode = false;
+        function toggleCompactMode() {
+            isCompactMode = !isCompactMode;
+            const studentRows = document.querySelectorAll('.batch-student-row');
+            const compactIcon = document.getElementById('compactModeIcon');
+            const compactText = document.getElementById('compactModeText');
+            
+            studentRows.forEach(row => {
+                if (isCompactMode) {
+                    // Compact mode - smaller cards with minimal padding
+                    row.style.padding = '8px';
+                    row.style.marginBottom = '5px';
+                    
+                    // Hide override inputs in compact mode
+                    const timeOverride = row.querySelector('.student-time-override');
+                    const notesOverride = row.querySelector('.student-notes-override');
+                    if (timeOverride) timeOverride.style.display = 'none';
+                    if (notesOverride) notesOverride.style.display = 'none';
+                } else {
+                    // Normal mode - restore full layout
+                    row.style.padding = '15px';
+                    row.style.marginBottom = '10px';
+                    
+                    // Show override inputs
+                    const timeOverride = row.querySelector('.student-time-override');
+                    const notesOverride = row.querySelector('.student-notes-override');
+                    if (timeOverride) timeOverride.style.display = 'block';
+                    if (notesOverride) notesOverride.style.display = 'block';
+                }
+            });
+            
+            // Update button appearance
+            if (isCompactMode) {
+                compactIcon.className = 'fas fa-expand';
+                compactText.textContent = 'Expand';
+            } else {
+                compactIcon.className = 'fas fa-compress';
+                compactText.textContent = 'Compact';
+            }
+        }
+
+        function updateBatchProgress() {
+            const totalStudents = document.querySelectorAll('.batch-student-row:not([style*="display: none"])').length;
+            const selectedStudents = batchSelectedStudents.size;
+            const percentage = totalStudents > 0 ? Math.round((selectedStudents / totalStudents) * 100) : 0;
+            
+            // Update progress elements
+            const progressElement = document.getElementById('batchProgress');
+            const totalElement = document.getElementById('batchTotal');
+            const percentageElement = document.getElementById('batchPercentage');
+            const progressBar = document.getElementById('batchProgressBar');
+            
+            if (progressElement) progressElement.textContent = selectedStudents;
+            if (totalElement) totalElement.textContent = totalStudents;
+            if (percentageElement) percentageElement.textContent = percentage + '%';
+            if (progressBar) progressBar.style.width = percentage + '%';
+            
+            // Change color based on progress
+            if (progressBar) {
+                if (percentage === 100) {
+                    progressBar.style.backgroundColor = '#2ecc71'; // Green
+                } else if (percentage >= 50) {
+                    progressBar.style.backgroundColor = '#f39c12'; // Orange
+                } else {
+                    progressBar.style.backgroundColor = '#3498db'; // Blue
+                }
+            }
+        }
+
+        // Initialize progress tracking when batch mode is activated
+        function initializeBatchProgress() {
+            setTimeout(() => {
+                updateBatchProgress();
+            }, 100);
+        }
+
         // Simple Firebase Functions (Working version from index-clean.html)
         async function saveDataToFirestore(record) {
             try {
