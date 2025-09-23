@@ -5648,6 +5648,201 @@
             .email-btn {
                 width: 100%;
             }
+
+            /* Mobile-Optimized Batch Attendance Styles */
+            .batch-mode-form {
+                padding: 10px;
+            }
+
+            .batch-actions-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .batch-action-btn {
+                width: 100% !important;
+                padding: 12px 16px !important;
+                font-size: 14px !important;
+                margin-bottom: 5px;
+            }
+
+            /* Mobile-friendly table layout - Switch to card layout */
+            .batch-student-table-container {
+                border: none !important;
+                border-radius: 0 !important;
+                overflow: visible !important;
+            }
+
+            .table-header {
+                display: none !important; /* Hide table header on mobile */
+            }
+
+            .batch-student-table-body {
+                max-height: none !important;
+                overflow-y: visible !important;
+            }
+
+            /* Convert table rows to cards on mobile */
+            .batch-student-row {
+                display: block !important;
+                grid-template-columns: none !important;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                padding: 15px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                position: relative;
+            }
+
+            .batch-student-row .student-checkbox-container {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+            }
+
+            .batch-student-row .student-checkbox {
+                transform: scale(1.3);
+            }
+
+            .batch-student-row .student-name {
+                display: block;
+                font-weight: bold;
+                font-size: 16px;
+                margin-bottom: 15px;
+                padding-right: 40px; /* Space for checkbox */
+                color: #2c3e50;
+            }
+
+            .batch-student-row .student-status {
+                display: block;
+                margin-bottom: 15px;
+            }
+
+            .batch-student-row .student-status select {
+                width: 100%;
+                padding: 10px;
+                font-size: 14px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                background: white;
+            }
+
+            .batch-student-row .student-time-override {
+                display: block;
+                margin-bottom: 15px;
+            }
+
+            .batch-student-row .student-time-override input {
+                width: 100%;
+                padding: 10px;
+                font-size: 14px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                background: white;
+            }
+
+            .batch-student-row .student-notes-override {
+                display: block;
+            }
+
+            .batch-student-row .student-notes-override select {
+                width: 100%;
+                padding: 10px;
+                font-size: 14px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                background: white;
+            }
+
+            /* Add labels for mobile */
+            .batch-student-row .student-status::before {
+                content: "Status: ";
+                font-weight: bold;
+                color: #555;
+                display: inline-block;
+                margin-bottom: 5px;
+            }
+
+            .batch-student-row .student-time-override::before {
+                content: "Override Time: ";
+                font-weight: bold;
+                color: #555;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .batch-student-row .student-notes-override::before {
+                content: "Excuse Notes: ";
+                font-weight: bold;
+                color: #555;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .batch-submit-section {
+                padding: 10px !important;
+                margin-top: 15px !important;
+            }
+
+            .batch-submit-btn {
+                width: 100% !important;
+                padding: 15px !important;
+                font-size: 16px !important;
+                border-radius: 8px !important;
+            }
+
+            /* Mode Toggle Mobile Improvements */
+            .mode-toggle-container {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .mode-options {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .mode-option {
+                padding: 15px;
+                text-align: center;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .mode-option:hover {
+                background-color: #f8f9fa;
+            }
+
+            .mode-option.active {
+                background-color: #e3f2fd;
+                border-color: #2196f3;
+            }
+
+            /* Batch Form Container Mobile */
+            .batch-mode-form {
+                padding: 15px;
+            }
+
+            /* Global Attendance Settings Mobile */
+            .global-attendance-section {
+                margin-bottom: 25px;
+            }
+
+            .global-attendance-section .form-group {
+                margin-bottom: 15px;
+            }
+
+            .global-attendance-section input,
+            .global-attendance-section select,
+            .global-attendance-section textarea {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border: 1px solid #ddd;
+                border-radius: 6px;
+            }
         }
     </style>
 </head>
@@ -5874,18 +6069,18 @@
                             </div>
 
                             <!-- Batch Actions -->
-                            <div class="batch-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                <h5 style="margin: 0; color: #34495e;">Quick Actions:</h5>
-                                <button type="button" class="batch-action-btn" onclick="markAllStudents('present')" style="background: #27ae60; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                            <div class="batch-actions batch-actions-row" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <h5 style="margin: 0; color: #34495e; width: 100%; margin-bottom: 10px;">Quick Actions:</h5>
+                                <button type="button" class="batch-action-btn" onclick="markAllStudents('present')" style="background: #27ae60; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1; min-width: 120px;">
                                     <i class="fas fa-check-circle"></i> Mark All Present
                                 </button>
-                                <button type="button" class="batch-action-btn" onclick="markAllStudents('absent')" style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                <button type="button" class="batch-action-btn" onclick="markAllStudents('absent')" style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1; min-width: 120px;">
                                     <i class="fas fa-times-circle"></i> Mark All Absent
                                 </button>
-                                <button type="button" class="batch-action-btn" onclick="clearAllSelections()" style="background: #95a5a6; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                <button type="button" class="batch-action-btn" onclick="clearAllSelections()" style="background: #95a5a6; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1; min-width: 120px;">
                                     <i class="fas fa-eraser"></i> Clear All
                                 </button>
-                                <button type="button" class="batch-action-btn" onclick="selectAllStudents()" style="background: #3498db; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                <button type="button" class="batch-action-btn" onclick="selectAllStudents()" style="background: #3498db; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; flex: 1; min-width: 120px;">
                                     <i class="fas fa-check-square"></i> Select All
                                 </button>
                             </div>
@@ -10528,25 +10723,25 @@ ${environment.tips.slice(0, 3).join('\n')}
                 row.setAttribute('data-student-key', studentKey);
                 
                 row.innerHTML = `
-                    <div>
+                    <div class="student-checkbox-container">
                         <input type="checkbox" class="student-checkbox" 
                                onchange="handleStudentSelection('${studentKey}')"
                                data-student-key="${studentKey}">
                     </div>
                     <div class="student-name">${studentDisplay}</div>
-                    <div>
+                    <div class="student-status">
                         <select class="status-select" onchange="handleStatusChange('${studentKey}', this.value)" disabled>
                             <option value="">Not Selected</option>
                             <option value="present">Present</option>
                             <option value="absent">Absent</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="student-time-override">
                         <input type="datetime-local" class="override-input" 
                                onchange="handleTimeOverride('${studentKey}', this.value)" 
                                placeholder="Use global time" disabled>
                     </div>
-                    <div>
+                    <div class="student-notes-override">
                         <select class="override-input" onchange="handleNotesOverride('${studentKey}', this.value)" disabled>
                             <option value="">Use global excuse</option>
                             <option value="Abroad-excused">Abroad-excused</option>
