@@ -1694,6 +1694,79 @@
             50% { opacity: 1; transform: scale(1.05); }
         }
 
+        /* Batch Student Table Container - Same Framework as View Records */
+        .batch-student-table-container {
+            overflow: auto;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-height: 600px;
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid #ddd;
+        }
+
+        /* Custom Scrollbars for Batch Table */
+        .batch-student-table-container::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        .batch-student-table-container::-webkit-scrollbar-track {
+            background: linear-gradient(180deg, #f1f2f6, #dfe4ea);
+            border-radius: 10px;
+        }
+
+        .batch-student-table-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 10px;
+            border: 2px solid #f1f2f6;
+        }
+
+        .batch-student-table-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #5a67d8, #6b46c1);
+        }
+
+        .batch-student-table-container::-webkit-scrollbar-corner {
+            background: #f1f2f6;
+        }
+
+        /* Batch Table Navigation Indicators */
+        .batch-student-table-container::before {
+            content: '👥 Scroll down for more students';
+            position: sticky;
+            top: 0;
+            left: 0;
+            background: linear-gradient(90deg, rgba(102,126,234,0.9), rgba(118,75,162,0.9));
+            color: white;
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 100;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            text-align: center;
+            display: block;
+            backdrop-filter: blur(10px);
+        }
+
+        .batch-student-table-container::after {
+            content: '⬇️ Scroll to see all students';
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            background: rgba(102,126,234,0.9);
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 15px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: pulseScroll 2s infinite;
+            pointer-events: none;
+        }
+
         .records-table {
             width: 100%;
             border-collapse: collapse;
@@ -5671,6 +5744,13 @@
                 border: none !important;
                 border-radius: 0 !important;
                 overflow: visible !important;
+                max-height: none !important;
+                box-shadow: none !important;
+            }
+
+            .batch-student-table-container::before,
+            .batch-student-table-container::after {
+                display: none !important;
             }
 
             .table-header {
@@ -6177,7 +6257,7 @@
                         </div>
 
                         <!-- Student List Table -->
-                        <div class="batch-student-table-container" id="batch-student-table-container" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                        <div class="batch-student-table-container" id="batch-student-table-container">
                             <div class="table-header" style="background: #34495e; color: white; padding: 10px; font-weight: bold;">
                                 <div style="display: grid; grid-template-columns: 50px 1fr 120px 120px 150px; gap: 10px; align-items: center;">
                                     <span>Select</span>
@@ -6187,7 +6267,7 @@
                                     <span>Override Excuse</span>
                                 </div>
                             </div>
-                            <div id="batchStudentTableBody" class="batch-student-table-body" style="max-height: 400px; overflow-y: auto;">
+                            <div id="batchStudentTableBody" class="batch-student-table-body">
                                 <!-- Student rows will be dynamically populated here -->
                             </div>
                         </div>
