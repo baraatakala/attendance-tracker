@@ -5739,31 +5739,32 @@
                 margin-bottom: 5px;
             }
 
-            /* Mobile-friendly table layout - Switch to card layout */
-            .batch-student-table-container {
+            /* Mobile-friendly table layout - Switch to card layout - Higher Specificity */
+            .batch-mode-section .batch-student-table-container {
                 border: none !important;
                 border-radius: 0 !important;
                 overflow: visible !important;
                 max-height: none !important;
                 box-shadow: none !important;
+                background: transparent !important;
             }
 
-            .batch-student-table-container::before,
-            .batch-student-table-container::after {
+            .batch-mode-section .batch-student-table-container::before,
+            .batch-mode-section .batch-student-table-container::after {
                 display: none !important;
             }
 
-            .table-header {
+            .batch-mode-section .table-header {
                 display: none !important; /* Hide table header on mobile */
             }
 
-            .batch-student-table-body {
+            .batch-mode-section .batch-student-table-body {
                 max-height: none !important;
                 overflow-y: visible !important;
             }
 
-            /* Convert table rows to cards on mobile */
-            .batch-student-row {
+            /* Convert table rows to cards on mobile - Higher Specificity */
+            .batch-mode-section .batch-student-row {
                 display: block !important;
                 grid-template-columns: none !important;
                 background: white;
@@ -5775,7 +5776,7 @@
                 position: relative;
             }
 
-            .batch-student-row .student-checkbox-container {
+            .batch-mode-section .batch-student-row .student-checkbox-container {
                 position: absolute;
                 top: 15px;
                 right: 15px;
@@ -6154,7 +6155,7 @@
                     </form>
 
                     <!-- Batch Attendance Mode Interface (Hidden by default) -->
-                    <div id="batchAttendanceInterface" class="batch-attendance-interface" style="display: none;">
+                    <div id="batchAttendanceInterface" class="batch-attendance-interface batch-mode-section" style="display: none;">
                         <div class="batch-header">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <h3 style="margin: 0; color: #2c3e50;"><i class="fas fa-users"></i> Batch Attendance Recording</h3>
