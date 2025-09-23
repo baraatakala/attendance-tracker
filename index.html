@@ -1337,12 +1337,48 @@
             }
             
             .batch-student-row {
-                grid-template-columns: 40px 1fr 80px;
-                gap: 8px;
+                display: block !important;
+                grid-template-columns: none !important;
+                background: white !important;
+                border: 1px solid #ddd !important;
+                border-radius: 8px !important;
+                margin-bottom: 12px !important;
+                padding: 16px !important;
+                position: relative !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .batch-student-row > div {
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 12px !important;
+            }
+
+            .batch-student-row .student-checkbox-container {
+                position: absolute !important;
+                top: 16px !important;
+                right: 16px !important;
+                width: auto !important;
+                margin-bottom: 0 !important;
+            }
+
+            .batch-student-row .student-name {
+                font-weight: bold !important;
+                font-size: 18px !important;
+                padding-right: 50px !important;
+                margin-bottom: 16px !important;
+            }
+
+            .batch-student-row select, .batch-student-row input {
+                width: 100% !important;
+                padding: 12px !important;
+                font-size: 16px !important;
+                box-sizing: border-box !important;
             }
             
-            .table-header > div {
-                grid-template-columns: 40px 1fr 80px !important;
+            .table-header {
+                display: none !important;
             }
             
             .batch-actions {
@@ -1351,8 +1387,9 @@
             }
             
             .batch-action-btn {
-                justify-content: center;
+                width: 100% !important;
                 margin-bottom: 8px;
+                padding: 12px !important;
             }
         }
 
@@ -14486,7 +14523,7 @@ File: ${fileName}`, 'success');
                            dataQuality.fair ? 'Fair' : 'Limited'
             };
             
-            console.log('� Final synthetic record result for', student.name, ':', result);
+            console.log('  Final synthetic record result for', student.name, ':', result);
             return result;
         }
 
@@ -19076,4 +19113,4 @@ Current Status:
 
     </script>
 </body>
-</html>why that he
+</html>
