@@ -1149,6 +1149,213 @@
             opacity: 0.7;
         }
 
+        /* Batch Attendance Mode Styles */
+        .attendance-mode-toggle {
+            transition: all 0.3s ease;
+        }
+
+        .mode-switch {
+            position: relative;
+            display: inline-block;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3498db;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .mode-indicator {
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .batch-attendance-interface {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .single-mode-form {
+            transition: opacity 0.3s ease;
+        }
+
+        .single-mode-form.fade-out {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .batch-action-btn {
+            transition: all 0.2s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .batch-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .batch-student-row {
+            display: grid;
+            grid-template-columns: 50px 1fr 120px 120px 150px;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 10px;
+            border-bottom: 1px solid #ecf0f1;
+            transition: background-color 0.2s ease;
+        }
+
+        .batch-student-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .batch-student-row.selected {
+            background-color: #e8f5e8;
+            border-left: 4px solid #27ae60;
+        }
+
+        .student-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .student-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .status-select {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .status-select.present {
+            background-color: #d5edf5;
+            border-color: #27ae60;
+        }
+
+        .status-select.absent {
+            background-color: #f8d7da;
+            border-color: #e74c3c;
+        }
+
+        .override-input {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .batch-submit-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .batch-submit-btn:hover {
+            background-color: #27ae60 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+        }
+
+        .batch-submit-btn:disabled {
+            background-color: #95a5a6 !important;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .batch-info {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Responsive Design for Batch Mode */
+        @media (max-width: 768px) {
+            .batch-global-settings {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .batch-student-row {
+                grid-template-columns: 40px 1fr 80px;
+                gap: 8px;
+            }
+            
+            .table-header > div {
+                grid-template-columns: 40px 1fr 80px !important;
+            }
+            
+            .batch-actions {
+                flex-direction: column;
+                align-items: stretch !important;
+            }
+            
+            .batch-action-btn {
+                justify-content: center;
+                margin-bottom: 8px;
+            }
+        }
+
         /* Action Buttons */
         .actions-section {
             margin: 20px 0;
@@ -5477,7 +5684,33 @@
                 <div class="form-card">
                     <h2><i class="fas fa-user-check"></i> Record Attendance</h2>
                     
-                    <form id="attendanceForm" class="attendance-form">
+                    <!-- Attendance Mode Toggle -->
+                    <div class="attendance-mode-toggle" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                            <h4 style="margin: 0; color: #2c3e50;"><i class="fas fa-toggle-on"></i> Attendance Recording Mode</h4>
+                            <div class="mode-switch">
+                                <label class="switch">
+                                    <input type="checkbox" id="batchModeToggle" onchange="toggleAttendanceMode()">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 20px; font-size: 14px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="mode-indicator" id="singleModeIndicator" style="color: #27ae60; font-weight: bold;">●</span>
+                                <span>Single Student Mode</span>
+                                <small style="color: #7f8c8d;">(Current)</small>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="mode-indicator" id="batchModeIndicator" style="color: #bdc3c7;">●</span>
+                                <span>Batch Mode</span>
+                                <small style="color: #7f8c8d;">(Mark multiple students)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Single Student Form (Original) -->
+                    <form id="attendanceForm" class="attendance-form single-mode-form">
                         <!-- Student Selection -->
                         <div class="form-group">
                             <label for="student"><i class="fas fa-user"></i> Select Student:</label>
@@ -5605,6 +5838,86 @@
                             </div>
                         </div>
                     </form>
+
+                    <!-- Batch Attendance Mode Interface (Hidden by default) -->
+                    <div id="batchAttendanceInterface" class="batch-attendance-interface" style="display: none;">
+                        <div class="batch-header">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0; color: #2c3e50;"><i class="fas fa-users"></i> Batch Attendance Recording</h3>
+                                <div class="batch-info" style="background: #e8f5e8; padding: 8px 12px; border-radius: 4px; font-size: 13px; color: #27ae60;">
+                                    <i class="fas fa-info-circle"></i> <span id="selectedStudentCount">0</span> students selected
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Batch Mode Global Settings -->
+                        <div class="batch-global-settings" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 15px 0; color: #2c3e50;"><i class="fas fa-cog"></i> Global Settings (Applied to All Selected Students)</h4>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <!-- Batch Date & Time -->
+                                <div class="form-group">
+                                    <label for="batchDateTime"><i class="fas fa-calendar-alt"></i> Date & Time:</label>
+                                    <input type="datetime-local" id="batchDateTime" name="batchDateTime" style="width: 100%;">
+                                    <small class="form-help">Same timestamp for all selected students</small>
+                                </div>
+
+                                <!-- Batch Excuse Reason -->
+                                <div class="form-group">
+                                    <label for="batchNotes"><i class="fas fa-sticky-note"></i> Excuse Reason:</label>
+                                    <select id="batchNotes" name="batchNotes" style="width: 100%;">
+                                        <option value="">-- No excuse --</option>
+                                        <option value="Abroad-excused">Abroad-excused</option>
+                                    </select>
+                                    <small class="form-help">Applied to all selected students</small>
+                                </div>
+                            </div>
+
+                            <!-- Batch Actions -->
+                            <div class="batch-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <h5 style="margin: 0; color: #34495e;">Quick Actions:</h5>
+                                <button type="button" class="batch-action-btn" onclick="markAllStudents('present')" style="background: #27ae60; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-check-circle"></i> Mark All Present
+                                </button>
+                                <button type="button" class="batch-action-btn" onclick="markAllStudents('absent')" style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-times-circle"></i> Mark All Absent
+                                </button>
+                                <button type="button" class="batch-action-btn" onclick="clearAllSelections()" style="background: #95a5a6; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-eraser"></i> Clear All
+                                </button>
+                                <button type="button" class="batch-action-btn" onclick="selectAllStudents()" style="background: #3498db; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-check-square"></i> Select All
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Student List Table -->
+                        <div class="batch-student-table-container" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                            <div class="table-header" style="background: #34495e; color: white; padding: 10px; font-weight: bold;">
+                                <div style="display: grid; grid-template-columns: 50px 1fr 120px 120px 150px; gap: 10px; align-items: center;">
+                                    <span>Select</span>
+                                    <span>Student Name</span>
+                                    <span>Status</span>
+                                    <span>Override Time</span>
+                                    <span>Override Excuse</span>
+                                </div>
+                            </div>
+                            <div id="batchStudentTableBody" class="batch-student-table-body" style="max-height: 400px; overflow-y: auto;">
+                                <!-- Student rows will be dynamically populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Batch Submit Button -->
+                        <div class="batch-submit-section" style="margin-top: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px; text-align: center;">
+                            <button type="button" id="submitBatchAttendance" class="batch-submit-btn" onclick="submitBatchAttendance()" 
+                                    style="background: #2ecc71; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; min-width: 200px;">
+                                <i class="fas fa-save"></i> Save Attendance for <span id="submitButtonCount">0</span> Students
+                            </button>
+                            <div style="margin-top: 10px; font-size: 14px; color: #7f8c8d;">
+                                <i class="fas fa-info-circle"></i> Location data will be captured automatically for all selected students
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -5765,7 +6078,7 @@
                             <button class="info-btn" onclick="scrollToTop()" title="Scroll to Top">
                                 <i class="fas fa-arrow-up"></i> Top
                             </button>
-                            <button class="info-btn" onclick="refreshRecords()" title="Refresh Records">
+                            <button class="info-btn" onclick="refreshRecords(event)" title="Refresh Records">
                                 <i class="fas fa-sync-alt"></i> Refresh
                             </button>
                         </div>
@@ -10136,6 +10449,352 @@ ${environment.tips.slice(0, 3).join('\n')}
             elements.student.focus();
         }
 
+        // Batch Attendance Mode Functions
+        let isBatchMode = false;
+        let batchSelectedStudents = new Map(); // studentKey -> {status, overrideTime, overrideNotes}
+
+        function toggleAttendanceMode() {
+            const toggle = document.getElementById('batchModeToggle');
+            const singleForm = document.querySelector('.single-mode-form');
+            const batchInterface = document.getElementById('batchAttendanceInterface');
+            const singleIndicator = document.getElementById('singleModeIndicator');
+            const batchIndicator = document.getElementById('batchModeIndicator');
+            
+            isBatchMode = toggle.checked;
+            
+            if (isBatchMode) {
+                // Switch to batch mode
+                singleForm.style.display = 'none';
+                batchInterface.style.display = 'block';
+                singleIndicator.style.color = '#bdc3c7';
+                batchIndicator.style.color = '#27ae60';
+                singleIndicator.nextElementSibling.nextElementSibling.textContent = '';
+                batchIndicator.nextElementSibling.nextElementSibling.textContent = '(Current)';
+                
+                // Initialize batch interface
+                initializeBatchInterface();
+            } else {
+                // Switch to single mode
+                singleForm.style.display = 'block';
+                batchInterface.style.display = 'none';
+                singleIndicator.style.color = '#27ae60';
+                batchIndicator.style.color = '#bdc3c7';
+                singleIndicator.nextElementSibling.nextElementSibling.textContent = '(Current)';
+                batchIndicator.nextElementSibling.nextElementSibling.textContent = '';
+                
+                // Clear batch selections
+                batchSelectedStudents.clear();
+            }
+        }
+
+        function initializeBatchInterface() {
+            // Set current date/time for batch
+            const batchDateTime = document.getElementById('batchDateTime');
+            if (batchDateTime) {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // Adjust for timezone
+                batchDateTime.value = now.toISOString().slice(0, 16);
+            }
+            
+            // Populate student table
+            populateBatchStudentTable();
+            updateBatchCounters();
+        }
+
+        function populateBatchStudentTable() {
+            const tableBody = document.getElementById('batchStudentTableBody');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = '';
+            
+            if (!activeStudents || Object.keys(activeStudents).length === 0) {
+                tableBody.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #7f8c8d; font-style: italic;">
+                        <i class="fas fa-users"></i> No students available. Please add students first.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort students by name/ID
+            const sortedStudents = Object.keys(activeStudents).sort();
+            
+            sortedStudents.forEach(studentKey => {
+                const student = activeStudents[studentKey];
+                const studentDisplay = typeof student === 'string' ? student : `${student.id} - ${student.name}`;
+                
+                const row = document.createElement('div');
+                row.className = 'batch-student-row';
+                row.setAttribute('data-student-key', studentKey);
+                
+                row.innerHTML = `
+                    <div>
+                        <input type="checkbox" class="student-checkbox" 
+                               onchange="handleStudentSelection('${studentKey}')"
+                               data-student-key="${studentKey}">
+                    </div>
+                    <div class="student-name">${studentDisplay}</div>
+                    <div>
+                        <select class="status-select" onchange="handleStatusChange('${studentKey}', this.value)" disabled>
+                            <option value="">Not Selected</option>
+                            <option value="present">Present</option>
+                            <option value="absent">Absent</option>
+                        </select>
+                    </div>
+                    <div>
+                        <input type="datetime-local" class="override-input" 
+                               onchange="handleTimeOverride('${studentKey}', this.value)" 
+                               placeholder="Use global time" disabled>
+                    </div>
+                    <div>
+                        <select class="override-input" onchange="handleNotesOverride('${studentKey}', this.value)" disabled>
+                            <option value="">Use global excuse</option>
+                            <option value="Abroad-excused">Abroad-excused</option>
+                        </select>
+                    </div>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        function handleStudentSelection(studentKey) {
+            const checkbox = document.querySelector(`input[data-student-key="${studentKey}"]`);
+            const row = checkbox.closest('.batch-student-row');
+            const controls = row.querySelectorAll('.status-select, .override-input');
+            
+            if (checkbox.checked) {
+                // Student selected
+                batchSelectedStudents.set(studentKey, {
+                    status: '',
+                    overrideTime: '',
+                    overrideNotes: ''
+                });
+                row.classList.add('selected');
+                controls.forEach(control => control.disabled = false);
+            } else {
+                // Student deselected
+                batchSelectedStudents.delete(studentKey);
+                row.classList.remove('selected');
+                controls.forEach(control => {
+                    control.disabled = true;
+                    control.value = '';
+                    if (control.classList.contains('status-select')) {
+                        control.value = '';
+                        control.className = 'status-select';
+                    }
+                });
+            }
+            
+            updateBatchCounters();
+        }
+
+        function handleStatusChange(studentKey, status) {
+            if (batchSelectedStudents.has(studentKey)) {
+                const data = batchSelectedStudents.get(studentKey);
+                data.status = status;
+                batchSelectedStudents.set(studentKey, data);
+                
+                // Update visual styling
+                const statusSelect = document.querySelector(`select[onchange*="${studentKey}"]`);
+                if (statusSelect) {
+                    statusSelect.className = `status-select ${status}`;
+                }
+            }
+            updateBatchCounters();
+        }
+
+        function handleTimeOverride(studentKey, time) {
+            if (batchSelectedStudents.has(studentKey)) {
+                const data = batchSelectedStudents.get(studentKey);
+                data.overrideTime = time;
+                batchSelectedStudents.set(studentKey, data);
+            }
+        }
+
+        function handleNotesOverride(studentKey, notes) {
+            if (batchSelectedStudents.has(studentKey)) {
+                const data = batchSelectedStudents.get(studentKey);
+                data.overrideNotes = notes;
+                batchSelectedStudents.set(studentKey, data);
+            }
+        }
+
+        function markAllStudents(status) {
+            // Get all checkboxes
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                const studentKey = checkbox.getAttribute('data-student-key');
+                
+                // Check the checkbox if not already checked
+                if (!checkbox.checked) {
+                    checkbox.checked = true;
+                    handleStudentSelection(studentKey);
+                }
+                
+                // Set the status
+                if (batchSelectedStudents.has(studentKey)) {
+                    const statusSelect = checkbox.closest('.batch-student-row').querySelector('.status-select');
+                    statusSelect.value = status;
+                    handleStatusChange(studentKey, status);
+                }
+            });
+        }
+
+        function clearAllSelections() {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                    const studentKey = checkbox.getAttribute('data-student-key');
+                    handleStudentSelection(studentKey);
+                }
+            });
+        }
+
+        function selectAllStudents() {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    checkbox.checked = true;
+                    const studentKey = checkbox.getAttribute('data-student-key');
+                    handleStudentSelection(studentKey);
+                }
+            });
+        }
+
+        function updateBatchCounters() {
+            const selectedCount = batchSelectedStudents.size;
+            const withStatusCount = Array.from(batchSelectedStudents.values()).filter(data => data.status).length;
+            
+            // Update selected count display
+            const selectedCountElement = document.getElementById('selectedStudentCount');
+            if (selectedCountElement) {
+                selectedCountElement.textContent = selectedCount;
+            }
+            
+            // Update submit button
+            const submitBtn = document.getElementById('submitBatchAttendance');
+            const submitCountElement = document.getElementById('submitButtonCount');
+            
+            if (submitBtn && submitCountElement) {
+                submitCountElement.textContent = withStatusCount;
+                submitBtn.disabled = withStatusCount === 0;
+                
+                if (withStatusCount > 0) {
+                    submitBtn.style.backgroundColor = '#2ecc71';
+                } else {
+                    submitBtn.style.backgroundColor = '#95a5a6';
+                }
+            }
+        }
+
+        async function submitBatchAttendance() {
+            const submitBtn = document.getElementById('submitBatchAttendance');
+            if (submitBtn.disabled) return;
+            
+            const globalDateTime = document.getElementById('batchDateTime').value;
+            const globalNotes = document.getElementById('batchNotes').value;
+            
+            if (!globalDateTime) {
+                alert('Please set a date and time for the attendance records.');
+                return;
+            }
+            
+            // Validate that at least one student has a status set
+            const studentsWithStatus = Array.from(batchSelectedStudents.entries()).filter(([key, data]) => data.status);
+            
+            if (studentsWithStatus.length === 0) {
+                alert('Please set attendance status for at least one selected student.');
+                return;
+            }
+            
+            // Show loading state
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
+            try {
+                let successCount = 0;
+                const errors = [];
+                
+                for (const [studentKey, data] of studentsWithStatus) {
+                    try {
+                        const student = activeStudents[studentKey];
+                        const studentDisplay = typeof student === 'string' ? student : student.name;
+                        
+                        // Use override values if specified, otherwise use global values
+                        const finalDateTime = data.overrideTime || globalDateTime;
+                        const finalNotes = data.overrideNotes || globalNotes;
+                        
+                        // Parse the datetime to match single mode formatting
+                        const parsedDateTime = new Date(finalDateTime);
+                        const formattedDate = parsedDateTime.toLocaleDateString('en-US');
+                        const formattedTime = parsedDateTime.toLocaleTimeString('en-US', { hour12: true });
+                        
+                        // Create attendance record
+                        const record = {
+                            id: generateId(),
+                            studentName: studentDisplay,
+                            studentId: studentKey,
+                            attendanceStatus: data.status,
+                            datetime: finalDateTime,
+                            date: formattedDate,
+                            time: formattedTime,
+                            latitude: currentPosition ? currentPosition.coords.latitude.toString() : '',
+                            longitude: currentPosition ? currentPosition.coords.longitude.toString() : '',
+                            notes: finalNotes,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        // Add to attendance data
+                        attendanceData.push(record);
+                        
+                        // Save to Firebase if enabled
+                        if (useFirebase && navigator.onLine) {
+                            await saveDataToFirestore(record);
+                        } else if (useFirebase) {
+                            syncQueue.push(record);
+                        }
+                        
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Error saving attendance for ${studentKey}:`, error);
+                        errors.push(`${studentKey}: ${error.message}`);
+                    }
+                }
+                
+                // Save to local storage
+                saveDataToStorage();
+                updateSyncQueueUI();
+                
+                // Show results
+                if (successCount > 0) {
+                    showMessage(`✅ Successfully saved attendance for ${successCount} student(s)!`, 'success');
+                    
+                    // Clear selections and reset interface
+                    clearAllSelections();
+                    initializeBatchInterface();
+                }
+                
+                if (errors.length > 0) {
+                    console.error('Batch submission errors:', errors);
+                    showMessage(`⚠️ ${errors.length} error(s) occurred during batch submission.`, 'warning');
+                }
+                
+            } catch (error) {
+                console.error('Batch submission error:', error);
+                showMessage('❌ Error during batch submission. Please try again.', 'error');
+            } finally {
+                // Restore button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+
         function toggleRecordsView() {
             const isVisible = elements.recordsSection.style.display !== 'none';
             
@@ -10522,13 +11181,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
             }
             
-            // Format location data
-            const locationText = `${record.latitude.toFixed(4)}, ${record.longitude.toFixed(4)}`;
+            // Format location data with proper number validation
+            const latitude = parseFloat(record.latitude) || 0;
+            const longitude = parseFloat(record.longitude) || 0;
+            const locationText = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
             const qualityBadge = record.locationQuality ? 
                 `<span class="quality-indicator ${record.locationQuality.toLowerCase()}">${record.locationQuality}</span>` : '';
-            const accuracyText = `±${Math.round(record.accuracy)}m`;
-            const altitudeText = record.altitude ? `${Math.round(record.altitude)}m` : 'N/A';
-            const speedText = record.speed ? `${(record.speed * 3.6).toFixed(1)} km/h` : 'N/A';
+            const accuracy = parseFloat(record.accuracy) || 0;
+            const accuracyText = `±${Math.round(accuracy)}m`;
+            const altitude = parseFloat(record.altitude) || 0;
+            const altitudeText = altitude ? `${Math.round(altitude)}m` : 'N/A';
+            const speed = parseFloat(record.speed) || 0;
+            const speedText = speed ? `${(speed * 3.6).toFixed(1)} km/h` : 'N/A';
             
             row.innerHTML = `
                 <td>${index + 1}</td>
@@ -10550,7 +11214,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                             Alt: ${altitudeText} | Speed: ${speedText}
                         </div>
                         <div style="color: #6c757d; font-size: 0.8rem; margin-top: 3px;">
-                            <em>${record.address}</em>
+                            <em>${record.address || 'Location not available'}</em>
                         </div>
                         <div style="margin-top: 5px;">
                             <a href="https://www.openstreetmap.org/#map=18/${record.latitude}/${record.longitude}" 
@@ -17506,6 +18170,18 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
         window.exportFilteredRecordsToPdf = exportFilteredRecordsToPdf;
         window.clearChartStudentFilter = clearChartStudentFilter;
         window.initializeChartStudentFilter = initializeChartStudentFilter;
+        window.refreshRecords = refreshRecords;
+        
+        // Batch Attendance Functions
+        window.toggleAttendanceMode = toggleAttendanceMode;
+        window.markAllStudents = markAllStudents;
+        window.clearAllSelections = clearAllSelections;
+        window.selectAllStudents = selectAllStudents;
+        window.handleStudentSelection = handleStudentSelection;
+        window.handleStatusChange = handleStatusChange;
+        window.handleTimeOverride = handleTimeOverride;
+        window.handleNotesOverride = handleNotesOverride;
+        window.submitBatchAttendance = submitBatchAttendance;
         
         // Simple Firebase Functions (Working version from index-clean.html)
         async function saveDataToFirestore(record) {
@@ -17799,8 +18475,8 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
             }
         }
 
-        function refreshRecords() {
-            const refreshBtn = event.target.closest('.info-btn');
+        function refreshRecords(event) {
+            const refreshBtn = event ? event.target.closest('.info-btn') : null;
             if (refreshBtn) {
                 const icon = refreshBtn.querySelector('i');
                 icon.style.animation = 'spin 1s linear infinite';
@@ -17810,7 +18486,7 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
             }
             
             // Trigger records refresh
-            loadAttendanceData();
+            displayRecords();
             
             // Show success message
             setTimeout(() => {
