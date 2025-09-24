@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="Professional attendance tracking system with GPS location verification and penalties management - v3.0 Production Ready">
     <meta name="keywords" content="attendance tracker, GPS location, student management, penalties system">
     <meta name="author" content="Attendance Management System v3.0">
@@ -623,7 +623,7 @@
             padding: 12px 15px;
             border: 2px solid var(--input-border);
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: max(16px, 1rem); /* Prevents iOS zoom */
             transition: all 0.3s ease;
             background: var(--input-bg);
             color: var(--text-primary);
@@ -5687,6 +5687,49 @@
                 font-size: 13px;
             }
         }
+
+        /* Universal Anti-Zoom Rules for All Mobile Devices */
+        @media (max-width: 768px) {
+            /* Ensure ALL inputs are 16px+ to prevent iOS zoom */
+            input[type="text"],
+            input[type="email"], 
+            input[type="password"],
+            input[type="number"],
+            input[type="tel"],
+            input[type="url"],
+            input[type="search"],
+            input[type="datetime-local"],
+            input[type="date"],
+            input[type="time"],
+            select,
+            textarea {
+                font-size: 16px !important;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+            }
+
+            /* Prevent zoom on focus for all interactive elements */
+            input:focus,
+            select:focus,
+            textarea:focus {
+                font-size: 16px !important;
+            }
+
+            /* Specific fixes for common zoom triggers */
+            .student-search-input,
+            .student-search-input:focus {
+                font-size: 16px !important;
+            }
+
+            /* Override any smaller font sizes */
+            * {
+                -webkit-text-size-adjust: 100%;
+                -moz-text-size-adjust: 100%;
+                -ms-text-size-adjust: 100%;
+                text-size-adjust: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -7275,7 +7318,59 @@
             
             // Initialize searchable student dropdown
             initializeSearchableDropdown();
+            
+            // Prevent mobile zoom on all inputs
+            preventMobileZoom();
         });
+
+        // Prevent iOS Safari from zooming on input focus
+        function preventMobileZoom() {
+            // Dynamic viewport adjustment to prevent zoom
+            const viewport = document.querySelector('meta[name="viewport"]');
+            
+            function disableZoom() {
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+            
+            function enableZoom() {
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+            }
+            
+            // Detect iOS devices
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            
+            if (isIOS) {
+                // Find all input elements
+                const inputs = document.querySelectorAll('input, select, textarea');
+                
+                inputs.forEach(input => {
+                    // Ensure font-size is always 16px+ on focus
+                    input.addEventListener('focus', function() {
+                        disableZoom();
+                        const computedStyle = window.getComputedStyle(this);
+                        const fontSize = parseInt(computedStyle.fontSize, 10);
+                        
+                        if (fontSize < 16) {
+                            this.style.fontSize = '16px';
+                        }
+                    });
+                    
+                    input.addEventListener('blur', function() {
+                        // Optional: Re-enable zoom after blur
+                        // enableZoom();
+                    });
+                });
+            }
+            
+            // Force all inputs to have 16px font-size
+            const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], input[type="email"], input[type="number"], input[type="tel"], input[type="datetime-local"], select, textarea');
+            allInputs.forEach(input => {
+                const style = window.getComputedStyle(input);
+                if (parseInt(style.fontSize, 10) < 16) {
+                    input.style.fontSize = '16px';
+                }
+            });
+        }
 
         function initializeAnalyticsUI() {
             // Initialize collapsible sections - keep date analytics collapsed by default
