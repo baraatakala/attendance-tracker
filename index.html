@@ -12341,7 +12341,16 @@ ${environment.tips.slice(0, 3).join('\n')}
                     
                     // Statistical measures
                     const avgRate = rates_mean; // Already calculated above
-                    const minRate = Math.min(...weeklyRates);
+                    
+                    // Calculate minimum rate - if it's 0 (absent from day 1), use second minimum for more meaningful analysis
+                    let minRate = Math.min(...weeklyRates);
+                    if (minRate === 0 && weeklyRates.length > 1) {
+                        // Get sorted rates and find second minimum
+                        const sortedRates = [...weeklyRates].sort((a, b) => a - b);
+                        // Find first non-zero value as more meaningful minimum
+                        minRate = sortedRates.find(rate => rate > 0) || 0;
+                    }
+                    
                     const maxRate = Math.max(...weeklyRates);
                     
                     // RMSE (Root Mean Square Error) for trend accuracy
