@@ -5722,6 +5722,107 @@
                 font-size: 16px !important;
             }
 
+            /* Records Section Mobile Fixes */
+            .records-section select,
+            .records-section input,
+            .records-section button,
+            .compact-select,
+            .compact-input,
+            .filter-btn,
+            .info-btn {
+                font-size: 16px !important;
+                min-height: 44px;
+                padding: 12px 16px;
+            }
+
+            .records-section .filter-group select:focus,
+            .records-section .filter-group input:focus {
+                font-size: 16px !important;
+            }
+
+            /* Penalties Section Mobile Fixes */
+            .penalties-section select,
+            .penalties-section input, 
+            .penalties-section button,
+            .penalties-filter,
+            .penalty-action-btn {
+                font-size: 16px !important;
+                min-height: 44px;
+                padding: 12px 16px;
+            }
+
+            .penalties-section select:focus,
+            .penalties-section input:focus {
+                font-size: 16px !important;
+            }
+
+            /* Force all buttons in these sections to be touch-friendly */
+            .records-section button,
+            .penalties-section button {
+                min-height: 48px;
+                padding: 14px 18px;
+                font-size: 16px !important;
+                border-radius: 8px;
+            }
+
+            /* Table elements in records */
+            .records-table th,
+            .records-table td,
+            .records-table input,
+            .records-table select {
+                font-size: 16px !important;
+            }
+
+            /* Ultra-aggressive anti-zoom rules for Records and Penalties sections */
+            #recordsSection *,
+            #recordsSection input,
+            #recordsSection select,
+            #recordsSection button,
+            #recordsSection textarea,
+            #recordsSection .filter-btn,
+            #recordsSection .info-btn,
+            .records-section *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6),
+            .records-section input,
+            .records-section select,
+            .records-section button,
+            .records-section textarea {
+                font-size: 16px !important;
+                min-height: 44px !important;
+            }
+
+            #penaltiesSection *,
+            #penaltiesSection input,
+            #penaltiesSection select,
+            #penaltiesSection button,
+            #penaltiesSection textarea,
+            #penaltiesSection .filter-btn,
+            #penaltiesSection .info-btn,
+            #penaltiesSection .penalty-action-btn,
+            #penaltiesSection .penalties-filter,
+            .penalties-section *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6),
+            .penalties-section input,
+            .penalties-section select,
+            .penalties-section button,
+            .penalties-section textarea,
+            .penalties-section .filter-btn,
+            .penalties-section .info-btn,
+            .penalties-section .penalty-action-btn,
+            .penalties-section .penalties-filter {
+                font-size: 16px !important;
+                min-height: 44px !important;
+            }
+
+            /* Specific anti-zoom for known problem elements */
+            .info-btn,
+            .penalties-filter,
+            .penalty-action-btn,
+            .filter-btn {
+                font-size: 16px !important;
+                min-height: 44px !important;
+                line-height: 1.2 !important;
+                padding: 12px 8px !important;
+            }
+
             /* Override any smaller font sizes */
             * {
                 -webkit-text-size-adjust: 100%;
@@ -7363,13 +7464,62 @@
             }
             
             // Force all inputs to have 16px font-size
-            const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], input[type="email"], input[type="number"], input[type="tel"], input[type="datetime-local"], select, textarea');
+            const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], input[type="email"], input[type="number"], input[type="tel"], input[type="datetime-local"], input[type="date"], select, textarea, button');
             allInputs.forEach(input => {
                 const style = window.getComputedStyle(input);
                 if (parseInt(style.fontSize, 10) < 16) {
                     input.style.fontSize = '16px';
                 }
             });
+
+            // Specifically fix Records and Penalties sections
+            fixRecordsAndPenaltiesZoom();
+        }
+
+        // Fix zoom issues in Records and Penalties sections
+        function fixRecordsAndPenaltiesZoom() {
+            const recordsSection = document.getElementById('recordsSection');
+            const penaltiesSection = document.getElementById('penaltiesSection');
+
+            function fixSectionInputs(section) {
+                if (!section) return;
+                
+                const inputs = section.querySelectorAll('input, select, button, .filter-btn, .info-btn, .penalty-action-btn, .penalties-filter');
+                inputs.forEach(element => {
+                    const computedStyle = window.getComputedStyle(element);
+                    const fontSize = parseInt(computedStyle.fontSize, 10);
+                    
+                    if (fontSize < 16) {
+                        element.style.fontSize = '16px';
+                        element.style.minHeight = '44px';
+                    }
+                    
+                    // Add event listeners to prevent zoom on focus
+                    element.addEventListener('focus', function() {
+                        this.style.fontSize = '16px';
+                    });
+                });
+            }
+
+            // Fix both sections
+            fixSectionInputs(recordsSection);
+            fixSectionInputs(penaltiesSection);
+
+            // Re-run fix when sections become visible
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        const target = mutation.target;
+                        if ((target.id === 'recordsSection' || target.id === 'penaltiesSection') && 
+                            target.style.display !== 'none') {
+                            setTimeout(() => fixSectionInputs(target), 100);
+                        }
+                    }
+                });
+            });
+
+            if (recordsSection) observer.observe(recordsSection, { attributes: true });
+            if (penaltiesSection) observer.observe(penaltiesSection, { attributes: true });
         }
 
         function initializeAnalyticsUI() {
@@ -10731,6 +10881,11 @@ ${environment.tips.slice(0, 3).join('\n')}
                 elements.viewRecordsBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Records';
                 displayRecords();
                 updateStatistics();
+                
+                // Fix mobile zoom issues for this section
+                if (typeof fixRecordsAndPenaltiesZoom === 'function') {
+                    setTimeout(fixRecordsAndPenaltiesZoom, 100);
+                }
                 
                 // Smooth scroll to records section after showing it
                 setTimeout(() => {
@@ -15674,6 +15829,11 @@ File: ${fileName}`, 'success');
                 viewPenaltiesBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Hide Penalties';
                 penaltiesSection.style.display = 'block';
                 generatePenalties();
+                
+                // Fix mobile zoom issues for this section
+                if (typeof fixRecordsAndPenaltiesZoom === 'function') {
+                    setTimeout(fixRecordsAndPenaltiesZoom, 100);
+                }
                 
                 // Scroll to penalties section
                 penaltiesSection.scrollIntoView({ 
