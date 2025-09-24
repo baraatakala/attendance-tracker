@@ -12092,8 +12092,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
                 
                 // Attendance Rates by Student
-                addSectionHeader(doc, 'Individual Student Attendance and Weighted Performance', yPosition);
-                yPosition += 10;
+               
                 
                 console.log('📄 PDF export data comparison:', {
                     filteredDataLength: filteredData.length,
@@ -12333,10 +12332,34 @@ ${environment.tips.slice(0, 3).join('\n')}
                     const SStot = weeklyRates.reduce((sum, rate) => sum + Math.pow(rate - rates_mean, 2), 0);
                     const rSquared = SStot !== 0 ? 1 - (SSres / SStot) : 1;
                     
-                    // Overall statistics
+                    // Sophisticated Overall Statistics (MATLAB-compatible)
                     const overallChange = weeklyRates.length > 0 ? weeklyRates[weeklyRates.length - 1] - weeklyRates[0] : 0;
+                    
+                    // Week-to-week change (most recent change)
+                    const weekToWeekChange = weeklyRates.length > 1 ? 
+                        weeklyRates[weeklyRates.length - 1] - weeklyRates[weeklyRates.length - 2] : 0;
+                    
+                    // Statistical measures
+                    const avgRate = rates_mean; // Already calculated above
                     const minRate = Math.min(...weeklyRates);
                     const maxRate = Math.max(...weeklyRates);
+                    
+                    // RMSE (Root Mean Square Error) for trend accuracy
+                    const rmse = weeklyRates.length > 0 ? 
+                        Math.sqrt(weeklyRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0) / weeklyRates.length) : 0;
+                    
+                    // Week-to-week changes array (for volatility analysis)
+                    const weekToWeekChanges = [];
+                    for (let i = 1; i < weeklyRates.length; i++) {
+                        weekToWeekChanges.push(weeklyRates[i] - weeklyRates[i - 1]);
+                    }
+                    
+                    // Volatility measure (standard deviation of week-to-week changes)
+                    let volatility = 0;
+                    if (weekToWeekChanges.length > 1) {
+                        const changesMean = weekToWeekChanges.reduce((sum, val) => sum + val, 0) / weekToWeekChanges.length;
+                        volatility = Math.sqrt(weekToWeekChanges.reduce((sum, val) => sum + Math.pow(val - changesMean, 2), 0) / weekToWeekChanges.length);
+                    }
                     
                     // Moving average (3-week window, MATLAB-compatible)
                     const windowSize = Math.min(3, n);
@@ -12361,24 +12384,30 @@ ${environment.tips.slice(0, 3).join('\n')}
                         trendClassification = 'STABLE'; // Minimal change
                     }
                     
-                    console.log(`📊 Advanced Trend Analysis for ${studentName}:`, {
+                    console.log(`📊 Sophisticated Linear Weekly Attendance Trend Analysis for ${studentName}:`, {
                         sortedDates: sortedClassDates,
                         totalDates: sortedClassDates.length,
                         includedDates: includedDates.length,
                         excludedExcused: sortedClassDates.length - includedDates.length,
-                        weeklyRates: weeklyRates.map(rate => rate.toFixed(1)),
-                        ratesString: `[${weeklyRates.map(rate => rate.toFixed(1)).join(', ')}]`, // MATLAB format
+                        weeklyRates: weeklyRates.map(rate => rate.toFixed(2)),
+                        ratesString: `[${weeklyRates.map(rate => rate.toFixed(2)).join('  ')}]`, // MATLAB format with spacing
                         
                         // Linear regression results
                         slope: slope.toFixed(4),
                         intercept: intercept.toFixed(2),
                         rSquared: rSquared.toFixed(3),
                         
-                        // Overall statistics
-                        avgRate: rates_mean.toFixed(2),
-                        minRate: minRate.toFixed(1),
-                        maxRate: maxRate.toFixed(1),
-                        overallChange: overallChange.toFixed(1),
+                        // Sophisticated Overall Statistics (MATLAB-style)
+                        avgRate: `${avgRate.toFixed(2)}%`,
+                        minRate: `${minRate.toFixed(1)}%`,
+                        maxRate: `${maxRate.toFixed(1)}%`,
+                        overallChange: `${overallChange.toFixed(1)}%`,
+                        weekToWeekChange: `${weekToWeekChange.toFixed(1)}%`, // Most recent change
+                        rmse: rmse.toFixed(3),
+                        volatility: volatility.toFixed(3),
+                        
+                        // Week-to-week analysis
+                        weekToWeekChanges: weekToWeekChanges.map(change => change.toFixed(1)),
                         
                         // Advanced analysis
                         movingAverage: movingAvg.map(avg => avg.toFixed(1)),
@@ -12392,18 +12421,43 @@ ${environment.tips.slice(0, 3).join('\n')}
                             movingAvg: movingAvg[index].toFixed(1) + '%'
                         })),
                         
-                        // MATLAB comparison output
-                        matlabComparison: `Weekly Rates: [${weeklyRates.map(rate => rate.toFixed(1)).join(', ')}] => Slope: ${slope.toFixed(4)}%/week, R²: ${rSquared.toFixed(3)}`,
-                        interpretation: `${trendClassification} (${slope > 0 ? '+' : ''}${slope.toFixed(2)}%/week, R²=${rSquared.toFixed(2)})`
+                        // MATLAB-style sophisticated output
+                        matlabStyleOutput: [
+                            '--- Sophisticated Linear Weekly Attendance Trend ---',
+                            `Weekly Rates: ${weeklyRates.map(rate => rate.toFixed(2)).join('  ')}`,
+                            `Average Rate: ${avgRate.toFixed(2)}%`,
+                            `Min Rate: ${minRate.toFixed(1)}%, Max Rate: ${maxRate.toFixed(1)}%`,
+                            `Slope (%/week): ${slope.toFixed(4)}`,
+                            `Intercept: ${intercept.toFixed(2)}`,
+                            `Overall Change: ${overallChange.toFixed(1)}%`,
+                            `Week-to-Week Change: ${weekToWeekChange.toFixed(1)}%`,
+                            `R-squared (fit quality): ${rSquared.toFixed(3)}`,
+                            `RMSE: ${rmse.toFixed(3)}`,
+                            `Volatility: ${volatility.toFixed(3)}`,
+                            `Trend: ${trendClassification} ${slope > 2 ? '📈' : slope < -2 ? '📉' : '➡️'}`
+                        ].join('\n'),
+                        
+                        // Compact summary for table display
+                        interpretation: `${trendClassification} (${slope > 0 ? '+' : ''}${slope.toFixed(2)}%/wk, R²=${rSquared.toFixed(2)}, Δ=${weekToWeekChange > 0 ? '+' : ''}${weekToWeekChange.toFixed(1)}%)`
                     });
                     
-                    // Return comprehensive trend score with metadata
+                    // Return comprehensive sophisticated trend analysis with metadata
                     return {
                         slope: parseFloat(slope.toFixed(2)),
+                        intercept: parseFloat(intercept.toFixed(2)),
                         rSquared: parseFloat(rSquared.toFixed(3)),
+                        rmse: parseFloat(rmse.toFixed(3)),
                         classification: trendClassification,
                         overallChange: parseFloat(overallChange.toFixed(1)),
-                        displayValue: `${slope > 0 ? '+' : ''}${slope.toFixed(1)}%/wk`
+                        weekToWeekChange: parseFloat(weekToWeekChange.toFixed(1)),
+                        avgRate: parseFloat(avgRate.toFixed(2)),
+                        minRate: parseFloat(minRate.toFixed(1)),
+                        maxRate: parseFloat(maxRate.toFixed(1)),
+                        volatility: parseFloat(volatility.toFixed(3)),
+                        weeklyRatesCount: weeklyRates.length,
+                        fitQuality: rSquared >= 0.7 ? 'EXCELLENT' : rSquared >= 0.5 ? 'GOOD' : rSquared >= 0.3 ? 'FAIR' : 'POOR',
+                        displayValue: `${slope > 0 ? '+' : ''}${slope.toFixed(1)}%/wk (R²=${rSquared.toFixed(2)})`,
+                        sophisticatedSummary: `Avg:${avgRate.toFixed(1)}% | Δ:${weekToWeekChange > 0 ? '+' : ''}${weekToWeekChange.toFixed(1)}% | RMSE:${rmse.toFixed(1)}`
                     };
                 };
 
@@ -12415,7 +12469,11 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 console.log('📅 All class dates detected:', allClassDates);
                 
-                const attendanceTableData = attendanceRatesWithWeights.map((student, index) => {
+                // Prepare data for both basic and advanced tables
+                const basicTableData = [];
+                const advancedTableData = [];
+                
+                attendanceRatesWithWeights.forEach((student, index) => {
                     const lateRecords = calculateLateRecordsForStudent(student.name);
                     const onTimeRecords = student.present - lateRecords; // On-Time = Present - Late Records
                     const consistencyIndex = calculateConsistencyIndex(student.name, allClassDates, filteredData);
@@ -12434,7 +12492,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                         formula: `(0.8 × ${student.rate}) + (0.1 × ${punctualityRate.toFixed(1)}) + (0.1 × ${(consistencyIndex * 100).toFixed(1)})`
                     });
                     
-                    return [
+                    // Basic table data (core attendance metrics)
+                    basicTableData.push([
                         (index + 1).toString(), // Add row number
                         student.name,
                         student.present.toString(),
@@ -12444,54 +12503,70 @@ ${environment.tips.slice(0, 3).join('\n')}
                         `${student.rate}%`,
                         student.weightedScore.toString(),
                         lateRecords.toString(), // Late Records column
-                        onTimeRecords.toString(), // On-Time column
+                        onTimeRecords.toString() // On-Time column
+                    ]);
+                    
+                    // Advanced table data (analytics and trends)
+                    const weeklyChange = typeof attendanceTrend === 'object' && attendanceTrend.weekToWeekChange !== undefined && attendanceTrend.weekToWeekChange !== null
+                        ? `${attendanceTrend.weekToWeekChange > 0 ? '+' : ''}${attendanceTrend.weekToWeekChange.toFixed(1)}%`
+                        : '0.0%'; // Default to 0.0% instead of N/A when insufficient weekly data
+                    
+                    const minRate = typeof attendanceTrend === 'object' && attendanceTrend.minRate !== undefined && attendanceTrend.minRate !== null
+                        ? `${attendanceTrend.minRate.toFixed(1)}%`
+                        : `${student.attendanceRate.toFixed(1)}%`; // Use current rate instead of N/A when insufficient weekly data
+                    
+                    advancedTableData.push([
+                        (index + 1).toString(), // Add row number for reference
+                        student.name,
                         consistencyIndex.toFixed(3), // Consistency Index column
                         engagementIndex.toFixed(1), // Engagement Index column
+                        weeklyChange, // Weekly Rate Change column
+                        minRate, // Min Rate column
                         typeof attendanceTrend === 'object' ? attendanceTrend.displayValue : attendanceTrend // Advanced Trend column with R² info
-                    ];
+                    ]);
                 });
                 
-                // Use autoTable for proper pagination instead of custom addTable
+                // Basic Attendance Table
+                doc.text('Basic Attendance Summary', 14, yPosition);
+                yPosition += 10;
+                
                 doc.autoTable({
-                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score', 'Late Records', 'On-Time', 'CI', 'EI', 'Trend']],
-                    body: attendanceTableData,
+                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score', 'Late Records', 'On-Time']],
+                    body: basicTableData,
                     startY: yPosition,
                     theme: 'striped',
                     headStyles: {
                         fillColor: [52, 73, 94],
                         textColor: 255,
                         fontStyle: 'bold',
-                        fontSize: 7  // Reduced from 10 to 7 for better header fit
+                        fontSize: 8
                     },
                     alternateRowStyles: {
                         fillColor: [245, 245, 245]
                     },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 8 },    // # (reduced)
-                        1: { cellWidth: 28 },                     // Student Name (reduced)
-                        2: { halign: 'center', cellWidth: 12 },   // Present (reduced)
-                        3: { halign: 'center', cellWidth: 12 },   // Absent (reduced)
-                        4: { halign: 'center', cellWidth: 13 },   // Num-Excuse (reduced)
-                        5: { halign: 'center', cellWidth: 16 },   // Effective Days (reduced)
-                        6: { halign: 'center', cellWidth: 13 },   // Rate (reduced)
-                        7: { halign: 'center', cellWidth: 18 },   // Weighted Score (reduced)
-                        8: { halign: 'center', cellWidth: 14 },   // Late Records (reduced)
-                        9: { halign: 'center', cellWidth: 14 },   // On-Time (reduced)
-                        10: { halign: 'center', cellWidth: 14 },  // CI (reduced)
-                        11: { halign: 'center', cellWidth: 14 },  // EI (reduced)
-                        12: { halign: 'center', cellWidth: 14 }   // Trend (new)
+                        0: { halign: 'center', cellWidth: 10 },   // #
+                        1: { cellWidth: 35 },                     // Student Name (wider since less columns)
+                        2: { halign: 'center', cellWidth: 15 },   // Present
+                        3: { halign: 'center', cellWidth: 15 },   // Absent
+                        4: { halign: 'center', cellWidth: 18 },   // Num-Excuse
+                        5: { halign: 'center', cellWidth: 20 },   // Effective Days
+                        6: { halign: 'center', cellWidth: 15 },   // Rate
+                        7: { halign: 'center', cellWidth: 22 },   // Weighted Score
+                        8: { halign: 'center', cellWidth: 18 },   // Late Records
+                        9: { halign: 'center', cellWidth: 18 }    // On-Time
                     },
                     styles: {
                         fontSize: 9,
-                        cellPadding: 3,
+                        cellPadding: 4,
                         overflow: 'linebreak',
                         cellWidth: 'wrap'
                     },
-                    margin: { top: 20, left: 2, right: 2 },
+                    margin: { top: 20, left: 10, right: 10 },
                     tableWidth: 'auto',
                     showHead: 'everyPage',
                     didParseCell: function(data) {
-                        // Only apply color coding to body cells, not header cells
+                        // Only apply color coding to body cells, not header cells (Basic table only)
                         if (data.section === 'body') {
                             // Color coding for rates
                             if (data.column.index === 6 && data.cell.raw.includes('%')) { // Rate column
@@ -12530,9 +12605,59 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     data.cell.styles.fontStyle = 'bold';
                                 }
                             }
-                            
+                        }
+                    }
+                });
+                
+                yPosition = doc.lastAutoTable.finalY + 15;
+                
+                // Check if we need a new page
+                if (yPosition > 200) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Advanced Analytics Table
+                doc.text('Advanced Analytics & Trends', 14, yPosition);
+                yPosition += 10;
+                
+                doc.autoTable({
+                    head: [['#', 'Student Name', 'CI', 'EI', 'Weekly Change', 'Min Rate', 'Trend']],
+                    body: advancedTableData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [141, 68, 173], // Purple theme for advanced analytics
+                        textColor: 255,
+                        fontStyle: 'bold',
+                        fontSize: 8
+                    },
+                    alternateRowStyles: {
+                        fillColor: [248, 246, 250] // Light purple
+                    },
+                    columnStyles: {
+                        0: { halign: 'center', cellWidth: 15 },   // #
+                        1: { cellWidth: 45 },                     // Student Name (reduced for new column)
+                        2: { halign: 'center', cellWidth: 18 },   // CI
+                        3: { halign: 'center', cellWidth: 18 },   // EI
+                        4: { halign: 'center', cellWidth: 22 },   // Weekly Change
+                        5: { halign: 'center', cellWidth: 22 },   // Min Rate
+                        6: { halign: 'center', cellWidth: 55 }    // Trend (widest for complex trend data)
+                    },
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 4,
+                        overflow: 'linebreak',
+                        cellWidth: 'wrap'
+                    },
+                    margin: { top: 20, left: 10, right: 10 },
+                    tableWidth: 'auto',
+                    showHead: 'everyPage',
+                    didParseCell: function(data) {
+                        // Advanced analytics color coding
+                        if (data.section === 'body') {
                             // Color coding for Consistency Index (CI)
-                            if (data.column.index === 10) { // CI column
+                            if (data.column.index === 2) { // CI column
                                 const ci = parseFloat(data.cell.raw);
                                 if (ci >= 0.8) {
                                     // High consistency (80-100%)
@@ -12555,7 +12680,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                             }
                             
                             // Color coding for Engagement Index (EI)
-                            if (data.column.index === 11) { // EI column
+                            if (data.column.index === 3) { // EI column
                                 const ei = parseFloat(data.cell.raw);
                                 if (ei >= 85) {
                                     // Excellent engagement (85-100)
@@ -12581,8 +12706,67 @@ ${environment.tips.slice(0, 3).join('\n')}
                                 }
                             }
                             
-                            // Color coding for Advanced Trend Analysis (column 12)
-                            if (data.column.index === 12) { // Trend column
+                            // Color coding for Weekly Change
+                            if (data.column.index === 4) { // Weekly Change column
+                                const changeText = data.cell.raw.toString();
+                                const change = parseFloat(changeText.replace(/[^-+\d.]/g, ''));
+                                    if (change >= 10) {
+                                        // Excellent weekly improvement (≥10%)
+                                        data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
+                                        data.cell.styles.fontStyle = 'bold';
+                                    } else if (change >= 5) {
+                                        // Good weekly improvement (5-9.9%)
+                                        data.cell.styles.textColor = [34, 139, 34]; // Dark Green
+                                        data.cell.styles.fontStyle = 'bold';
+                                    } else if (change > 0) {
+                                        // Slight weekly improvement (0.1-4.9%)
+                                        data.cell.styles.textColor = [46, 204, 113]; // Light Green
+                                    } else if (change === 0) {
+                                        // No change
+                                        data.cell.styles.textColor = [100, 100, 100]; // Gray
+                                    } else if (change > -5) {
+                                        // Slight weekly decline (-0.1 to -4.9%)
+                                        data.cell.styles.textColor = [255, 140, 0]; // Dark Orange
+                                    } else if (change > -10) {
+                                        // Moderate weekly decline (-5 to -9.9%)
+                                        data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                                    } else {
+                                        // Significant weekly decline (≤-10%)
+                                        data.cell.styles.textColor = [139, 0, 0]; // Dark Red
+                                        data.cell.styles.fontStyle = 'bold';
+                                    }
+                            }
+                            
+                            // Color coding for Min Rate
+                            if (data.column.index === 5) { // Min Rate column
+                                const minRateText = data.cell.raw.toString();
+                                const minRate = parseFloat(minRateText.replace('%', ''));
+                                    if (minRate >= 90) {
+                                        // Excellent minimum rate (≥90%)
+                                        data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
+                                        data.cell.styles.fontStyle = 'bold';
+                                    } else if (minRate >= 80) {
+                                        // Very good minimum rate (80-89%)
+                                        data.cell.styles.textColor = [34, 139, 34]; // Dark Green
+                                        data.cell.styles.fontStyle = 'bold';
+                                    } else if (minRate >= 70) {
+                                        // Good minimum rate (70-79%)
+                                        data.cell.styles.textColor = [46, 204, 113]; // Light Green
+                                    } else if (minRate >= 60) {
+                                        // Fair minimum rate (60-69%)
+                                        data.cell.styles.textColor = [243, 156, 18]; // Orange
+                                    } else if (minRate >= 50) {
+                                        // Poor minimum rate (50-59%)
+                                        data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                                    } else {
+                                        // Very poor minimum rate (<50%)
+                                        data.cell.styles.textColor = [139, 0, 0]; // Dark Red
+                                        data.cell.styles.fontStyle = 'bold';
+                                    }
+                            }
+                            
+                            // Color coding for Advanced Trend Analysis
+                            if (data.column.index === 6) { // Trend column (moved to index 6)
                                 const trendText = data.cell.raw.toString();
                                 
                                 if (trendText.includes('+')) {
