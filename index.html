@@ -892,6 +892,79 @@
             flex: 1;
         }
 
+        /* Searchable Student Dropdown Styles */
+        .student-search-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .student-search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--bg-input);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .student-search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .student-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 2px solid var(--input-border);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .student-dropdown.show {
+            display: block;
+        }
+
+        .student-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--input-border);
+            transition: background-color 0.2s ease;
+            color: var(--text-color);
+        }
+
+        .student-option:last-child {
+            border-bottom: none;
+        }
+
+        .student-option:hover,
+        .student-option.highlighted {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .student-option.selected {
+            background: #28a745;
+            color: white;
+            font-weight: bold;
+        }
+
+        .student-option[data-value=""] {
+            font-style: italic;
+            color: #6c757d;
+        }
+
         .manage-students-btn {
             background: var(--button-info);
             color: white;
@@ -5478,13 +5551,25 @@
                     <h2><i class="fas fa-user-check"></i> Record Attendance</h2>
                     
                     <form id="attendanceForm" class="attendance-form">
-                        <!-- Student Selection -->
+                        <!-- Student Selection with Search -->
                         <div class="form-group">
                             <label for="student"><i class="fas fa-user"></i> Select Student:</label>
                             <div class="student-selection-container">
-                                <select id="student" name="student" required 
-                                        aria-describedby="student-help" 
-                                        aria-label="Select student for attendance tracking">
+                                <!-- Search Input -->
+                                <div class="student-search-wrapper">
+                                    <input type="text" 
+                                           id="studentSearch" 
+                                           class="student-search-input"
+                                           placeholder="🔍 Type to search students..."
+                                           autocomplete="off"
+                                           aria-describedby="student-help"
+                                           aria-label="Search students by name">
+                                    <div class="student-dropdown" id="studentDropdown">
+                                        <div class="student-option" data-value="">-- Select Student --</div>
+                                    </div>
+                                </div>
+                                <!-- Hidden select for form submission -->
+                                <select id="student" name="student" required style="display: none;">
                                     <option value="">-- Select Student --</option>
                                 </select>
                                 <button type="button" id="manageStudentsBtn" class="manage-students-btn" 
@@ -5495,7 +5580,7 @@
                                     <i class="fas fa-cog" aria-hidden="true"></i>
                                 </button>
                             </div>
-                            <small id="student-help" class="form-help">Select the student for attendance tracking</small>
+                            <small id="student-help" class="form-help">🔍 Type student name to search, or click dropdown to browse all students</small>
                         </div>
 
                         <!-- Student Management Panel (Hidden by default) -->
@@ -7005,6 +7090,9 @@
             
             // Initialize chart filter keyboard shortcuts
             setupChartFilterKeyboardShortcuts();
+            
+            // Initialize searchable student dropdown
+            initializeSearchableDropdown();
         });
 
         function initializeAnalyticsUI() {
@@ -7021,6 +7109,163 @@
                 firstTab.classList.add('active');
                 firstTabContent.classList.add('active');
             }
+        }
+
+        // Initialize searchable student dropdown functionality
+        function initializeSearchableDropdown() {
+            const searchInput = document.getElementById('studentSearch');
+            const dropdown = document.getElementById('studentDropdown');
+            const hiddenSelect = document.getElementById('student');
+            
+            if (!searchInput || !dropdown || !hiddenSelect) return;
+
+            let allOptions = [];
+            let highlightedIndex = -1;
+
+            // Update dropdown options from hidden select
+            function updateDropdownOptions() {
+                allOptions = Array.from(dropdown.querySelectorAll('.student-option'));
+            }
+
+            // Show dropdown
+            function showDropdown() {
+                dropdown.classList.add('show');
+                updateDropdownOptions();
+            }
+
+            // Hide dropdown
+            function hideDropdown() {
+                dropdown.classList.remove('show');
+                highlightedIndex = -1;
+            }
+
+            // Filter options based on search term
+            function filterOptions(searchTerm) {
+                const options = dropdown.querySelectorAll('.student-option');
+                const term = searchTerm.toLowerCase().trim();
+                
+                let visibleCount = 0;
+                options.forEach(option => {
+                    const text = option.textContent.toLowerCase();
+                    const isMatch = text.includes(term) || term === '';
+                    
+                    option.style.display = isMatch ? 'block' : 'none';
+                    if (isMatch) visibleCount++;
+                });
+
+                // Update visible options array for keyboard navigation
+                allOptions = Array.from(options).filter(opt => opt.style.display !== 'none');
+                highlightedIndex = -1;
+                
+                return visibleCount > 0;
+            }
+
+            // Select an option
+            function selectOption(option) {
+                const value = option.getAttribute('data-value');
+                const text = option.textContent;
+
+                // Update hidden select
+                hiddenSelect.value = value;
+
+                // Update search input
+                searchInput.value = text;
+
+                // Update visual selection
+                dropdown.querySelectorAll('.student-option').forEach(opt => 
+                    opt.classList.remove('selected'));
+                option.classList.add('selected');
+
+                hideDropdown();
+
+                // Trigger change event for form validation
+                hiddenSelect.dispatchEvent(new Event('change'));
+            }
+
+            // Handle keyboard navigation
+            function handleKeyboard(e) {
+                if (!dropdown.classList.contains('show')) {
+                    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                        e.preventDefault();
+                        showDropdown();
+                        return;
+                    }
+                    return;
+                }
+
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        highlightedIndex = Math.min(highlightedIndex + 1, allOptions.length - 1);
+                        updateHighlight();
+                        break;
+                    
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                        updateHighlight();
+                        break;
+                    
+                    case 'Enter':
+                        e.preventDefault();
+                        if (highlightedIndex >= 0 && allOptions[highlightedIndex]) {
+                            selectOption(allOptions[highlightedIndex]);
+                        }
+                        break;
+                    
+                    case 'Escape':
+                        hideDropdown();
+                        searchInput.blur();
+                        break;
+                }
+            }
+
+            // Update highlighted option
+            function updateHighlight() {
+                allOptions.forEach((option, index) => {
+                    option.classList.toggle('highlighted', index === highlightedIndex);
+                });
+
+                // Scroll highlighted option into view
+                if (highlightedIndex >= 0 && allOptions[highlightedIndex]) {
+                    allOptions[highlightedIndex].scrollIntoView({
+                        block: 'nearest',
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            // Event listeners
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value;
+                showDropdown();
+                filterOptions(searchTerm);
+            });
+
+            searchInput.addEventListener('focus', function() {
+                showDropdown();
+                filterOptions(this.value);
+            });
+
+            searchInput.addEventListener('keydown', handleKeyboard);
+
+            // Click on dropdown options
+            dropdown.addEventListener('click', function(e) {
+                const option = e.target.closest('.student-option');
+                if (option) {
+                    selectOption(option);
+                }
+            });
+
+            // Click outside to close dropdown
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    hideDropdown();
+                }
+            });
+
+            // Initialize dropdown with current data
+            updateDropdownOptions();
         }
 
         function initializeApp() {
@@ -7772,28 +8017,44 @@
 
         function populateStudentDropdown() {
             const studentSelect = elements.student;
-            if (!studentSelect) return;
+            const studentDropdown = document.getElementById('studentDropdown');
+            if (!studentSelect || !studentDropdown) return;
 
-            // Clear current options except the first one
+            // Clear current options
             studentSelect.innerHTML = '<option value="">-- Select Student --</option>';
+            studentDropdown.innerHTML = '<div class="student-option" data-value="">-- Select Student --</div>';
 
             // Add active students with ID and name display
             Object.keys(activeStudents).sort().forEach(key => {
+                // Add to hidden select (for form submission)
                 const option = document.createElement('option');
                 option.value = key;
                 
                 // Handle both old string format and new object format
+                let displayText;
                 if (typeof activeStudents[key] === 'string') {
-                    option.textContent = activeStudents[key]; // Legacy format
+                    displayText = activeStudents[key]; // Legacy format
                 } else {
-                    option.textContent = `${activeStudents[key].id} - ${activeStudents[key].name}`;
+                    displayText = `${activeStudents[key].id} - ${activeStudents[key].name}`;
                 }
-                
+                option.textContent = displayText;
                 studentSelect.appendChild(option);
+
+                // Add to searchable dropdown
+                const dropdownOption = document.createElement('div');
+                dropdownOption.className = 'student-option';
+                dropdownOption.setAttribute('data-value', key);
+                dropdownOption.textContent = displayText;
+                studentDropdown.appendChild(dropdownOption);
             });
 
             // Also update filter dropdown if it exists
             updateFilterStudentDropdown();
+            
+            // Reinitialize searchable dropdown after population
+            if (typeof initializeSearchableDropdown === 'function') {
+                setTimeout(() => initializeSearchableDropdown(), 100);
+            }
         }
 
         function updateFilterStudentDropdown() {
