@@ -898,9 +898,15 @@
             flex: 1;
         }
 
+        .student-search-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
         .student-search-input {
             width: 100%;
-            padding: 12px 16px;
+            padding: 12px 40px 12px 16px;
             border: 2px solid var(--input-border);
             border-radius: 8px;
             font-size: 16px;
@@ -914,6 +920,36 @@
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .clear-search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .clear-search-btn:hover {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .clear-search-btn:active {
+            transform: translateY(-50%) scale(0.95);
         }
 
         .student-dropdown {
@@ -5491,8 +5527,9 @@
             line-height: 1.5;
         }
 
-        /* Responsive Design */
+        /* Mobile Responsive Design - iPhone 13 & All Mobile Devices */
         @media (max-width: 768px) {
+            /* Email Modal Styles */
             .email-modal-content {
                 width: 98%;
                 margin: 10px;
@@ -5513,6 +5550,141 @@
 
             .email-btn {
                 width: 100%;
+            }
+
+            /* Attendance Form Mobile Optimizations */
+            .container {
+                padding: 10px;
+                max-width: 100%;
+            }
+
+            .form-card {
+                margin: 10px 0;
+                padding: 20px 15px;
+                border-radius: 12px;
+            }
+
+            .attendance-form {
+                gap: 15px;
+            }
+
+            .form-group {
+                gap: 10px;
+            }
+
+            /* Student Selection Mobile */
+            .student-selection-container {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .student-search-wrapper {
+                width: 100%;
+            }
+
+            .student-search-input {
+                padding: 14px 40px 14px 16px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                min-height: 44px; /* iOS touch target minimum */
+            }
+
+            .clear-search-btn {
+                right: 10px;
+                width: 30px;
+                height: 30px;
+            }
+
+            .manage-students-btn {
+                width: 100%;
+                padding: 14px;
+                min-height: 48px;
+                justify-content: center;
+            }
+
+            /* Location Group Mobile */
+            .location-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            /* Form Inputs Mobile */
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 14px 16px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                min-height: 44px;
+                border-radius: 8px;
+            }
+
+            /* Attendance Buttons Mobile */
+            .attendance-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .attendance-btn {
+                width: 100%;
+                padding: 16px;
+                min-height: 52px;
+                font-size: 18px;
+                border-radius: 10px;
+            }
+
+            /* Form Help Text Mobile */
+            .form-help {
+                font-size: 14px;
+                line-height: 1.4;
+            }
+
+            /* Student Dropdown Mobile */
+            .student-dropdown {
+                max-height: 250px;
+                border-radius: 0 0 10px 10px;
+            }
+
+            .student-option {
+                padding: 14px 16px;
+                font-size: 16px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+
+            /* Date/Time Input Mobile */
+            input[type="datetime-local"] {
+                font-size: 16px;
+                padding: 14px;
+                min-height: 44px;
+            }
+        }
+
+        /* iPhone 13 Specific Optimizations */
+        @media (max-width: 428px) and (min-width: 375px) {
+            .form-card {
+                padding: 18px 12px;
+                margin: 8px 0;
+            }
+
+            .student-search-input {
+                font-size: 16px;
+                padding: 12px 38px 12px 14px;
+            }
+
+            .attendance-btn {
+                padding: 14px;
+                min-height: 50px;
+                font-size: 17px;
+            }
+
+            .form-group label {
+                font-size: 15px;
+                font-weight: 600;
+            }
+
+            .form-help {
+                font-size: 13px;
             }
         }
     </style>
@@ -5555,15 +5727,25 @@
                         <div class="form-group">
                             <label for="student"><i class="fas fa-user"></i> Select Student:</label>
                             <div class="student-selection-container">
-                                <!-- Search Input -->
+                                <!-- Search Input with Clear Button -->
                                 <div class="student-search-wrapper">
-                                    <input type="text" 
-                                           id="studentSearch" 
-                                           class="student-search-input"
-                                           placeholder="🔍 Type to search students..."
-                                           autocomplete="off"
-                                           aria-describedby="student-help"
-                                           aria-label="Search students by name">
+                                    <div class="student-search-input-container">
+                                        <input type="text" 
+                                               id="studentSearch" 
+                                               class="student-search-input"
+                                               placeholder="🔍 Type to search students..."
+                                               autocomplete="off"
+                                               aria-describedby="student-help"
+                                               aria-label="Search students by name">
+                                        <button type="button" 
+                                                id="clearStudentSearch" 
+                                                class="clear-search-btn" 
+                                                title="Clear search"
+                                                aria-label="Clear search text"
+                                                style="display: none;">
+                                            <i class="fas fa-times" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
                                     <div class="student-dropdown" id="studentDropdown">
                                         <div class="student-option" data-value="">-- Select Student --</div>
                                     </div>
@@ -7116,11 +7298,42 @@
             const searchInput = document.getElementById('studentSearch');
             const dropdown = document.getElementById('studentDropdown');
             const hiddenSelect = document.getElementById('student');
+            const clearButton = document.getElementById('clearStudentSearch');
             
-            if (!searchInput || !dropdown || !hiddenSelect) return;
+            if (!searchInput || !dropdown || !hiddenSelect || !clearButton) return;
 
             let allOptions = [];
             let highlightedIndex = -1;
+
+            // Toggle clear button visibility based on input content
+            function toggleClearButton() {
+                if (searchInput.value.trim().length > 0) {
+                    clearButton.style.display = 'flex';
+                } else {
+                    clearButton.style.display = 'none';
+                }
+            }
+
+            // Clear search input and reset selection
+            function clearSearch() {
+                searchInput.value = '';
+                hiddenSelect.value = '';
+                toggleClearButton();
+                
+                // Show all students in dropdown after clearing
+                showDropdown();
+                filterOptions(''); // Show all options (empty search term)
+                
+                // Reset all options to show unselected state
+                dropdown.querySelectorAll('.student-option').forEach(opt => 
+                    opt.classList.remove('selected'));
+                
+                // Trigger change event for form validation
+                hiddenSelect.dispatchEvent(new Event('change'));
+                
+                // Focus back on input for better UX
+                searchInput.focus();
+            }
 
             // Update dropdown options from hidden select
             function updateDropdownOptions() {
@@ -7177,6 +7390,9 @@
                 option.classList.add('selected');
 
                 hideDropdown();
+                
+                // Update clear button visibility
+                toggleClearButton();
 
                 // Trigger change event for form validation
                 hiddenSelect.dispatchEvent(new Event('change'));
@@ -7240,11 +7456,20 @@
                 const searchTerm = e.target.value;
                 showDropdown();
                 filterOptions(searchTerm);
+                toggleClearButton();
             });
 
             searchInput.addEventListener('focus', function() {
                 showDropdown();
                 filterOptions(this.value);
+                toggleClearButton();
+            });
+
+            // Clear button event listener
+            clearButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                clearSearch();
             });
 
             searchInput.addEventListener('keydown', handleKeyboard);
@@ -7266,6 +7491,9 @@
 
             // Initialize dropdown with current data
             updateDropdownOptions();
+            
+            // Initialize clear button state
+            toggleClearButton();
         }
 
         function initializeApp() {
