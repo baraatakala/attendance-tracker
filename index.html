@@ -12812,69 +12812,6 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 yPosition = doc.lastAutoTable.finalY + 20;
                 
-                // Check if we need a new page
-                if (yPosition > 220) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                
-                // Absence Analysis
-                addSectionHeader(doc, 'ABSENCE ANALYSIS', yPosition);
-                yPosition += 15;
-                
-                // Use the correctly calculated attendance data for absence analysis
-                const absenceData = attendanceRatesWithWeights
-                    .filter(student => student.absent > 0) // Only show students with absences
-                    .sort((a, b) => b.absent - a.absent) // Sort by absent days descending
-                    .map(student => {
-                        const absenceRate = student.daysCovered > 0 ? (student.absent / student.daysCovered) * 100 : 0;
-                        return {
-                            name: student.name,
-                            count: student.absent,
-                            percentage: parseFloat(absenceRate.toFixed(1))
-                        };
-                    });
-                if (absenceData.length > 0) {
-                    const absenceTableData = absenceData.map(item => [
-                        item.name,
-                        item.count.toString(),
-                        `${item.percentage}%`
-                    ]);
-                    
-                    doc.autoTable({
-                        head: [['Student Name', 'Absent Days', 'Absence Rate']],
-                        body: absenceTableData,
-                        startY: yPosition,
-                        theme: 'striped',
-                        headStyles: {
-                            fillColor: [52, 73, 94],
-                            textColor: 255,
-                            fontStyle: 'bold',
-                            fontSize: 10
-                        },
-                        alternateRowStyles: {
-                            fillColor: [245, 245, 245]
-                        },
-                        columnStyles: {
-                            0: { cellWidth: 60 },                    // Student Name
-                            1: { halign: 'center', cellWidth: 30 },  // Absent Days
-                            2: { halign: 'center', cellWidth: 30 }   // Absence Rate
-                        },
-                        styles: {
-                            fontSize: 9,
-                            cellPadding: 3,
-                            overflow: 'linebreak'
-                        },
-                        margin: { top: 20, left: 8, right: 8 },
-                        showHead: 'everyPage'
-                    });
-                    yPosition = doc.lastAutoTable.finalY + 20;
-                } else {
-                    doc.setFontSize(10);
-                    doc.text('No absence data available for the selected period.', 20, yPosition);
-                    yPosition += 20;
-                }
-                
                 // Check if we need a new page before adding dates analysis
                 if (yPosition > 200) {
                     doc.addPage();
