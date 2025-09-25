@@ -6553,13 +6553,13 @@
                     </div>
                     
                     <div>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;">
-                            <h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">📊 Report Content:</h4>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #2196F3;">
+                            <h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">� Email Workflow:</h4>
                             <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.4;">
-                                The current <strong>Analytics Report</strong> will be sent as a PDF attachment, including:
-                                <br>• Basic attendance statistics for all students
-                                <br>• Advanced analytics with trends and insights
-                                <br>• All statistical measures (CI, EI, Weekly Changes, Min Rate, etc.)
+                                <strong>Step 1:</strong> This will open your email client with pre-filled content
+                                <br><strong>Step 2:</strong> Download PDF from Analytics section (Export PDF button)
+                                <br><strong>Step 3:</strong> Attach the downloaded PDF to your email
+                                <br><strong>Step 4:</strong> Send the email with the analytics report attached
                             </p>
                         </div>
                     </div>
@@ -6568,7 +6568,7 @@
                         <button type="button" onclick="closeEmailForm()" 
                                 style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
                         <button type="button" id="sendEmailBtn" onclick="sendSimpleEmail()" 
-                                style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">📊 Generate PDF & Send</button>
+                                style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">� Send Email</button>
                     </div>
                 </form>
             </div>
@@ -16934,19 +16934,8 @@ File: ${fileName}`, 'success');
             const currentDate = new Date();
             const dateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
             
-            // Generate the current analytics PDF report
-            try {
-                // Show loading message
-                const sendBtn = document.getElementById('sendEmailBtn');
-                const originalText = sendBtn.textContent;
-                sendBtn.textContent = 'Generating PDF...';
-                sendBtn.disabled = true;
-                
-                // Generate the PDF report (this will download the PDF)
-                exportAnalyticsToPDF();
-                
-                // Create email content with instructions
-                const emailContent = `📊 ATTENDANCE ANALYTICS REPORT
+            // Create email content with instructions for PDF attachment
+            const emailContent = `📊 ATTENDANCE ANALYTICS REPORT
 
 Dear Recipient,
 
@@ -16958,60 +16947,42 @@ Please find the attached Attendance Analytics Report PDF that includes:
 ✅ Color-coded performance indicators
 ✅ Comprehensive data analysis
 
-📅 Report Generated: ${currentDate.toLocaleString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                })}
+📅 Report Date: ${currentDate.toLocaleString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
 
-Note: The PDF report has been downloaded to your device. Please attach it to this email before sending.
+📎 Note: Please download the PDF report from the Analytics section and attach it to this email before sending.
 
 Best regards,
 Attendance Tracker System v3.0
 `;
 
-                // Open email client with the content
-                const subject = `📊 Attendance Analytics Report - ${dateStr}`;
-                const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
-                
-                // Delay to allow PDF generation to complete
-                setTimeout(() => {
-                    try {
-                        window.open(mailtoLink, '_self');
-                    } catch (error) {
-                        // Fallback method
-                        const tempLink = document.createElement('a');
-                        tempLink.href = mailtoLink;
-                        tempLink.target = '_blank';
-                        document.body.appendChild(tempLink);
-                        tempLink.click();
-                        document.body.removeChild(tempLink);
-                    }
-                    
-                    // Reset button
-                    sendBtn.textContent = originalText;
-                    sendBtn.disabled = false;
-                    
-                    // Close the email form
-                    closeEmailForm();
-                    
-                    // Show success message
-                    alert('📊 Analytics PDF generated and email opened!\n\n✅ The PDF has been downloaded to your device\n📧 Please attach it to the email before sending');
-                    
-                }, 1000); // 1 second delay
-                
+            // Open email client with the content
+            const subject = `📊 Attendance Analytics Report - ${dateStr}`;
+            const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
+            
+            try {
+                window.open(mailtoLink, '_self');
             } catch (error) {
-                console.error('Error generating email with PDF:', error);
-                alert('❌ Error generating the analytics report. Please try again.');
-                
-                // Reset button on error
-                const sendBtn = document.getElementById('sendEmailBtn');
-                sendBtn.textContent = 'Send Email';
-                sendBtn.disabled = false;
+                // Fallback method
+                const tempLink = document.createElement('a');
+                tempLink.href = mailtoLink;
+                tempLink.target = '_blank';
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                document.body.removeChild(tempLink);
             }
+            
+            // Close the email form
+            closeEmailForm();
+            
+            // Show success message
+            alert('� Email opened successfully!\n\n� Remember to:\n1. Download the PDF from Analytics section\n2. Attach it to the email\n3. Send the email');
         }
         
         // Helper function to calculate email analytics
