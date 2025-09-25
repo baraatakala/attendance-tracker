@@ -6553,27 +6553,22 @@
                     </div>
                     
                     <div>
-                        <fieldset style="border: none; padding: 0; margin: 0;">
-                            <legend style="display: block; margin-bottom: 10px; font-weight: bold;">What to include:</legend>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <label style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="radio" name="reportType" value="present" checked> Present Students Only
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="radio" name="reportType" value="absent"> Absent Students Only
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="radio" name="reportType" value="both"> Both Present and Absent
-                                </label>
-                            </div>
-                        </fieldset>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;">
+                            <h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">📊 Report Content:</h4>
+                            <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.4;">
+                                The current <strong>Analytics Report</strong> will be sent as a PDF attachment, including:
+                                <br>• Basic attendance statistics for all students
+                                <br>• Advanced analytics with trends and insights
+                                <br>• All statistical measures (CI, EI, Weekly Changes, Min Rate, etc.)
+                            </p>
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
                         <button type="button" onclick="closeEmailForm()" 
                                 style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
                         <button type="button" id="sendEmailBtn" onclick="sendSimpleEmail()" 
-                                style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Send Email</button>
+                                style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">📊 Generate PDF & Send</button>
                     </div>
                 </form>
             </div>
@@ -16929,83 +16924,94 @@ File: ${fileName}`, 'success');
         
         function sendSimpleEmail() {
             const recipientEmail = document.getElementById('recipientEmail').value;
-            const reportType = document.querySelector('input[name="reportType"]:checked').value;
             
             if (!recipientEmail) {
                 alert('Please enter an email address.');
                 return;
             }
-            
-            // Get ALL records instead of just today's records
-            let recordsToInclude = attendanceData.slice(); // Copy all records
-            
-            // Sort records by date and time (newest first)
-            recordsToInclude.sort((a, b) => {
-                const dateA = new Date(a.dateTime || `${a.date} ${a.time}`);
-                const dateB = new Date(b.dateTime || `${b.date} ${b.time}`);
-                return dateB - dateA; // Newest first
-            });
-            
-            // Calculate analytics for beautiful insights
-            const analytics = calculateEmailAnalytics(recordsToInclude);
-            
-            // Create beautiful email content
-            let emailContent = `
-📊 ATTENDANCE ANALYSIS REPORT
-═══════════════════════════════════════════════════════════════════
 
-📅 Report Period: ${analytics.dateRange}
-🔢 Total Records: ${recordsToInclude.length}
-👥 Active Students: ${Object.keys(activeStudents).length}
-📈 Overall Attendance Rate: ${analytics.attendanceRate}%
-
-${analytics.quickInsights}
-
-`;
-
-            // Show records based on selection with beautiful formatting
-            if (reportType === 'present') {
-                emailContent += generatePresentStudentsReport(recordsToInclude, analytics);
-            }
-            else if (reportType === 'absent') {
-                emailContent += generateAbsentStudentsReport(recordsToInclude, analytics);
-            }
-            else { // both
-                emailContent += generateCompleteAttendanceReport(recordsToInclude, analytics);
-            }
-
-            emailContent += `
-═══════════════════════════════════════════════════════════════════
-📱 Generated: ${new Date().toLocaleString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            })}
-🎯 System: Attendance Tracker v3.0
-`;
+            // Get current date for filename
+            const currentDate = new Date();
+            const dateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
             
-            // Open email with beautiful subject
-            const subject = `📊 Attendance Report (${analytics.periodSummary}) - ${analytics.attendanceRate}% Rate`;
-            const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
-            
-            // Use window.open instead of window.location.href to avoid triggering beforeunload
+            // Generate the current analytics PDF report
             try {
-                window.open(mailtoLink, '_self');
+                // Show loading message
+                const sendBtn = document.getElementById('sendEmailBtn');
+                const originalText = sendBtn.textContent;
+                sendBtn.textContent = 'Generating PDF...';
+                sendBtn.disabled = true;
+                
+                // Generate the PDF report (this will download the PDF)
+                exportAnalyticsToPDF();
+                
+                // Create email content with instructions
+                const emailContent = `📊 ATTENDANCE ANALYTICS REPORT
+
+Dear Recipient,
+
+Please find the attached Attendance Analytics Report PDF that includes:
+
+✅ Complete attendance statistics for all students
+✅ Advanced analytics with trends and insights  
+✅ Statistical measures (CI, EI, Weekly Changes, Min Rate, etc.)
+✅ Color-coded performance indicators
+✅ Comprehensive data analysis
+
+📅 Report Generated: ${currentDate.toLocaleString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}
+
+Note: The PDF report has been downloaded to your device. Please attach it to this email before sending.
+
+Best regards,
+Attendance Tracker System v3.0
+`;
+
+                // Open email client with the content
+                const subject = `📊 Attendance Analytics Report - ${dateStr}`;
+                const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
+                
+                // Delay to allow PDF generation to complete
+                setTimeout(() => {
+                    try {
+                        window.open(mailtoLink, '_self');
+                    } catch (error) {
+                        // Fallback method
+                        const tempLink = document.createElement('a');
+                        tempLink.href = mailtoLink;
+                        tempLink.target = '_blank';
+                        document.body.appendChild(tempLink);
+                        tempLink.click();
+                        document.body.removeChild(tempLink);
+                    }
+                    
+                    // Reset button
+                    sendBtn.textContent = originalText;
+                    sendBtn.disabled = false;
+                    
+                    // Close the email form
+                    closeEmailForm();
+                    
+                    // Show success message
+                    alert('📊 Analytics PDF generated and email opened!\n\n✅ The PDF has been downloaded to your device\n📧 Please attach it to the email before sending');
+                    
+                }, 1000); // 1 second delay
+                
             } catch (error) {
-                // Fallback to creating a temporary link element
-                const tempLink = document.createElement('a');
-                tempLink.href = mailtoLink;
-                tempLink.target = '_blank';
-                document.body.appendChild(tempLink);
-                tempLink.click();
-                document.body.removeChild(tempLink);
+                console.error('Error generating email with PDF:', error);
+                alert('❌ Error generating the analytics report. Please try again.');
+                
+                // Reset button on error
+                const sendBtn = document.getElementById('sendEmailBtn');
+                sendBtn.textContent = 'Send Email';
+                sendBtn.disabled = false;
             }
-            
-            alert(`📧 Beautiful email report ready!\n📊 ${recordsToInclude.length} records analyzed\n📈 ${analytics.attendanceRate}% attendance rate`);
-            closeEmailForm();
         }
         
         // Helper function to calculate email analytics
