@@ -12295,23 +12295,32 @@ ${environment.tips.slice(0, 3).join('\n')}
                         }
                     });
                     
-                    // Linear regression on attendance rates (MATLAB-compatible)
-                    const n = weeklyRates.length;
+                    // *** Take only last 3 samples for trend analysis (MATLAB-compatible) ***
+                    // Store original for reference, use last 3 for calculations
+                    const originalWeeklyRates = [...weeklyRates];
+                    const originalIncludedDates = [...includedDates];
+                    
+                    // Use only last 3 samples for trend calculation
+                    const trendWeeklyRates = weeklyRates.length > 3 ? weeklyRates.slice(-3) : weeklyRates;
+                    const trendIncludedDates = includedDates.length > 3 ? includedDates.slice(-3) : includedDates;
+                    
+                    // Linear regression on attendance rates (MATLAB-compatible - Last 3 Samples)
+                    const n = trendWeeklyRates.length;
                     if (n < 2) return 'FLAT'; // Need at least 2 points for trend
                     
                     // Sequential week numbers (1, 2, 3, ...)
                     const weeks = Array.from({ length: n }, (_, i) => i + 1);
                     
-                    // Calculate means
+                    // Calculate means (using last 3 samples)
                     const weeks_mean = weeks.reduce((sum, val) => sum + val, 0) / n;
-                    const rates_mean = weeklyRates.reduce((sum, val) => sum + val, 0) / n;
+                    const rates_mean = trendWeeklyRates.reduce((sum, val) => sum + val, 0) / n;
                     
                     // Calculate numerator and denominator for slope
                     let numerator = 0;
                     let denominator = 0;
                     
                     for (let i = 0; i < n; i++) {
-                        numerator += (weeks[i] - weeks_mean) * (weeklyRates[i] - rates_mean);
+                        numerator += (weeks[i] - weeks_mean) * (trendWeeklyRates[i] - rates_mean);
                         denominator += (weeks[i] - weeks_mean) ** 2;
                     }
                     
@@ -12323,39 +12332,46 @@ ${environment.tips.slice(0, 3).join('\n')}
                     const fitted = weeks.map(week => slope * week + intercept);
                     
                     // Calculate R-squared (fit quality)
-                    const SSres = weeklyRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0);
-                    const SStot = weeklyRates.reduce((sum, rate) => sum + Math.pow(rate - rates_mean, 2), 0);
+                    const SSres = trendWeeklyRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0);
+                    const SStot = trendWeeklyRates.reduce((sum, rate) => sum + Math.pow(rate - rates_mean, 2), 0);
                     const rSquared = SStot !== 0 ? 1 - (SSres / SStot) : 1;
                     
-                    // Sophisticated Overall Statistics (MATLAB-compatible)
-                    const overallChange = weeklyRates.length > 0 ? weeklyRates[weeklyRates.length - 1] - weeklyRates[0] : 0;
+                    // Sophisticated Overall Statistics (MATLAB-compatible - Last 3 Samples)
+                    const overallChange = trendWeeklyRates.length > 0 ? trendWeeklyRates[trendWeeklyRates.length - 1] - trendWeeklyRates[0] : 0;
                     
                     // Week-to-week change (most recent change)
-                    const weekToWeekChange = weeklyRates.length > 1 ? 
-                        weeklyRates[weeklyRates.length - 1] - weeklyRates[weeklyRates.length - 2] : 0;
+                    const weekToWeekChange = trendWeeklyRates.length > 1 ? 
+                        trendWeeklyRates[trendWeeklyRates.length - 1] - trendWeeklyRates[trendWeeklyRates.length - 2] : 0;
                     
-                    // Statistical measures
+                    // Statistical measures (using last 3 samples)
                     const avgRate = rates_mean; // Already calculated above
                     
-                    // Calculate minimum rate - if it's 0 (absent from day 1), use second minimum for more meaningful analysis
-                    let minRate = Math.min(...weeklyRates);
-                    if (minRate === 0 && weeklyRates.length > 1) {
+                    // Calculate minimum rate from FULL DATASET (not just last 3 samples) - if it's 0 (absent from day 1), use second minimum for more meaningful analysis
+                    let minRate = Math.min(...originalWeeklyRates);
+                    if (minRate === 0 && originalWeeklyRates.length > 1) {
                         // Get sorted rates and find second minimum
-                        const sortedRates = [...weeklyRates].sort((a, b) => a - b);
+                        const sortedRates = [...originalWeeklyRates].sort((a, b) => a - b);
                         // Find first non-zero value as more meaningful minimum
                         minRate = sortedRates.find(rate => rate > 0) || 0;
                     }
                     
-                    const maxRate = Math.max(...weeklyRates);
+                    // Calculate maximum rate from FULL DATASET - if it's 100% (perfect attendance), use second highest for more meaningful analysis
+                    let maxRate = Math.max(...originalWeeklyRates);
+                    if (maxRate === 100 && originalWeeklyRates.length > 1) {
+                        // Get sorted rates and find second maximum
+                        const sortedRates = [...originalWeeklyRates].sort((a, b) => b - a);
+                        // Find first value less than 100% as more meaningful maximum
+                        maxRate = sortedRates.find(rate => rate < 100) || 100;
+                    }
                     
-                    // RMSE (Root Mean Square Error) for trend accuracy
-                    const rmse = weeklyRates.length > 0 ? 
-                        Math.sqrt(weeklyRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0) / weeklyRates.length) : 0;
+                    // RMSE (Root Mean Square Error) for trend accuracy (Last 3 Samples)
+                    const rmse = trendWeeklyRates.length > 0 ? 
+                        Math.sqrt(trendWeeklyRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0) / trendWeeklyRates.length) : 0;
                     
-                    // Week-to-week changes array (for volatility analysis)
+                    // Week-to-week changes array (for volatility analysis - Last 3 Samples)
                     const weekToWeekChanges = [];
-                    for (let i = 1; i < weeklyRates.length; i++) {
-                        weekToWeekChanges.push(weeklyRates[i] - weeklyRates[i - 1]);
+                    for (let i = 1; i < trendWeeklyRates.length; i++) {
+                        weekToWeekChanges.push(trendWeeklyRates[i] - trendWeeklyRates[i - 1]);
                     }
                     
                     // Volatility measure (standard deviation of week-to-week changes)
@@ -12365,13 +12381,13 @@ ${environment.tips.slice(0, 3).join('\n')}
                         volatility = Math.sqrt(weekToWeekChanges.reduce((sum, val) => sum + Math.pow(val - changesMean, 2), 0) / weekToWeekChanges.length);
                     }
                     
-                    // Moving average (3-week window, MATLAB-compatible)
+                    // Moving average (3-week window, MATLAB-compatible - Last 3 Samples)
                     const windowSize = Math.min(3, n);
                     const movingAvg = [];
                     for (let i = 0; i < n; i++) {
                         const start = Math.max(0, i - Math.floor(windowSize / 2));
                         const end = Math.min(n, start + windowSize);
-                        const window = weeklyRates.slice(start, end);
+                        const window = trendWeeklyRates.slice(start, end);
                         const avg = window.reduce((sum, val) => sum + val, 0) / window.length;
                         movingAvg.push(avg);
                     }
@@ -12393,8 +12409,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                         totalDates: sortedClassDates.length,
                         includedDates: includedDates.length,
                         excludedExcused: sortedClassDates.length - includedDates.length,
-                        weeklyRates: weeklyRates.map(rate => rate.toFixed(2)),
-                        ratesString: `[${weeklyRates.map(rate => rate.toFixed(2)).join('  ')}]`, // MATLAB format with spacing
+                        weeklyRates: trendWeeklyRates.map(rate => rate.toFixed(2)),
+                        ratesString: `[${trendWeeklyRates.map(rate => rate.toFixed(2)).join('  ')}]`, // MATLAB format with spacing (Last 3 Samples)
                         
                         // Linear regression results
                         slope: slope.toFixed(4),
@@ -12418,17 +12434,17 @@ ${environment.tips.slice(0, 3).join('\n')}
                         trendClassification: trendClassification,
                         fitQuality: rSquared >= 0.7 ? 'EXCELLENT' : rSquared >= 0.5 ? 'GOOD' : rSquared >= 0.3 ? 'FAIR' : 'POOR',
                         
-                        dateMapping: includedDates.map((date, index) => ({
+                        dateMapping: trendIncludedDates.map((date, index) => ({
                             week: index + 1,
                             date: date,
-                            cumulativeRate: weeklyRates[index].toFixed(1) + '%',
+                            cumulativeRate: trendWeeklyRates[index].toFixed(1) + '%',
                             movingAvg: movingAvg[index].toFixed(1) + '%'
                         })),
                         
-                        // MATLAB-style sophisticated output
+                        // MATLAB-style sophisticated output (Last 3 Samples)
                         matlabStyleOutput: [
-                            '--- Sophisticated Linear Weekly Attendance Trend ---',
-                            `Weekly Rates: ${weeklyRates.map(rate => rate.toFixed(2)).join('  ')}`,
+                            '--- Sophisticated Linear Weekly Attendance Trend (Last 3 Samples) ---',
+                            `Weekly Rates: ${trendWeeklyRates.map(rate => rate.toFixed(2)).join('  ')}`,
                             `Average Rate: ${avgRate.toFixed(2)}%`,
                             `Min Rate: ${minRate.toFixed(1)}%, Max Rate: ${maxRate.toFixed(1)}%`,
                             `Slope (%/week): ${slope.toFixed(4)}`,
@@ -12440,6 +12456,11 @@ ${environment.tips.slice(0, 3).join('\n')}
                             `Volatility: ${volatility.toFixed(3)}`,
                             `Trend: ${trendClassification} ${slope > 2 ? '📈' : slope < -2 ? '📉' : '➡️'}`
                         ].join('\n'),
+                        
+                        // Analysis summary
+                        analysisNote: `Analysis based on last ${trendWeeklyRates.length} samples out of ${originalWeeklyRates.length} total data points`,
+                        originalDataCount: originalWeeklyRates.length,
+                        trendDataCount: trendWeeklyRates.length,
                         
                         // Compact summary for table display
                         interpretation: `${trendClassification} (${slope > 0 ? '+' : ''}${slope.toFixed(2)}%/wk, R²=${rSquared.toFixed(2)}, Δ=${weekToWeekChange > 0 ? '+' : ''}${weekToWeekChange.toFixed(1)}%)`
@@ -12458,7 +12479,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                         minRate: parseFloat(minRate.toFixed(1)),
                         maxRate: parseFloat(maxRate.toFixed(1)),
                         volatility: parseFloat(volatility.toFixed(3)),
-                        weeklyRatesCount: weeklyRates.length,
+                        weeklyRatesCount: trendWeeklyRates.length,
+                        originalDataCount: originalWeeklyRates.length,
                         fitQuality: rSquared >= 0.7 ? 'EXCELLENT' : rSquared >= 0.5 ? 'GOOD' : rSquared >= 0.3 ? 'FAIR' : 'POOR',
                         displayValue: `${slope > 0 ? '+' : ''}${slope.toFixed(1)}%/wk (R²=${rSquared.toFixed(2)})`,
                         sophisticatedSummary: `Avg:${avgRate.toFixed(1)}% | Δ:${weekToWeekChange > 0 ? '+' : ''}${weekToWeekChange.toFixed(1)}% | RMSE:${rmse.toFixed(1)}`
@@ -12519,6 +12541,10 @@ ${environment.tips.slice(0, 3).join('\n')}
                         ? `${attendanceTrend.minRate.toFixed(1)}%`
                         : `${student.attendanceRate.toFixed(1)}%`; // Use current rate instead of N/A when insufficient weekly data
                     
+                    const maxRate = typeof attendanceTrend === 'object' && attendanceTrend.maxRate !== undefined && attendanceTrend.maxRate !== null
+                        ? `${attendanceTrend.maxRate.toFixed(1)}%`
+                        : `${student.attendanceRate.toFixed(1)}%`; // Use current rate instead of N/A when insufficient weekly data
+                    
                     advancedTableData.push([
                         (index + 1).toString(), // Add row number for reference
                         student.name,
@@ -12526,6 +12552,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                         engagementIndex.toFixed(1), // Engagement Index column
                         weeklyChange, // Weekly Rate Change column
                         minRate, // Min Rate column
+                        maxRate, // Max Rate column
                         typeof attendanceTrend === 'object' ? attendanceTrend.displayValue : attendanceTrend // Advanced Trend column with R² info
                     ]);
                 });
@@ -12626,7 +12653,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 yPosition += 10;
                 
                 doc.autoTable({
-                    head: [['#', 'Student Name', 'CI', 'EI', 'Weekly Change', 'Min Rate', 'Trend']],
+                    head: [['#', 'Student Name', 'CI', 'EI', 'Weekly Change', 'Min Rate', 'Max Rate', 'Trend']],
                     body: advancedTableData,
                     startY: yPosition,
                     theme: 'striped',
@@ -12640,13 +12667,14 @@ ${environment.tips.slice(0, 3).join('\n')}
                         fillColor: [248, 246, 250] // Light purple
                     },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 15 },   // #
-                        1: { cellWidth: 45 },                     // Student Name (reduced for new column)
-                        2: { halign: 'center', cellWidth: 18 },   // CI
-                        3: { halign: 'center', cellWidth: 18 },   // EI
-                        4: { halign: 'center', cellWidth: 22 },   // Weekly Change
-                        5: { halign: 'center', cellWidth: 22 },   // Min Rate
-                        6: { halign: 'center', cellWidth: 55 }    // Trend (widest for complex trend data)
+                        0: { halign: 'center', cellWidth: 12 },   // #
+                        1: { cellWidth: 40 },                     // Student Name (reduced for new column)
+                        2: { halign: 'center', cellWidth: 16 },   // CI
+                        3: { halign: 'center', cellWidth: 16 },   // EI
+                        4: { halign: 'center', cellWidth: 20 },   // Weekly Change
+                        5: { halign: 'center', cellWidth: 18 },   // Min Rate
+                        6: { halign: 'center', cellWidth: 18 },   // Max Rate
+                        7: { halign: 'center', cellWidth: 50 }    // Trend (widest for complex trend data)
                     },
                     styles: {
                         fontSize: 9,
@@ -12769,8 +12797,36 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     }
                             }
                             
+                            // Color coding for Max Rate
+                            if (data.column.index === 6) { // Max Rate column
+                                const maxRateText = data.cell.raw.toString();
+                                const maxRate = parseFloat(maxRateText.replace('%', ''));
+                                    if (maxRate >= 95) {
+                                        // Excellent maximum rate (≥95%)
+                                        data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
+                                        data.cell.styles.fontStyle = 'bold';
+                                    } else if (maxRate >= 90) {
+                                        // Very good maximum rate (90-94%)
+                                        data.cell.styles.textColor = [34, 139, 34]; // Dark Green
+                                        data.cell.styles.fontStyle = 'bold';
+                                    } else if (maxRate >= 80) {
+                                        // Good maximum rate (80-89%)
+                                        data.cell.styles.textColor = [46, 204, 113]; // Light Green
+                                    } else if (maxRate >= 70) {
+                                        // Fair maximum rate (70-79%)
+                                        data.cell.styles.textColor = [243, 156, 18]; // Orange
+                                    } else if (maxRate >= 60) {
+                                        // Poor maximum rate (60-69%)
+                                        data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                                    } else {
+                                        // Very poor maximum rate (<60%)
+                                        data.cell.styles.textColor = [139, 0, 0]; // Dark Red
+                                        data.cell.styles.fontStyle = 'bold';
+                                    }
+                            }
+                            
                             // Color coding for Advanced Trend Analysis
-                            if (data.column.index === 6) { // Trend column (moved to index 6)
+                            if (data.column.index === 7) { // Trend column (moved to index 7)
                                 const trendText = data.cell.raw.toString();
                                 
                                 if (trendText.includes('+')) {
