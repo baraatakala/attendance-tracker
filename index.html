@@ -11810,44 +11810,54 @@ ${environment.tips.slice(0, 3).join('\n')}
             const dailyRates = [];
             const dateMapping = [];
 
-            // Calculate effective attendance rate for each date
-            sortedClassDates.forEach(date => {
-                // Get all records for this date
-                const dateRecords = filteredData.filter(record => {
+            // Calculate CUMULATIVE effective attendance rate up to each date (like summary statistics)
+            let cumulativePresentRecords = 0;
+            let cumulativeTotalVacation = 0;
+            let cumulativeDaysCovered = 0;
+
+            sortedClassDates.forEach((date, dayIndex) => {
+                cumulativeDaysCovered = dayIndex + 1; // Days covered up to this date
+
+                // Get all records UP TO this date (cumulative)
+                const recordsUpToDate = filteredData.filter(record => {
                     const recordDate = record.datetime ? record.datetime.split(' ')[0] : 
                                      record.date || record.timestamp?.split(' ')[0] || '';
-                    return recordDate === date;
+                    const recordDateObj = new Date(recordDate);
+                    const currentDateObj = new Date(date);
+                    return recordDate && recordDateObj <= currentDateObj;
                 });
 
-                // Count present and excused absences for this date
-                let presentCount = 0;
-                let excusedAbsences = 0;
-                
-                dateRecords.forEach(record => {
+                // Count cumulative present records and vacation days
+                cumulativePresentRecords = recordsUpToDate.filter(record => {
                     const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
-                    if (status === 'present' || status.includes('present')) {
-                        presentCount++;
-                    } else if (status === 'absent' || status.includes('absent')) {
-                        const notes = record.notes || '';
-                        if (isExcusedAbsence(notes)) {
-                            excusedAbsences++;
-                        }
-                    }
-                });
+                    return status === 'present' || status.includes('present');
+                }).length;
 
-                // Calculate effective attendance rate for this date
-                // Formula: presentCount / (totalStudents - excusedAbsences) * 100
-                const effectiveStudentsForDay = totalStudents - excusedAbsences;
-                const effectiveRate = effectiveStudentsForDay > 0 ? 
-                    (presentCount / effectiveStudentsForDay) * 100 : 0;
+                cumulativeTotalVacation = recordsUpToDate.filter(record => {
+                    const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
+                    if (status === 'absent' || status.includes('absent')) {
+                        const notes = record.notes || '';
+                        return isExcusedAbsence(notes);
+                    }
+                    return false;
+                }).length;
+
+                // Calculate effective attendance rate using CORRECT formula
+                // Formula: cumulativePresentRecords / (totalStudents * cumulativeDaysCovered - cumulativeTotalVacation) * 100
+                const expectedTotalAttendance = totalStudents * cumulativeDaysCovered;
+                const effectiveTotalDays = expectedTotalAttendance - cumulativeTotalVacation;
+                const effectiveRate = effectiveTotalDays > 0 ? 
+                    (cumulativePresentRecords / effectiveTotalDays) * 100 : 0;
 
                 dailyRates.push(effectiveRate);
                 dateMapping.push({
                     date: date,
                     rate: effectiveRate,
-                    present: presentCount,
-                    excused: excusedAbsences,
-                    effective: effectiveStudentsForDay
+                    cumulativePresent: cumulativePresentRecords,
+                    cumulativeVacation: cumulativeTotalVacation,
+                    daysCovered: cumulativeDaysCovered,
+                    expectedTotal: expectedTotalAttendance,
+                    effectiveTotal: effectiveTotalDays
                 });
             });
 
