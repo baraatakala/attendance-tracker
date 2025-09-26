@@ -10712,7 +10712,39 @@ ${environment.tips.slice(0, 3).join('\n')}
             elements.absentBtn.classList.remove('selected');
             
             selectedAttendanceStatus = null;
-            elements.student.focus();
+            
+            // Reset and show full student list
+            const searchInput = document.getElementById('studentSearch');
+            const dropdown = document.getElementById('studentDropdown');
+            const clearButton = document.getElementById('clearStudentSearch');
+            
+            if (searchInput && dropdown && clearButton) {
+                // Clear search input
+                searchInput.value = '';
+                
+                // Hide clear button
+                clearButton.style.display = 'none';
+                
+                // Use setTimeout to ensure DOM is ready for dropdown manipulation
+                setTimeout(() => {
+                    // Show dropdown with all students
+                    dropdown.classList.add('show');
+                    
+                    // Show all student options
+                    const options = dropdown.querySelectorAll('.student-option');
+                    options.forEach(option => {
+                        option.style.display = 'block';
+                        option.classList.remove('selected');
+                        option.classList.remove('highlighted');
+                    });
+                    
+                    // Focus on search input for immediate typing
+                    searchInput.focus();
+                }, 50); // Small delay to ensure proper initialization
+            } else {
+                // Fallback to original focus behavior if dropdown elements not found
+                elements.student.focus();
+            }
         }
 
         function toggleRecordsView() {
