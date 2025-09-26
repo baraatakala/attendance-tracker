@@ -12892,11 +12892,11 @@ ${environment.tips.slice(0, 3).join('\n')}
                     
                     const minRate = typeof attendanceTrend === 'object' && attendanceTrend.minRate !== undefined && attendanceTrend.minRate !== null
                         ? `${attendanceTrend.minRate.toFixed(1)}%`
-                        : `${student.attendanceRate.toFixed(1)}%`; // Use current rate instead of N/A when insufficient weekly data
+                        : `${student.rate.toFixed(1)}%`; // Use current rate instead of N/A when insufficient weekly data
                     
                     const maxRate = typeof attendanceTrend === 'object' && attendanceTrend.maxRate !== undefined && attendanceTrend.maxRate !== null
                         ? `${attendanceTrend.maxRate.toFixed(1)}%`
-                        : `${student.attendanceRate.toFixed(1)}%`; // Use current rate instead of N/A when insufficient weekly data
+                        : `${student.rate.toFixed(1)}%`; // Use current rate instead of N/A when insufficient weekly data
                     
                     advancedTableData.push([
                         (index + 1).toString(), // Add row number for reference
