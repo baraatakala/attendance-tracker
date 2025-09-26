@@ -2257,16 +2257,7 @@
             }
         }
 
-        .date-analytics {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 0;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            overflow: hidden;
-        }
+
 
         .section-header {
             color: #2c3e50;
@@ -2319,6 +2310,149 @@
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
+        /* Matrix Absence Analytics Styles */
+        .matrix-absence-analytics {
+            background: linear-gradient(135deg, rgba(255, 245, 245, 0.95), rgba(255, 235, 235, 0.95));
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.15);
+            padding: 0;
+            margin-bottom: 20px;
+            border: 2px solid rgba(231, 76, 60, 0.1);
+            overflow: hidden;
+        }
+
+        .matrix-absence-analytics .section-header {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+            border-bottom: 2px solid rgba(231, 76, 60, 0.15);
+        }
+
+        .matrix-absence-analytics .section-header:hover {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15));
+        }
+
+        .matrix-analysis-description {
+            background: rgba(52, 152, 219, 0.05);
+            border: 1px solid rgba(52, 152, 219, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .matrix-absence-timeline {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .matrix-insights {
+            margin-top: 20px;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .insight-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.15);
+        }
+
+        .insight-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .insight-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .matrix-date-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: white;
+            border: 1px solid rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .matrix-date-item:hover {
+            background: rgba(231, 76, 60, 0.05);
+            transform: translateX(5px);
+        }
+
+        .matrix-date-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .matrix-date {
+            font-weight: bold;
+            color: #2c3e50;
+            min-width: 100px;
+        }
+
+        .matrix-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+        }
+
+        .matrix-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .matrix-stat.absences {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .matrix-stat.present {
+            color: #27ae60;
+        }
+
+        .matrix-stat.rate {
+            color: #f39c12;
+        }
+
+        .matrix-binary {
+            font-family: 'Courier New', monospace;
+            background: rgba(231, 76, 60, 0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #c0392b;
+        }
+
         .analytics-tab {
             flex: 1;
             padding: 15px 10px;
@@ -2350,45 +2484,7 @@
             display: block;
         }
 
-        .absence-timeline {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
 
-        .timeline-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background: linear-gradient(45deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
-            border-radius: 10px;
-            border-left: 3px solid #e74c3c;
-            transition: all 0.3s ease;
-        }
-
-        .timeline-item:hover {
-            transform: translateX(3px);
-            box-shadow: 0 3px 12px rgba(231, 76, 60, 0.2);
-        }
-
-        .timeline-date {
-            font-weight: 700;
-            color: #2c3e50;
-            font-size: 1rem;
-        }
-
-        .timeline-count {
-            background: linear-gradient(45deg, #27ae60, #229954);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
-        }
 
         .individual-stats {
             background: rgba(255, 255, 255, 0.95);
@@ -6136,44 +6232,46 @@
                     </div>
                 </div>
 
-                <!-- Dates with Highest Present -->
-                <div class="date-analytics">
+                <!-- Matrix Analysis: Dates with Highest Unexcused Absences -->
+                <div class="matrix-absence-analytics">
                     <div class="section-header" onclick="toggleSection(this)">
-                        <span><i class="fas fa-calendar-check header-icon"></i> Dates with Highest Present</span>
+                        <span><i class="fas fa-matrix-code header-icon" style="color: #e74c3c;"></i> Matrix Analysis: Highest Unexcused Absences</span>
                         <i class="fas fa-chevron-down section-toggle"></i>
                     </div>
                     <div class="section-content">
-                        <div id="absenceTimeline" class="absence-timeline">
-                            <div class="analytics-empty">No absence data available</div>
+                        <div class="matrix-analysis-description">
+                            <p><i class="fas fa-info-circle" style="color: #3498db;"></i> <strong>Intelligent Analysis:</strong> 
+                            Uses binary matrix logic (1=Present, 0=Unexcused Absent) from Consistency Index calculations 
+                            to identify dates with highest collective absenteeism patterns.</p>
+                        </div>
+                        <div id="matrixAbsenceTimeline" class="matrix-absence-timeline">
+                            <div class="analytics-empty">Generate analytics to view matrix-based absence patterns</div>
+                        </div>
+                        <div id="matrixInsights" class="matrix-insights">
+                            <div class="insights-grid">
+                                <div class="insight-card">
+                                    <div class="insight-label">Worst Date</div>
+                                    <div class="insight-value" id="worstAbsenceDate">-</div>
+                                </div>
+                                <div class="insight-card">
+                                    <div class="insight-label">Max Absences</div>
+                                    <div class="insight-value" id="maxAbsences">-</div>
+                                </div>
+                                <div class="insight-card">
+                                    <div class="insight-label">Avg Absenteeism</div>
+                                    <div class="insight-value" id="avgAbsenteeism">-</div>
+                                </div>
+                                <div class="insight-card">
+                                    <div class="insight-label">Matrix Zeros</div>
+                                    <div class="insight-value" id="matrixZeros">-</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Charts Section -->
                 <div class="individual-stats">
-                    <div class="charts-filter-section">
-                        <div class="charts-filter-container">
-                            <div class="filter-input-group">
-                                <i class="fas fa-user filter-icon"></i>
-                                <select id="chartStudentFilter" 
-                                        class="chart-student-filter" 
-                                        aria-label="Filter students in charts view">
-                                    <option value="">All Students</option>
-                                </select>
-                                <button type="button" 
-                                        id="clearChartStudentFilter" 
-                                        class="clear-filter-btn" 
-                                        onclick="clearChartStudentFilter()" 
-                                        title="Clear student filter"
-                                        style="display: none;">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="filter-results-info">
-                                <span id="chartFilterResults" class="filter-results-text"></span>
-                            </div>
-                        </div>
-                    </div>
                     <div id="studentChartsContainer" class="charts-container">
                         <div class="analytics-empty">Select "Refresh Analytics" to generate charts</div>
                     </div>
@@ -7308,9 +7406,6 @@
             initializeApp();
             initializeAnalyticsUI();
             
-            // Initialize chart filter keyboard shortcuts
-            setupChartFilterKeyboardShortcuts();
-            
             // Initialize searchable student dropdown
             initializeSearchableDropdown();
             
@@ -7368,10 +7463,10 @@
         }
 
         function initializeAnalyticsUI() {
-            // Initialize collapsible sections - keep date analytics collapsed by default
-            const dateAnalyticsContent = document.querySelector('.date-analytics .section-content');
-            if (dateAnalyticsContent) {
-                dateAnalyticsContent.style.display = 'none';
+            // Initialize collapsible sections - matrix analytics collapsed by default
+            const matrixAnalyticsContent = document.querySelector('.matrix-absence-analytics .section-content');
+            if (matrixAnalyticsContent) {
+                matrixAnalyticsContent.style.display = 'none';
             }
             
             // Initialize tabs - first tab active by default
@@ -11791,7 +11886,7 @@ ${environment.tips.slice(0, 3).join('\n')}
         function showEmptyAnalytics() {
             document.getElementById('highestAttendanceList').innerHTML = '<li class="analytics-empty">No data available for selected period</li>';
             document.getElementById('lowestAttendanceList').innerHTML = '<li class="analytics-empty">No data available for selected period</li>';
-            document.getElementById('absenceTimeline').innerHTML = '<div class="analytics-empty">No absence data available</div>';
+            // Matrix analytics will handle its own empty state
         }
 
         // Helper function to resolve student names for PDF export
@@ -11965,6 +12060,93 @@ ${environment.tips.slice(0, 3).join('\n')}
                 lastFourData: lastFourDates,
                 fitted: fitted
             };
+        }
+
+        // Analyze Dates with Highest Unexcused Absences (using CI matrix logic)
+        function analyzeDatesByUnexcusedAbsences(filteredData, totalStudents, allClassDates) {
+            if (!filteredData || filteredData.length === 0 || !allClassDates || allClassDates.length === 0) {
+                return [];
+            }
+
+            // Get unique students from the data
+            const uniqueStudents = [...new Set(filteredData.map(record => 
+                record.studentName || record.studentId || 'Unknown'
+            ))];
+
+            // If no unique students found, use totalStudents as fallback
+            const studentCount = uniqueStudents.length > 0 ? uniqueStudents.length : totalStudents;
+            
+            // Sort dates chronologically (same as CI calculation)
+            const sortedClassDates = [...allClassDates].sort((a, b) => new Date(a) - new Date(b));
+            
+            // Build attendance matrix for each date (inspired by CI logic)
+            const dateAnalysis = [];
+            
+            sortedClassDates.forEach(date => {
+                let unexcusedAbsences = 0;
+                let presentCount = 0;
+                let excusedAbsences = 0;
+                
+                // Create binary matrix for this date across all students
+                uniqueStudents.forEach(studentName => {
+                    // Find student's record for this date
+                    const studentRecord = filteredData.find(record => {
+                        const recordStudent = record.studentName || record.studentId || 'Unknown';
+                        const recordDate = record.datetime ? record.datetime.split(' ')[0] : 
+                                         record.date || record.timestamp?.split(' ')[0] || '';
+                        
+                        return recordStudent === studentName && recordDate === date;
+                    });
+                    
+                    if (studentRecord) {
+                        const status = (studentRecord.attendanceStatus || studentRecord.action || '').toLowerCase().trim();
+                        
+                        if (status === 'present' || status.includes('present')) {
+                            // Binary: 1 (present)
+                            presentCount++;
+                        } else if (status === 'absent' || status.includes('absent')) {
+                            // Check if absence is excused (has vacation notes)
+                            const notes = studentRecord.notes || '';
+                            if (isExcusedAbsence(notes)) {
+                                // Excused absence - excluded from unexcused count
+                                excusedAbsences++;
+                            } else {
+                                // Binary: 0 (unexcused absent)
+                                unexcusedAbsences++;
+                            }
+                        } else {
+                            // Unknown status - treat as unexcused absent (Binary: 0)
+                            unexcusedAbsences++;
+                        }
+                    } else {
+                        // No record at all - unexcused absent (Binary: 0)
+                        unexcusedAbsences++;
+                    }
+                });
+                
+                // Calculate absenteeism percentage for this date
+                const totalAccountableStudents = presentCount + unexcusedAbsences; // Exclude excused
+                const absenteeismRate = totalAccountableStudents > 0 ? 
+                    (unexcusedAbsences / totalAccountableStudents) * 100 : 0;
+                
+                dateAnalysis.push({
+                    date: date,
+                    unexcusedAbsences: unexcusedAbsences,
+                    presentCount: presentCount,
+                    excusedAbsences: excusedAbsences,
+                    totalStudents: studentCount,
+                    accountableStudents: totalAccountableStudents,
+                    absenteeismRate: absenteeismRate,
+                    // Binary matrix representation for this date (sum of zeros)
+                    matrixZeros: unexcusedAbsences,
+                    matrixOnes: presentCount
+                });
+            });
+            
+            // Sort by highest unexcused absences (most zeros in the matrix)
+            dateAnalysis.sort((a, b) => b.unexcusedAbsences - a.unexcusedAbsences);
+            
+            return dateAnalysis;
         }
 
         // PDF Export Functions
@@ -12153,31 +12335,31 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const dangerColor = [231, 76, 60]; // Red
                 const textColor = [44, 62, 80]; // Dark blue-gray
                 
-                // Header - Extended to accommodate both lines
+                // Header - Optimized for compact layout
                 doc.setFillColor(...primaryColor);
-                doc.rect(0, 0, 210, 38, 'F'); // Increased from 30 to 38
+                doc.rect(0, 0, 210, 32, 'F'); // Reduced from 38 to 32
                 
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(20);
-                doc.text('ATTENDANCE ANALYTICS REPORT', 20, 20);
+                doc.setFontSize(18); // Reduced from 20 to 18
+                doc.text('ATTENDANCE ANALYTICS REPORT', 20, 18);
                 
                 // Date and filter info
-                doc.setFontSize(10);
+                doc.setFontSize(9);
                 const currentDate = new Date().toLocaleDateString();
                 const filterText = getPeriodDisplayName(filterPeriod);
                 const actualDateRange = getActualDateRange(filteredData);
-                doc.text(`Generated on: ${currentDate} | Period: ${filterText}`, 20, 26);
+                doc.text(`Generated on: ${currentDate} | Period: ${filterText}`, 20, 24);
                 
                 // Add the actual date range with simple text (still in white text on blue background)
                 if (actualDateRange && actualDateRange !== 'No data') {
-                    doc.text(`Report Period: ${actualDateRange}`, 20, 32);
+                    doc.text(`Report Period: ${actualDateRange}`, 20, 28);
                 }
                 
                 // Reset text color for body
                 doc.setTextColor(...textColor);
                 
-                let yPosition = 50; // Reduced from 55 to 50 for better spacing
+                let yPosition = 42; // Reduced from 50 to 42 for better spacing
                 
                 // Summary Statistics using the same calculations as dashboard
                 addSectionHeader(doc, 'SUMMARY STATISTICS', yPosition);
@@ -12221,10 +12403,10 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const summaryData = [
                     ['Total Records', totalRecords.toString()],
                     ['Total Students', totalStudents.toString()],
-                    ['Number of Present', presentRecords.toString()],
-                    ['number of Execused Absent', totalVacation.toString()],
-                    ['Total number of Absent', totalAbsent.toString()],
-                    ['number of Unexcused Absent', unexcusedAbsent.toString()],
+                    ['Present Records', presentRecords.toString()],
+                    ['Excused Absences', totalVacation.toString()],
+                    ['Total Absences', totalAbsent.toString()],
+                    ['Unexcused Absences', unexcusedAbsent.toString()],
                     ['Raw Attendance Rate', `${rawAttendanceRate}%`],
                     ['Effective Attendance Rate', `${effectiveAttendanceRate}%`],
                     ['Class Average Rate', `${classAverageRate}%`],
@@ -12235,21 +12417,26 @@ ${environment.tips.slice(0, 3).join('\n')}
                 doc.autoTable({
                     body: summaryData,
                     startY: yPosition,
-                    theme: 'plain',
+                    theme: 'striped',
+                    alternateRowStyles: {
+                        fillColor: [248, 249, 250]
+                    },
                     styles: {
-                        fontSize: 10,
-                        cellPadding: 4
+                        fontSize: 9,
+                        cellPadding: 2,
+                        minCellHeight: 6
                     },
                     columnStyles: {
-                        0: { fontStyle: 'bold', cellWidth: 60 },
-                        1: { cellWidth: 40 }
+                        0: { fontStyle: 'bold', cellWidth: 80, halign: 'left' },
+                        1: { cellWidth: 40, halign: 'center', fontStyle: 'bold' }
                     },
-                    margin: { top: 20, left: 8, right: 8 }
+                    margin: { top: 2, left: 8, right: 8 },
+                    pageBreak: 'avoid'
                 });
-                yPosition = doc.lastAutoTable.finalY + 15;
+                yPosition = doc.lastAutoTable.finalY + 8;
                 
                 // Check if we need a new page
-                if (yPosition > 250) {
+                if (yPosition > 180) {
                     doc.addPage();
                     yPosition = 20;
                 }
@@ -12694,8 +12881,6 @@ ${environment.tips.slice(0, 3).join('\n')}
                         student.absent.toString(),
                         student.vacation.toString(),
                         student.effectiveDaysCovered.toString(),
-                        `${student.rate}%`,
-                        student.weightedScore.toString(),
                         lateRecords.toString(), // Late Records column
                         onTimeRecords.toString() // On-Time column
                     ]);
@@ -12716,8 +12901,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                     advancedTableData.push([
                         (index + 1).toString(), // Add row number for reference
                         student.name,
-                        consistencyIndex.toFixed(3), // Consistency Index column
-                        engagementIndex.toFixed(1), // Engagement Index column
+                        `${student.rate}%`, // Rate column (moved from basic table)
+                        student.weightedScore.toString(), // Weighted Score column (moved from basic table)
                         weeklyChange, // Weekly Rate Change column
                         minRate, // Min Rate column
                         maxRate, // Max Rate column
@@ -12725,12 +12910,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                     ]);
                 });
                 
-                // Basic Attendance Table
-                doc.text('Basic Attendance Summary', 14, yPosition);
-                yPosition += 10;
+                // Basic Attendance Table - ensure header and table stay together
+                // Reserve space for title + at least 3 table rows (approximately 60px)
+                if (yPosition > 180) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                addSectionHeader(doc, 'Basic Attendance Summary', yPosition);
+                yPosition += 12;
                 
                 doc.autoTable({
-                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Rate', 'Weighted Score', 'Late Records', 'On-Time']],
+                    head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Late Records', 'On-Time']],
                     body: basicTableData,
                     startY: yPosition,
                     theme: 'striped',
@@ -12744,39 +12935,96 @@ ${environment.tips.slice(0, 3).join('\n')}
                         fillColor: [245, 245, 245]
                     },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 10 },   // #
-                        1: { cellWidth: 35 },                     // Student Name (wider since less columns)
-                        2: { halign: 'center', cellWidth: 15 },   // Present
-                        3: { halign: 'center', cellWidth: 15 },   // Absent
-                        4: { halign: 'center', cellWidth: 18 },   // Num-Excuse
-                        5: { halign: 'center', cellWidth: 20 },   // Effective Days
-                        6: { halign: 'center', cellWidth: 15 },   // Rate
-                        7: { halign: 'center', cellWidth: 22 },   // Weighted Score
-                        8: { halign: 'center', cellWidth: 18 },   // Late Records
-                        9: { halign: 'center', cellWidth: 18 }    // On-Time
+                        0: { halign: 'center', cellWidth: 8 },    // #
+                        1: { cellWidth: 45 },                     // Student Name (wider since Rate/Weighted Score removed)
+                        2: { halign: 'center', cellWidth: 18 },   // Present
+                        3: { halign: 'center', cellWidth: 18 },   // Absent
+                        4: { halign: 'center', cellWidth: 24 },   // Num-Excuse
+                        5: { halign: 'center', cellWidth: 28 },   // Effective Days
+                        6: { halign: 'center', cellWidth: 24 },   // Late Records (was column 8)
+                        7: { halign: 'center', cellWidth: 24 }    // On-Time (was column 9)
                     },
                     styles: {
-                        fontSize: 9,
-                        cellPadding: 4,
+                        fontSize: 8,
+                        cellPadding: 1.5,
                         overflow: 'linebreak',
-                        cellWidth: 'wrap'
+                        cellWidth: 'wrap',
+                        minCellHeight: 6
                     },
-                    margin: { top: 20, left: 10, right: 10 },
+                    margin: { top: 1, left: 8, right: 8 },
                     tableWidth: 'auto',
                     showHead: 'everyPage',
+                    pageBreak: 'avoid',
+                    rowPageBreak: 'avoid',
                     didParseCell: function(data) {
-                        // Only apply color coding to body cells, not header cells (Basic table only)
+                        // Basic table now has no special color coding since Rate and Weighted Score moved to Advanced table
                         if (data.section === 'body') {
-                            // Color coding for rates
-                            if (data.column.index === 6 && data.cell.raw.includes('%')) { // Rate column
+                            // No special color coding needed for basic attendance metrics
+                        }
+                    }
+                });
+                
+                yPosition = doc.lastAutoTable.finalY + 8;
+                
+                // Advanced Analytics Table - ensure header and table stay together
+                // Reserve space for title + at least 3 table rows (approximately 60px)
+                if (yPosition > 180) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                addSectionHeader(doc, 'Advanced Analytics & Trends', yPosition);
+                yPosition += 12;
+                
+                doc.autoTable({
+                    head: [['#', 'Student Name', 'Rate', 'Weighted Score', 'Weekly Change', 'Min Rate', 'Max Rate', 'Trend']],
+                    body: advancedTableData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [141, 68, 173], // Purple theme for advanced analytics
+                        textColor: 255,
+                        fontStyle: 'bold',
+                        fontSize: 8
+                    },
+                    alternateRowStyles: {
+                        fillColor: [248, 246, 250] // Light purple
+                    },
+                    columnStyles: {
+                        0: { halign: 'center', cellWidth: 8 },    // #
+                        1: { cellWidth: 38 },                     // Student Name
+                        2: { halign: 'center', cellWidth: 18 },   // Rate (moved from basic table)
+                        3: { halign: 'center', cellWidth: 22 },   // Weighted Score (moved from basic table)
+                        4: { halign: 'center', cellWidth: 22 },   // Weekly Change
+                        5: { halign: 'center', cellWidth: 20 },   // Min Rate
+                        6: { halign: 'center', cellWidth: 20 },   // Max Rate
+                        7: { halign: 'center', cellWidth: 48 }    // Trend
+                    },
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 1.5,
+                        overflow: 'linebreak',
+                        cellWidth: 'wrap',
+                        minCellHeight: 6
+                    },
+                    margin: { top: 1, left: 8, right: 8 },
+                    tableWidth: 'auto',
+                    showHead: 'everyPage',
+                    pageBreak: 'avoid',
+                    rowPageBreak: 'avoid',
+                    didParseCell: function(data) {
+                        // Advanced analytics color coding
+                        if (data.section === 'body') {
+                            // Color coding for Rate (moved from basic table - now column index 2)
+                            if (data.column.index === 2 && data.cell.raw.includes('%')) { // Rate column
                                 const rate = parseFloat(data.cell.raw);
                                 if (rate >= 80) data.cell.styles.textColor = [46, 204, 113]; // Green
                                 else if (rate >= 60) data.cell.styles.textColor = [243, 156, 18]; // Orange
                                 else data.cell.styles.textColor = [220, 20, 20]; // Bright Red
                             }
                             
-                            // Color coding for weighted scores based on class average
-                            if (data.column.index === 7) { // Weighted Score column
+                            // Color coding for Weighted Score (moved from basic table - now column index 3)
+                            if (data.column.index === 3) { // Weighted Score column
                                 const weightedScore = parseFloat(data.cell.raw);
                                 const classAverage = parseFloat(classAverageWeightedScore);
                                 
@@ -12804,109 +13052,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     data.cell.styles.fontStyle = 'bold';
                                 }
                             }
-                        }
-                    }
-                });
-                
-                yPosition = doc.lastAutoTable.finalY + 15;
-                
-                // Check if we need a new page
-                if (yPosition > 200) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                
-                // Advanced Analytics Table
-                doc.text('Advanced Analytics & Trends', 14, yPosition);
-                yPosition += 10;
-                
-                doc.autoTable({
-                    head: [['#', 'Student Name', 'CI', 'EI', 'Weekly Change', 'Min Rate', 'Max Rate', 'Trend']],
-                    body: advancedTableData,
-                    startY: yPosition,
-                    theme: 'striped',
-                    headStyles: {
-                        fillColor: [141, 68, 173], // Purple theme for advanced analytics
-                        textColor: 255,
-                        fontStyle: 'bold',
-                        fontSize: 8
-                    },
-                    alternateRowStyles: {
-                        fillColor: [248, 246, 250] // Light purple
-                    },
-                    columnStyles: {
-                        0: { halign: 'center', cellWidth: 12 },   // #
-                        1: { cellWidth: 40 },                     // Student Name (reduced for new column)
-                        2: { halign: 'center', cellWidth: 16 },   // CI
-                        3: { halign: 'center', cellWidth: 16 },   // EI
-                        4: { halign: 'center', cellWidth: 20 },   // Weekly Change
-                        5: { halign: 'center', cellWidth: 18 },   // Min Rate
-                        6: { halign: 'center', cellWidth: 18 },   // Max Rate
-                        7: { halign: 'center', cellWidth: 50 }    // Trend (widest for complex trend data)
-                    },
-                    styles: {
-                        fontSize: 9,
-                        cellPadding: 4,
-                        overflow: 'linebreak',
-                        cellWidth: 'wrap'
-                    },
-                    margin: { top: 20, left: 10, right: 10 },
-                    tableWidth: 'auto',
-                    showHead: 'everyPage',
-                    didParseCell: function(data) {
-                        // Advanced analytics color coding
-                        if (data.section === 'body') {
-                            // Color coding for Consistency Index (CI)
-                            if (data.column.index === 2) { // CI column
-                                const ci = parseFloat(data.cell.raw);
-                                if (ci >= 0.8) {
-                                    // High consistency (80-100%)
-                                    data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
-                                    data.cell.styles.fontStyle = 'bold';
-                                } else if (ci >= 0.6) {
-                                    // Good consistency (60-79%)
-                                    data.cell.styles.textColor = [46, 204, 113]; // Light Green
-                                } else if (ci >= 0.4) {
-                                    // Moderate consistency (40-59%)
-                                    data.cell.styles.textColor = [243, 156, 18]; // Orange
-                                } else if (ci >= 0.2) {
-                                    // Low consistency (20-39%)
-                                    data.cell.styles.textColor = [220, 20, 20]; // Bright Red
-                                } else {
-                                    // Very low consistency (0-19%)
-                                    data.cell.styles.textColor = [139, 0, 0]; // Dark Red
-                                    data.cell.styles.fontStyle = 'bold';
-                                }
-                            }
                             
-                            // Color coding for Engagement Index (EI)
-                            if (data.column.index === 3) { // EI column
-                                const ei = parseFloat(data.cell.raw);
-                                if (ei >= 85) {
-                                    // Excellent engagement (85-100)
-                                    data.cell.styles.textColor = [0, 100, 0]; // Dark Forest Green
-                                    data.cell.styles.fontStyle = 'bold';
-                                } else if (ei >= 75) {
-                                    // Very good engagement (75-84)
-                                    data.cell.styles.textColor = [34, 139, 34]; // Dark Green
-                                    data.cell.styles.fontStyle = 'bold';
-                                } else if (ei >= 65) {
-                                    // Good engagement (65-74)
-                                    data.cell.styles.textColor = [46, 204, 113]; // Light Green
-                                } else if (ei >= 55) {
-                                    // Moderate engagement (55-64)
-                                    data.cell.styles.textColor = [243, 156, 18]; // Orange
-                                } else if (ei >= 45) {
-                                    // Low engagement (45-54)
-                                    data.cell.styles.textColor = [220, 20, 20]; // Bright Red
-                                } else {
-                                    // Very low engagement (0-44)
-                                    data.cell.styles.textColor = [139, 0, 0]; // Dark Red
-                                    data.cell.styles.fontStyle = 'bold';
-                                }
-                            }
-                            
-                            // Color coding for Weekly Change
+                            // Color coding for Weekly Change (now column index 4)
                             if (data.column.index === 4) { // Weekly Change column
                                 const changeText = data.cell.raw.toString();
                                 const change = parseFloat(changeText.replace(/[^-+\d.]/g, ''));
@@ -12937,7 +13084,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     }
                             }
                             
-                            // Color coding for Min Rate
+                            // Color coding for Min Rate (now column index 5)
                             if (data.column.index === 5) { // Min Rate column
                                 const minRateText = data.cell.raw.toString();
                                 const minRate = parseFloat(minRateText.replace('%', ''));
@@ -12965,7 +13112,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                                     }
                             }
                             
-                            // Color coding for Max Rate
+                            // Color coding for Max Rate (now column index 6)
                             if (data.column.index === 6) { // Max Rate column
                                 const maxRateText = data.cell.raw.toString();
                                 const maxRate = parseFloat(maxRateText.replace('%', ''));
@@ -12994,7 +13141,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                             }
                             
                             // Color coding for Advanced Trend Analysis
-                            if (data.column.index === 7) { // Trend column (moved to index 7)
+                            if (data.column.index === 7) { // Trend column (now index 7)
                                 const trendText = data.cell.raw.toString();
                                 
                                 if (trendText.includes('+')) {
@@ -13034,16 +13181,146 @@ ${environment.tips.slice(0, 3).join('\n')}
                     }
                 });
                 
-                yPosition = doc.lastAutoTable.finalY + 20;
+                yPosition = doc.lastAutoTable.finalY + 8;
                 
-                // Add Effective Attendance Rate Trend Analysis (Last Four Rates)
+                // Check page break before Matrix Analysis - ensure header and table stay together
+                if (yPosition > 180) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Add Dates with Highest Unexcused Absences Analysis (Matrix Intelligence)
+                addSectionHeader(doc, 'DATES WITH HIGHEST UNEXCUSED ABSENCES (MATRIX ANALYSIS)', yPosition);
+                yPosition += 12;
+                
+                // Use our intelligent matrix-based analysis
+                const dateAbsenceAnalysis = analyzeDatesByUnexcusedAbsences(filteredData, totalStudents, allClassDates);
+                
+                if (dateAbsenceAnalysis.length > 0) {
+                    // Show top 10 dates with highest unexcused absences
+                    const topAbsenceDates = dateAbsenceAnalysis.slice(0, 10);
+                    
+                    const datesTableData = topAbsenceDates.map(item => [
+                        item.date,
+                        item.unexcusedAbsences.toString(),
+                        item.presentCount.toString(),
+                        item.excusedAbsences.toString(),
+                        `${item.absenteeismRate.toFixed(1)}%`,
+                        `${item.matrixZeros}/${item.accountableStudents}` // Matrix representation
+                    ]);
+                    
+                    doc.autoTable({
+                        head: [['Date', 'Unexcused\nAbsent', 'Present', 'Excused\nAbsent', 'Absence\nRate', 'Matrix\n(0s/Total)']],
+                        body: datesTableData,
+                        startY: yPosition,
+                        theme: 'striped',
+                        headStyles: {
+                            fillColor: [231, 76, 60], // Red theme for absence analysis
+                            textColor: 255,
+                            fontStyle: 'bold',
+                            fontSize: 9
+                        },
+                        alternateRowStyles: {
+                            fillColor: [255, 245, 245] // Light red alternating rows
+                        },
+                        columnStyles: {
+                            0: { halign: 'center', cellWidth: 25 },  // Date
+                            1: { halign: 'center', cellWidth: 20, fillColor: [255, 235, 235] }, // Unexcused (highlighted)
+                            2: { halign: 'center', cellWidth: 18 },  // Present
+                            3: { halign: 'center', cellWidth: 20 },  // Excused
+                            4: { halign: 'center', cellWidth: 20 },  // Rate
+                            5: { halign: 'center', cellWidth: 25, fontStyle: 'bold' }   // Matrix representation
+                        },
+                        styles: {
+                            fontSize: 8,
+                            cellPadding: 1.5,
+                            overflow: 'linebreak',
+                            minCellHeight: 5
+                        },
+                        margin: { top: 1, left: 8, right: 8 },
+                        showHead: 'everyPage',
+                        pageBreak: 'avoid',
+                        rowPageBreak: 'avoid'
+                    });
+                    yPosition = doc.lastAutoTable.finalY + 6;
+                    
+                    // Summary insights and explanation text removed per user request
+                    yPosition += 10;
+                    
+                } else {
+                    doc.setFontSize(10);
+                    doc.text('No unexcused absence data available for matrix analysis in the selected period.', 20, yPosition);
+                    yPosition += 20;
+                }
+                
+                // Add time-based analytics section - ensure header and content stay together
+                if (yPosition > 180) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Time-Based Attendance Analytics
+                addSectionHeader(doc, 'TIME-BASED ATTENDANCE ANALYTICS', yPosition);
+                yPosition += 12;
+                
+                // Calculate time-based analytics from the filtered data
+                const timeAnalytics = calculateTimeBasedAnalyticsForPDF(filteredData);
+                
+                // Add analytics explanation
+                doc.setFontSize(10);
+                doc.text('Analysis of attendance timing patterns based on 1:00-1:15 PM on-time window:', 20, yPosition);
+                yPosition += 10;
+                
+                // Time analytics table
+                const timeTableData = [
+                    ['Category', 'Count'],
+                    ['On-Time Records (1:00-1:15 PM)', timeAnalytics.onTimeRecords.toString()],
+                    ['Late Records (After 1:15 PM)', timeAnalytics.lateRecords.toString()],
+                    ['Absent Records', timeAnalytics.absentRecords.toString()],
+                    ['Total Records', timeAnalytics.totalRecords.toString()],
+                    ['Punctuality Rate', `${timeAnalytics.punctualityRate}%`]
+                ];
+                
+                doc.autoTable({
+                    body: timeTableData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245]
+                    },
+                    didParseCell: function(data) {
+                        // Style the first row as header
+                        if (data.row.index === 0) {
+                            data.cell.styles.fillColor = [52, 73, 94];
+                            data.cell.styles.textColor = [255, 255, 255];
+                            data.cell.styles.fontStyle = 'bold';
+                            data.cell.styles.fontSize = 10;
+                        }
+                    },
+                    columnStyles: {
+                        0: { halign: 'left', cellWidth: 100 },   // Category
+                        1: { halign: 'center', cellWidth: 50 }   // Count
+                    },
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 1.5,
+                        overflow: 'linebreak',
+                        minCellHeight: 6
+                    },
+                    margin: { top: 1, left: 8, right: 8 },
+                    pageBreak: 'avoid',
+                    rowPageBreak: 'avoid'
+                });
+                yPosition = doc.lastAutoTable.finalY + 8;
+                
+                // Add Effective Attendance Rate Trend Analysis (Last Four Rates) - moved after TIME-BASED section
                 if (yPosition > 180) {
                     doc.addPage();
                     yPosition = 20;
                 }
                 
                 addSectionHeader(doc, 'EFFECTIVE ATTENDANCE RATE TREND (LAST FOUR RATES)', yPosition);
-                yPosition += 15;
+                yPosition += 12;
                 
                 // Calculate effective attendance rate trend using last four rates
                 const effectiveRateTrend = calculateEffectiveAttendanceRateTrend(filteredData, totalStudents, allClassDates);
@@ -13083,123 +13360,20 @@ ${environment.tips.slice(0, 3).join('\n')}
                             1: { cellWidth: 50, halign: 'center' }
                         },
                         styles: {
-                            fontSize: 9,
-                            cellPadding: 3
+                            fontSize: 8,
+                            cellPadding: 1.5,
+                            minCellHeight: 6
                         },
-                        margin: { top: 20, left: 8, right: 8 },
-                        showHead: 'everyPage'
+                        margin: { top: 1, left: 8, right: 8 },
+                        pageBreak: 'avoid',
+                        rowPageBreak: 'avoid'
                     });
-                    yPosition = doc.lastAutoTable.finalY + 20;
+                    yPosition = doc.lastAutoTable.finalY + 8;
                 } else {
                     doc.setFontSize(10);
                     doc.text('Insufficient data for trend analysis (need at least 4 data points)', 20, yPosition);
                     yPosition += 20;
                 }
-                
-                // Check if we need a new page before adding dates analysis
-                if (yPosition > 200) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                
-                // Dates with Highest Present
-                addSectionHeader(doc, 'DATES WITH HIGHEST PRESENT', yPosition);
-                yPosition += 15;
-                
-                const datesAbsenceData = calculateDatesWithHighestAbsences(filteredData);
-                if (datesAbsenceData.length > 0) {
-                    const datesTableData = datesAbsenceData.map(item => [
-                        item.date, // Show date in simple format like dashboard
-                        `${item.absentStudents} present` // Show present count
-                    ]);
-                    
-                    doc.autoTable({
-                        head: [['Date', 'Present Students']],
-                        body: datesTableData,
-                        startY: yPosition,
-                        theme: 'striped',
-                        headStyles: {
-                            fillColor: [52, 73, 94],
-                            textColor: 255,
-                            fontStyle: 'bold',
-                            fontSize: 10
-                        },
-                        alternateRowStyles: {
-                            fillColor: [245, 245, 245]
-                        },
-                        columnStyles: {
-                            0: { halign: 'center', cellWidth: 60 },  // Date
-                            1: { halign: 'center', cellWidth: 60 }   // Present Students
-                        },
-                        styles: {
-                            fontSize: 9,
-                            cellPadding: 3,
-                            overflow: 'linebreak'
-                        },
-                        margin: { top: 20, left: 8, right: 8 },
-                        showHead: 'everyPage'
-                    });
-                    yPosition = doc.lastAutoTable.finalY + 20;
-                } else {
-                    doc.setFontSize(10);
-                    doc.text('No date-specific absence data available for the selected period.', 20, yPosition);
-                    yPosition += 20;
-                }
-                
-                // Add time-based analytics section
-                if (yPosition > 250) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                
-                // Time-Based Attendance Analytics
-                addSectionHeader(doc, 'TIME-BASED ATTENDANCE ANALYTICS', yPosition);
-                yPosition += 15;
-                
-                // Calculate time-based analytics from the filtered data
-                const timeAnalytics = calculateTimeBasedAnalyticsForPDF(filteredData);
-                
-                // Add analytics explanation
-                doc.setFontSize(10);
-                doc.text('Analysis of attendance timing patterns based on 1:00-1:15 PM on-time window:', 20, yPosition);
-                yPosition += 10;
-                
-                // Time analytics table
-                const timeTableData = [
-                    ['On-Time Records (1:00-1:15 PM)', timeAnalytics.onTimeRecords.toString()],
-                    ['Late Records (After 1:15 PM)', timeAnalytics.lateRecords.toString()],
-                    ['Absent Records', timeAnalytics.absentRecords.toString()],
-                    ['Total Records', timeAnalytics.totalRecords.toString()],
-                    ['Punctuality Rate', `${timeAnalytics.punctualityRate}%`]
-                ];
-                
-                doc.autoTable({
-                    head: [['Category', 'Count']],
-                    body: timeTableData,
-                    startY: yPosition,
-                    theme: 'striped',
-                    headStyles: {
-                        fillColor: [52, 73, 94],
-                        textColor: 255,
-                        fontStyle: 'bold',
-                        fontSize: 10
-                    },
-                    alternateRowStyles: {
-                        fillColor: [245, 245, 245]
-                    },
-                    columnStyles: {
-                        0: { halign: 'left', cellWidth: 100 },   // Category
-                        1: { halign: 'center', cellWidth: 50 }   // Count
-                    },
-                    styles: {
-                        fontSize: 9,
-                        cellPadding: 3,
-                        overflow: 'linebreak'
-                    },
-                    margin: { top: 20, left: 8, right: 8 },
-                    showHead: 'everyPage'
-                });
-                yPosition = doc.lastAutoTable.finalY + 20;
                 
                 // Footer
                 addFooter(doc);
@@ -13725,7 +13899,7 @@ File: ${fileName}`, 'success');
             console.log('✅ Proceeding with improved analytics generation...');
             // Generate all analytics with improved algorithms
             generateAttendanceRateAnalytics(filteredData);
-            generateDateAnalytics(filteredData);
+            generateMatrixAbsenceAnalytics(filteredData); // New intelligent matrix analysis
             generateDetailedStudentStats(filteredData);
         }
 
@@ -14016,32 +14190,108 @@ File: ${fileName}`, 'success');
             }
         }
 
-        function generateDateAnalytics(data) {
-            const dateStats = {};
+
+
+        function generateMatrixAbsenceAnalytics(data) {
+            console.log('🧮 MATRIX ANALYSIS: Starting intelligent absence pattern detection...');
             
-            // Count present records per date
-            data.forEach(record => {
-                const isPresent = record.attendanceStatus === 'present' || 
-                                record.actionType === 'presence' || 
-                                record.action === 'Present' ||
-                                record.status === 'present';
-                                
-                if (isPresent) {
-                    const date = record.date;
-                    if (!dateStats[date]) {
-                        dateStats[date] = { present: 0 };
-                    }
-                    dateStats[date].present++;
-                }
+            // Get unique students and dates from data
+            const uniqueStudents = [...new Set(data.map(record => 
+                record.studentName || record.studentId || 'Unknown'
+            ))];
+            
+            const uniqueDates = [...new Set(data.map(record => {
+                const recordDate = record.datetime ? record.datetime.split(' ')[0] : 
+                                 record.date || record.timestamp?.split(' ')[0] || '';
+                return recordDate;
+            }))].filter(date => date).sort();
+            
+            console.log('📊 Matrix dimensions:', {
+                students: uniqueStudents.length,
+                dates: uniqueDates.length,
+                totalRecords: data.length
             });
             
-            // Create sorted list of dates with present counts
-            const sortedDates = Object.entries(dateStats)
-                .map(([date, stats]) => [date, stats.present])
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10); // Top 10 dates with most present students
+            // Use our intelligent matrix analysis function
+            const matrixAnalysis = analyzeDatesByUnexcusedAbsences(data, uniqueStudents.length, uniqueDates);
             
-            updateDateAnalyticsDisplay(sortedDates);
+            if (matrixAnalysis.length === 0) {
+                updateMatrixAnalyticsDisplay([], null);
+                return;
+            }
+            
+            // Calculate summary insights
+            const insights = {
+                worstDate: matrixAnalysis[0],
+                bestDate: matrixAnalysis[matrixAnalysis.length - 1],
+                avgAbsenteeism: matrixAnalysis.reduce((sum, item) => sum + item.absenteeismRate, 0) / matrixAnalysis.length,
+                totalDates: matrixAnalysis.length,
+                maxAbsences: Math.max(...matrixAnalysis.map(item => item.unexcusedAbsences)),
+                totalMatrixZeros: matrixAnalysis.reduce((sum, item) => sum + item.matrixZeros, 0)
+            };
+            
+            console.log('🎯 Matrix Analysis Results:', {
+                worstDate: insights.worstDate.date,
+                maxAbsences: insights.maxAbsences,
+                avgAbsenteeism: insights.avgAbsenteeism.toFixed(1) + '%',
+                matrixIntelligence: 'Using CI binary logic (1/0) for pattern detection'
+            });
+            
+            // Update the display
+            updateMatrixAnalyticsDisplay(matrixAnalysis.slice(0, 10), insights); // Show top 10
+        }
+
+        function updateMatrixAnalyticsDisplay(matrixData, insights) {
+            const container = document.getElementById('matrixAbsenceTimeline');
+            const insightsContainer = document.getElementById('matrixInsights');
+            
+            if (!container) {
+                console.error('Matrix analytics container not found');
+                return;
+            }
+            
+            if (matrixData.length === 0) {
+                container.innerHTML = '<div class="analytics-empty">No matrix data available for the selected period</div>';
+                if (insightsContainer) {
+                    insightsContainer.style.display = 'none';
+                }
+                return;
+            }
+            
+            // Update insights cards
+            if (insights && insightsContainer) {
+                insightsContainer.style.display = 'block';
+                document.getElementById('worstAbsenceDate').textContent = insights.worstDate.date;
+                document.getElementById('maxAbsences').textContent = insights.maxAbsences.toString();
+                document.getElementById('avgAbsenteeism').textContent = insights.avgAbsenteeism.toFixed(1) + '%';
+                document.getElementById('matrixZeros').textContent = insights.totalMatrixZeros.toString();
+            }
+            
+            // Generate matrix timeline HTML
+            const timelineHTML = matrixData.map(item => `
+                <div class="matrix-date-item">
+                    <div class="matrix-date-info">
+                        <div class="matrix-date">${item.date}</div>
+                        <div class="matrix-binary">${item.matrixZeros}/${item.accountableStudents}</div>
+                    </div>
+                    <div class="matrix-stats">
+                        <div class="matrix-stat absences">
+                            <i class="fas fa-times-circle"></i>
+                            <span>${item.unexcusedAbsences} absent</span>
+                        </div>
+                        <div class="matrix-stat present">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${item.presentCount} present</span>
+                        </div>
+                        <div class="matrix-stat rate">
+                            <i class="fas fa-percentage"></i>
+                            <span>${item.absenteeismRate.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = timelineHTML;
         }
 
         // Functions for collapsible sections and tabs
@@ -14089,20 +14339,7 @@ File: ${fileName}`, 'success');
             }
         }
 
-        function updateDateAnalyticsDisplay(dates) {
-            const timeline = document.getElementById('absenceTimeline');
-            
-            if (dates.length > 0) {
-                timeline.innerHTML = dates.map(([date, count]) => `
-                    <div class="timeline-item">
-                        <span class="timeline-date">${new Date(date).toLocaleDateString()}</span>
-                        <span class="timeline-count">${count} present</span>
-                    </div>
-                `).join('');
-            } else {
-                timeline.innerHTML = '<div class="analytics-empty">No presence data available</div>';
-            }
-        }
+
 
         function generateDetailedStudentStats(data) {
             // Use the same reliable data processing as PDF export
@@ -15885,190 +16122,19 @@ File: ${fileName}`, 'success');
         function showEmptyAnalytics() {
             document.getElementById('highestAttendanceList').innerHTML = '<li class="analytics-empty">No data for selected period</li>';
             document.getElementById('lowestAttendanceList').innerHTML = '<li class="analytics-empty">No data for selected period</li>';
-            document.getElementById('absenceTimeline').innerHTML = '<div class="analytics-empty">No data for selected period</div>';
+            // Matrix analytics will handle its own empty state
             document.getElementById('studentChartsContainer').innerHTML = '<div class="analytics-empty">No chart data for selected period</div>';
         }
 
-        // Chart Student Filter Functions (using same logic as View Records)
-        function initializeChartStudentFilter() {
-            const filterSelect = document.getElementById('chartStudentFilter');
-            const clearButton = document.getElementById('clearChartStudentFilter');
-            
-            if (filterSelect) {
-                // Populate the dropdown with students (same as View Records)
-                populateChartStudentOptions();
-                
-                filterSelect.addEventListener('change', handleChartStudentFilter);
-                
-                // Show/hide clear button based on selection
-                filterSelect.addEventListener('change', function() {
-                    if (clearButton) {
-                        clearButton.style.display = this.value ? 'block' : 'none';
-                    }
-                });
-            }
-        }
 
-        function populateChartStudentOptions() {
-            const filterSelect = document.getElementById('chartStudentFilter');
-            if (!filterSelect) return;
-            
-            // Clear existing options except "All Students"
-            filterSelect.innerHTML = '<option value="">All Students</option>';
-            
-            // Get unique students from analytics data (updated selectors for simplified dashboard)
-            const chartItems = document.querySelectorAll('#studentChartsContainer .simple-student-card, #studentChartsContainer .enhanced-chart');
-            const students = new Set();
-            
-            chartItems.forEach(item => {
-                // Check for simplified dashboard structure first
-                let studentHeader = item.querySelector('.student-header-simple h5');
-                // Fallback to old structure
-                if (!studentHeader) {
-                    studentHeader = item.querySelector('.student-header h5');
-                }
-                
-                if (studentHeader) {
-                    students.add(studentHeader.textContent.trim());
-                }
-            });
-            
-            // Add student options to dropdown
-            Array.from(students).sort().forEach(studentName => {
-                const option = document.createElement('option');
-                option.value = studentName;
-                option.textContent = studentName;
-                filterSelect.appendChild(option);
-            });
-        }
 
-        function handleChartStudentFilter() {
-            const filterSelect = document.getElementById('chartStudentFilter');
-            const resultsInfo = document.getElementById('chartFilterResults');
-            
-            if (!filterSelect || !resultsInfo) return;
-            
-            const selectedStudent = filterSelect.value;
-            // Updated selectors for both simplified and old chart structures
-            const chartItems = document.querySelectorAll('#studentChartsContainer .simple-student-card, #studentChartsContainer .enhanced-chart');
-            
-            let visibleCount = 0;
-            let totalCount = chartItems.length;
-            
-            chartItems.forEach(item => {
-                // Check for simplified dashboard structure first
-                let studentHeader = item.querySelector('.student-header-simple h5');
-                // Fallback to old structure
-                if (!studentHeader) {
-                    studentHeader = item.querySelector('.student-header h5');
-                }
-                
-                if (!studentHeader) return;
-                
-                const studentName = studentHeader.textContent.trim();
-                
-                // Use same matching logic as View Records applyFilters function
-                const matches = selectedStudent === '' || 
-                               studentName === selectedStudent ||
-                               studentName.includes(selectedStudent);
-                
-                if (matches) {
-                    item.classList.remove('hidden');
-                    item.classList.add('filter-match');
-                    // Remove animation class after animation completes
-                    setTimeout(() => item.classList.remove('filter-match'), 1000);
-                    visibleCount++;
-                } else {
-                    item.classList.add('hidden');
-                    item.classList.remove('filter-match');
-                }
-            });
-            
-            // Update results info
-            if (selectedStudent === '') {
-                resultsInfo.textContent = `Showing all ${totalCount} students`;
-            } else {
-                resultsInfo.textContent = `Showing ${visibleCount} of ${totalCount} students (filtered by: ${selectedStudent})`;
-            }
-            
-            // Show "no results" message if needed
-            const container = document.getElementById('studentChartsContainer');
-            let noResultsMsg = container.querySelector('.no-filter-results');
-            
-            if (visibleCount === 0 && selectedStudent !== '') {
-                if (!noResultsMsg) {
-                    noResultsMsg = document.createElement('div');
-                    noResultsMsg.className = 'analytics-empty no-filter-results';
-                    noResultsMsg.innerHTML = `
-                        <div style="text-align: center; padding: 40px;">
-                            <i class="fas fa-user-times" style="font-size: 3rem; color: #6c757d; margin-bottom: 20px;"></i>
-                            <h4 style="color: #495057; margin-bottom: 10px;">No charts found for "${selectedStudent}"</h4>
-                            <p style="color: #6c757d;">Try selecting a different student or <button onclick="clearChartStudentFilter()" style="background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer;">show all students</button></p>
-                        </div>
-                    `;
-                    container.appendChild(noResultsMsg);
-                }
-                noResultsMsg.style.display = 'block';
-            } else if (noResultsMsg) {
-                noResultsMsg.style.display = 'none';
-            }
-        }
 
-        function clearChartStudentFilter() {
-            const filterSelect = document.getElementById('chartStudentFilter');
-            const clearButton = document.getElementById('clearChartStudentFilter');
-            const resultsInfo = document.getElementById('chartFilterResults');
-            
-            if (filterSelect) {
-                filterSelect.value = '';
-                filterSelect.focus();
-            }
-            
-            if (clearButton) {
-                clearButton.style.display = 'none';
-            }
-            
-            // Show all charts
-            const chartItems = document.querySelectorAll('#studentChartsContainer .enhanced-chart');
-            chartItems.forEach(item => {
-                item.classList.remove('hidden', 'filter-match');
-            });
-            
-            // Update results info
-            if (resultsInfo) {
-                resultsInfo.textContent = `Showing all ${chartItems.length} students`;
-            }
-            
-            // Hide no results message
-            const noResultsMsg = document.querySelector('.no-filter-results');
-            if (noResultsMsg) {
-                noResultsMsg.style.display = 'none';
-            }
-        }
 
-        // Enhanced keyboard shortcuts for chart student filter
-        function setupChartFilterKeyboardShortcuts() {
-            document.addEventListener('keydown', function(e) {
-                // Ctrl+F or Cmd+F to focus on chart filter (when charts tab is active)
-                if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-                    const chartsTab = document.getElementById('chartsTab');
-                    const filterSelect = document.getElementById('chartStudentFilter');
-                    
-                    if (chartsTab && chartsTab.classList.contains('active') && filterSelect) {
-                        e.preventDefault();
-                        filterSelect.focus();
-                    }
-                }
-                
-                // Escape key to clear filter
-                if (e.key === 'Escape') {
-                    const chartsTab = document.getElementById('chartsTab');
-                    if (chartsTab && chartsTab.classList.contains('active')) {
-                        clearChartStudentFilter();
-                    }
-                }
-            });
-        }
+
+
+
+
+
 
         // Penalties System Functions
         function togglePenaltiesView() {
@@ -18479,8 +18545,7 @@ ${syncQueue.length > 0 ? '⚠ You have pending uploads. Click "Sync Now" to uplo
         window.testClearData = testClearData;
         window.addNewStudent = addNewStudent;
         window.exportFilteredRecordsToPdf = exportFilteredRecordsToPdf;
-        window.clearChartStudentFilter = clearChartStudentFilter;
-        window.initializeChartStudentFilter = initializeChartStudentFilter;
+
         
         // Simple Firebase Functions (Working version from index-clean.html)
         async function saveDataToFirestore(record) {
