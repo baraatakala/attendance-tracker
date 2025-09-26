@@ -11799,6 +11799,126 @@ ${environment.tips.slice(0, 3).join('\n')}
             return studentKey || 'Unknown Student';
         }
 
+        // Calculate Effective Attendance Rate Trend over Full Period
+        function calculateEffectiveAttendanceRateTrend(filteredData, totalStudents, allClassDates) {
+            if (!filteredData || filteredData.length === 0 || !allClassDates || allClassDates.length < 3) {
+                return 'INSUFFICIENT_DATA';
+            }
+
+            // Sort dates chronologically
+            const sortedClassDates = [...allClassDates].sort((a, b) => new Date(a) - new Date(b));
+            const dailyRates = [];
+            const dateMapping = [];
+
+            // Calculate effective attendance rate for each date
+            sortedClassDates.forEach(date => {
+                // Get all records for this date
+                const dateRecords = filteredData.filter(record => {
+                    const recordDate = record.datetime ? record.datetime.split(' ')[0] : 
+                                     record.date || record.timestamp?.split(' ')[0] || '';
+                    return recordDate === date;
+                });
+
+                // Count present and excused absences for this date
+                let presentCount = 0;
+                let excusedAbsences = 0;
+                
+                dateRecords.forEach(record => {
+                    const status = (record.attendanceStatus || record.action || '').toLowerCase().trim();
+                    if (status === 'present' || status.includes('present')) {
+                        presentCount++;
+                    } else if (status === 'absent' || status.includes('absent')) {
+                        const notes = record.notes || '';
+                        if (isExcusedAbsence(notes)) {
+                            excusedAbsences++;
+                        }
+                    }
+                });
+
+                // Calculate effective attendance rate for this date
+                // Formula: presentCount / (totalStudents - excusedAbsences) * 100
+                const effectiveStudentsForDay = totalStudents - excusedAbsences;
+                const effectiveRate = effectiveStudentsForDay > 0 ? 
+                    (presentCount / effectiveStudentsForDay) * 100 : 0;
+
+                dailyRates.push(effectiveRate);
+                dateMapping.push({
+                    date: date,
+                    rate: effectiveRate,
+                    present: presentCount,
+                    excused: excusedAbsences,
+                    effective: effectiveStudentsForDay
+                });
+            });
+
+            if (dailyRates.length < 3) {
+                return 'INSUFFICIENT_DATA';
+            }
+
+            // Linear regression analysis (full period)
+            const n = dailyRates.length;
+            const days = Array.from({ length: n }, (_, i) => i + 1);
+            
+            // Calculate means
+            const days_mean = days.reduce((sum, val) => sum + val, 0) / n;
+            const rates_mean = dailyRates.reduce((sum, val) => sum + val, 0) / n;
+            
+            // Calculate slope and intercept
+            let numerator = 0;
+            let denominator = 0;
+            
+            for (let i = 0; i < n; i++) {
+                numerator += (days[i] - days_mean) * (dailyRates[i] - rates_mean);
+                denominator += (days[i] - days_mean) ** 2;
+            }
+            
+            const slope = denominator !== 0 ? numerator / denominator : 0;
+            const intercept = rates_mean - (slope * days_mean);
+            
+            // Calculate fitted values and R-squared
+            const fitted = days.map(day => slope * day + intercept);
+            const SSres = dailyRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0);
+            const SStot = dailyRates.reduce((sum, rate) => sum + Math.pow(rate - rates_mean, 2), 0);
+            const rSquared = SStot !== 0 ? 1 - (SSres / SStot) : 1;
+            
+            // Calculate RMSE
+            const rmse = Math.sqrt(SSres / n);
+            
+            // Calculate statistics
+            const avgRate = rates_mean;
+            const minRate = Math.min(...dailyRates);
+            const maxRate = Math.max(...dailyRates);
+            const overallChange = dailyRates[dailyRates.length - 1] - dailyRates[0];
+            
+            // Trend classification
+            let classification;
+            if (rSquared < 0.3) {
+                classification = 'VOLATILE';
+            } else if (slope > 1) {
+                classification = 'IMPROVING';
+            } else if (slope < -1) {
+                classification = 'DECLINING';
+            } else {
+                classification = 'STABLE';
+            }
+
+            return {
+                dataPoints: n,
+                periodCoverage: `${sortedClassDates[0]} to ${sortedClassDates[sortedClassDates.length - 1]}`,
+                slope: slope,
+                intercept: intercept,
+                rSquared: rSquared,
+                rmse: rmse,
+                avgRate: avgRate,
+                minRate: minRate,
+                maxRate: maxRate,
+                overallChange: overallChange,
+                classification: classification,
+                dailyData: dateMapping,
+                fitted: fitted
+            };
+        }
+
         // PDF Export Functions
         function exportAnalyticsToPDF() {
             try {
@@ -12867,6 +12987,64 @@ ${environment.tips.slice(0, 3).join('\n')}
                 });
                 
                 yPosition = doc.lastAutoTable.finalY + 20;
+                
+                // Add Effective Attendance Rate Trend Analysis (Full Period)
+                if (yPosition > 180) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                addSectionHeader(doc, 'EFFECTIVE ATTENDANCE RATE TREND (FULL PERIOD)', yPosition);
+                yPosition += 15;
+                
+                // Calculate effective attendance rate trend over full period
+                const effectiveRateTrend = calculateEffectiveAttendanceRateTrend(filteredData, totalStudents, allClassDates);
+                
+                if (effectiveRateTrend && effectiveRateTrend !== 'INSUFFICIENT_DATA') {
+                    // Trend Analysis Table
+                    const trendData = [
+                        ['Metric', 'Value'],
+                        ['Data Points', effectiveRateTrend.dataPoints.toString()],
+                        ['Period Coverage', effectiveRateTrend.periodCoverage],
+                        ['Average Effective Rate', `${effectiveRateTrend.avgRate.toFixed(1)}%`],
+                        ['Rate Range', `${effectiveRateTrend.minRate.toFixed(1)}% - ${effectiveRateTrend.maxRate.toFixed(1)}%`],
+                        ['Overall Change', `${effectiveRateTrend.overallChange > 0 ? '+' : ''}${effectiveRateTrend.overallChange.toFixed(1)}%`],
+                        ['Trend Slope', `${effectiveRateTrend.slope > 0 ? '+' : ''}${effectiveRateTrend.slope.toFixed(3)}%/day`],
+                        ['Fit Quality (R²)', effectiveRateTrend.rSquared.toFixed(3)],
+                        ['Trend Classification', effectiveRateTrend.classification],
+                        ['RMSE', effectiveRateTrend.rmse.toFixed(2)]
+                    ];
+                    
+                    doc.autoTable({
+                        body: trendData,
+                        startY: yPosition,
+                        theme: 'striped',
+                        headStyles: {
+                            fillColor: [52, 73, 94],
+                            textColor: 255,
+                            fontStyle: 'bold',
+                            fontSize: 10
+                        },
+                        alternateRowStyles: {
+                            fillColor: [245, 245, 245]
+                        },
+                        columnStyles: {
+                            0: { fontStyle: 'bold', cellWidth: 70 },
+                            1: { cellWidth: 50, halign: 'center' }
+                        },
+                        styles: {
+                            fontSize: 9,
+                            cellPadding: 3
+                        },
+                        margin: { top: 20, left: 8, right: 8 },
+                        showHead: 'everyPage'
+                    });
+                    yPosition = doc.lastAutoTable.finalY + 20;
+                } else {
+                    doc.setFontSize(10);
+                    doc.text('Insufficient data for trend analysis (need at least 3 data points)', 20, yPosition);
+                    yPosition += 20;
+                }
                 
                 // Check if we need a new page before adding dates analysis
                 if (yPosition > 200) {
