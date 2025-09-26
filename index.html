@@ -11799,9 +11799,9 @@ ${environment.tips.slice(0, 3).join('\n')}
             return studentKey || 'Unknown Student';
         }
 
-        // Calculate Effective Attendance Rate Trend over Full Period
+        // Calculate Effective Attendance Rate Trend using Last Four Rates
         function calculateEffectiveAttendanceRateTrend(filteredData, totalStudents, allClassDates) {
-            if (!filteredData || filteredData.length === 0 || !allClassDates || allClassDates.length < 3) {
+            if (!filteredData || filteredData.length === 0 || !allClassDates || allClassDates.length < 4) {
                 return 'INSUFFICIENT_DATA';
             }
 
@@ -11861,44 +11861,48 @@ ${environment.tips.slice(0, 3).join('\n')}
                 });
             });
 
-            if (dailyRates.length < 3) {
+            if (dailyRates.length < 4) {
                 return 'INSUFFICIENT_DATA';
             }
 
-            // Linear regression analysis (full period)
-            const n = dailyRates.length;
+            // Use only the last 4 rates for trend analysis
+            const lastFourRates = dailyRates.slice(-4);
+            const lastFourDates = dateMapping.slice(-4);
+            
+            // Linear regression analysis (last four rates only)
+            const n = lastFourRates.length; // Will be 4 (or less if insufficient data)
             const days = Array.from({ length: n }, (_, i) => i + 1);
             
-            // Calculate means
+            // Calculate means using only last four rates
             const days_mean = days.reduce((sum, val) => sum + val, 0) / n;
-            const rates_mean = dailyRates.reduce((sum, val) => sum + val, 0) / n;
+            const rates_mean = lastFourRates.reduce((sum, val) => sum + val, 0) / n;
             
             // Calculate slope and intercept
             let numerator = 0;
             let denominator = 0;
             
             for (let i = 0; i < n; i++) {
-                numerator += (days[i] - days_mean) * (dailyRates[i] - rates_mean);
+                numerator += (days[i] - days_mean) * (lastFourRates[i] - rates_mean);
                 denominator += (days[i] - days_mean) ** 2;
             }
             
             const slope = denominator !== 0 ? numerator / denominator : 0;
             const intercept = rates_mean - (slope * days_mean);
             
-            // Calculate fitted values and R-squared
+            // Calculate fitted values and R-squared using last four rates
             const fitted = days.map(day => slope * day + intercept);
-            const SSres = dailyRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0);
-            const SStot = dailyRates.reduce((sum, rate) => sum + Math.pow(rate - rates_mean, 2), 0);
+            const SSres = lastFourRates.reduce((sum, rate, i) => sum + Math.pow(rate - fitted[i], 2), 0);
+            const SStot = lastFourRates.reduce((sum, rate) => sum + Math.pow(rate - rates_mean, 2), 0);
             const rSquared = SStot !== 0 ? 1 - (SSres / SStot) : 1;
             
-            // Calculate RMSE
+            // Calculate RMSE using last four rates
             const rmse = Math.sqrt(SSres / n);
             
-            // Calculate statistics
+            // Calculate statistics using last four rates
             const avgRate = rates_mean;
-            const minRate = Math.min(...dailyRates);
-            const maxRate = Math.max(...dailyRates);
-            const overallChange = dailyRates[dailyRates.length - 1] - dailyRates[0];
+            const minRate = Math.min(...lastFourRates);
+            const maxRate = Math.max(...lastFourRates);
+            const overallChange = lastFourRates[lastFourRates.length - 1] - lastFourRates[0];
             
             // Trend classification
             let classification;
@@ -11914,7 +11918,8 @@ ${environment.tips.slice(0, 3).join('\n')}
 
             return {
                 dataPoints: n,
-                periodCoverage: `${sortedClassDates[0]} to ${sortedClassDates[sortedClassDates.length - 1]}`,
+                periodCoverage: `${lastFourDates[0].date} to ${lastFourDates[lastFourDates.length - 1].date}`,
+                fullPeriodCoverage: `${sortedClassDates[0]} to ${sortedClassDates[sortedClassDates.length - 1]}`,
                 slope: slope,
                 intercept: intercept,
                 rSquared: rSquared,
@@ -11925,6 +11930,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 overallChange: overallChange,
                 classification: classification,
                 dailyData: dateMapping,
+                lastFourData: lastFourDates,
                 fitted: fitted
             };
         }
@@ -12998,27 +13004,29 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 yPosition = doc.lastAutoTable.finalY + 20;
                 
-                // Add Effective Attendance Rate Trend Analysis (Full Period)
+                // Add Effective Attendance Rate Trend Analysis (Last Four Rates)
                 if (yPosition > 180) {
                     doc.addPage();
                     yPosition = 20;
                 }
                 
-                addSectionHeader(doc, 'EFFECTIVE ATTENDANCE RATE TREND (FULL PERIOD)', yPosition);
+                addSectionHeader(doc, 'EFFECTIVE ATTENDANCE RATE TREND (LAST FOUR RATES)', yPosition);
                 yPosition += 15;
                 
-                // Calculate effective attendance rate trend over full period
+                // Calculate effective attendance rate trend using last four rates
                 const effectiveRateTrend = calculateEffectiveAttendanceRateTrend(filteredData, totalStudents, allClassDates);
                 
                 if (effectiveRateTrend && effectiveRateTrend !== 'INSUFFICIENT_DATA') {
                     // Trend Analysis Table
                     const trendData = [
                         ['Metric', 'Value'],
-                        ['Data Points', effectiveRateTrend.dataPoints.toString()],
-                        ['Period Coverage', effectiveRateTrend.periodCoverage],
+                        ['Analysis Scope', 'Last 4 Rates'],
+                        ['Data Points Used', effectiveRateTrend.dataPoints.toString()],
+                        ['Analysis Period', effectiveRateTrend.periodCoverage],
+                        ['Full Data Period', effectiveRateTrend.fullPeriodCoverage || 'N/A'],
                         ['Average Effective Rate', `${effectiveRateTrend.avgRate.toFixed(1)}%`],
-                        ['Rate Range', `${effectiveRateTrend.minRate.toFixed(1)}% - ${effectiveRateTrend.maxRate.toFixed(1)}%`],
-                        ['Overall Change', `${effectiveRateTrend.overallChange > 0 ? '+' : ''}${effectiveRateTrend.overallChange.toFixed(1)}%`],
+                        ['Rate Range (Last 4)', `${effectiveRateTrend.minRate.toFixed(1)}% - ${effectiveRateTrend.maxRate.toFixed(1)}%`],
+                        ['Overall Change (Last 4)', `${effectiveRateTrend.overallChange > 0 ? '+' : ''}${effectiveRateTrend.overallChange.toFixed(1)}%`],
                         ['Trend Slope', `${effectiveRateTrend.slope > 0 ? '+' : ''}${effectiveRateTrend.slope.toFixed(3)}%/day`],
                         ['Fit Quality (R²)', effectiveRateTrend.rSquared.toFixed(3)],
                         ['Trend Classification', effectiveRateTrend.classification],
@@ -13052,7 +13060,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                     yPosition = doc.lastAutoTable.finalY + 20;
                 } else {
                     doc.setFontSize(10);
-                    doc.text('Insufficient data for trend analysis (need at least 3 data points)', 20, yPosition);
+                    doc.text('Insufficient data for trend analysis (need at least 4 data points)', 20, yPosition);
                     yPosition += 20;
                 }
                 
