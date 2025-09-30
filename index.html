@@ -14111,7 +14111,7 @@ File: ${fileName}`, 'success');
                     weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                 } else if (student.vacation === 0 && onTimeRecords === 0 && lateRecords > 0) {
                     // Case 3: Num-Excuse = 0, On-Time = 0, Late > 0
-                    weightedScore = (0.9 * rate) + (0.3 * punctualityPercentage);
+                    weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                 } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords > 0) {
                     // Case 4: Num-Excuse = 0, On-Time > 0, Late > 0
                     weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
