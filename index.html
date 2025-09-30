@@ -12286,31 +12286,31 @@ ${environment.tips.slice(0, 3).join('\n')}
                     // Comprehensive 8-case weighted score system
                     if (student.vacation === 0 && onTimeRecords === 0 && lateRecords === 0) {
                         // Case 1: Num-Excuse = 0, On-Time = 0, Late = 0
-                        weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                     } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords === 0) {
                         // Case 2: Num-Excuse = 0, On-Time > 0, Late = 0
-                        weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                     } else if (student.vacation === 0 && onTimeRecords === 0 && lateRecords > 0) {
                         // Case 3: Num-Excuse = 0, On-Time = 0, Late > 0
-                        weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                     } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords > 0) {
                         // Case 4: Num-Excuse = 0, On-Time > 0, Late > 0
-                        weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                     } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords === 0) {
                         // Case 5: Num-Excuse > 0, On-Time = 0, Late = 0
-                        weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage);
+                        weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage) ;
                     } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords === 0) {
                         // Case 6: Num-Excuse > 0, On-Time > 0, Late = 0
-                        weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage)  + (0.1 * punctualityPercentage);
                     } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords > 0) {
                         // Case 7: Num-Excuse > 0, On-Time = 0, Late > 0
-                        weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage)  + (0.1 * punctualityPercentage);
                     } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords > 0) {
                         // Case 8: Num-Excuse > 0, On-Time > 0, Late > 0
-                        weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage)  + (0.1 * punctualityPercentage);
                     } else {
                         // Fallback to original simple formula if something goes wrong
-                        weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                        weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                     }
                     
                     return {
@@ -13207,11 +13207,10 @@ ${environment.tips.slice(0, 3).join('\n')}
                         item.excusedAbsences.toString(),
                         `${item.absenteeismRate.toFixed(1)}%`,
                         `${item.matrixZeros}/${item.accountableStudents}` // Matrix representation
-                         item.unexcusedStudentIds.join(", ") // <-- New column showing IDs
                     ]);
                     
                     doc.autoTable({
-                        head: [['Date', 'Unexcused\nAbsent', 'Present', 'Excused\nAbsent', 'Absence\nRate', 'Matrix\n(0s/Total)', 'Unexcused\nStudent IDs']],
+                        head: [['Date', 'Unexcused\nAbsent', 'Present', 'Excused\nAbsent', 'Absence\nRate', 'Matrix\n(0s/Total)']],
                         body: datesTableData,
                         startY: yPosition,
                         theme: 'striped',
@@ -14106,31 +14105,31 @@ File: ${fileName}`, 'success');
                 // Comprehensive 8-case weighted score system
                 if (student.vacation === 0 && onTimeRecords === 0 && lateRecords === 0) {
                     // Case 1: Num-Excuse = 0, On-Time = 0, Late = 0
-                    weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                 } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords === 0) {
                     // Case 2: Num-Excuse = 0, On-Time > 0, Late = 0
-                    weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                 } else if (student.vacation === 0 && onTimeRecords === 0 && lateRecords > 0) {
                     // Case 3: Num-Excuse = 0, On-Time = 0, Late > 0
-                    weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.9 * rate) + (0.3 * punctualityPercentage);
                 } else if (student.vacation === 0 && onTimeRecords > 0 && lateRecords > 0) {
                     // Case 4: Num-Excuse = 0, On-Time > 0, Late > 0
-                    weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                 } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords === 0) {
                     // Case 5: Num-Excuse > 0, On-Time = 0, Late = 0
                     weightedScore = (0.7 * rate) + (0.3 * effectiveDaysPercentage);
                 } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords === 0) {
                     // Case 6: Num-Excuse > 0, On-Time > 0, Late = 0
-                    weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage) + (0.1 * punctualityPercentage);
                 } else if (student.vacation > 0 && onTimeRecords === 0 && lateRecords > 0) {
                     // Case 7: Num-Excuse > 0, On-Time = 0, Late > 0
-                    weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage) + (0.1 * punctualityPercentage);
                 } else if (student.vacation > 0 && onTimeRecords > 0 && lateRecords > 0) {
                     // Case 8: Num-Excuse > 0, On-Time > 0, Late > 0
-                    weightedScore = (0.65 * rate) + (0.3 * effectiveDaysPercentage) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.6 * rate) + (0.3 * effectiveDaysPercentage) + (0.1 * punctualityPercentage);
                 } else {
                     // Fallback to original simple formula if something goes wrong
-                    weightedScore = (0.95 * rate) + (0.05 * punctualityPercentage);
+                    weightedScore = (0.9 * rate) + (0.1 * punctualityPercentage);
                 }
 
                 return {
