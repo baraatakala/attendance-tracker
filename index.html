@@ -13207,10 +13207,11 @@ ${environment.tips.slice(0, 3).join('\n')}
                         item.excusedAbsences.toString(),
                         `${item.absenteeismRate.toFixed(1)}%`,
                         `${item.matrixZeros}/${item.accountableStudents}` // Matrix representation
+                         item.unexcusedStudentIds.join(", ") // <-- New column showing IDs
                     ]);
                     
                     doc.autoTable({
-                        head: [['Date', 'Unexcused\nAbsent', 'Present', 'Excused\nAbsent', 'Absence\nRate', 'Matrix\n(0s/Total)']],
+                        head: [['Date', 'Unexcused\nAbsent', 'Present', 'Excused\nAbsent', 'Absence\nRate', 'Matrix\n(0s/Total)', 'Unexcused\nStudent IDs']],
                         body: datesTableData,
                         startY: yPosition,
                         theme: 'striped',
