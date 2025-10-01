@@ -14220,11 +14220,13 @@ File: ${fileName}`, 'success');
                 record.studentName || record.studentId || 'Unknown'
             ))];
             
+            // Sort dates chronologically
             const uniqueDates = [...new Set(data.map(record => {
                 const recordDate = record.datetime ? record.datetime.split(' ')[0] : 
                                  record.date || record.timestamp?.split(' ')[0] || '';
                 return recordDate;
-            }))].filter(date => date).sort();
+            }))].filter(date => date)
+            .sort((a, b) => new Date(a) - new Date(b));
             
             console.log('📊 Matrix dimensions:', {
                 students: uniqueStudents.length,
@@ -14241,8 +14243,11 @@ File: ${fileName}`, 'success');
             }
             
             // Calculate summary insights
+            // Find worst date by number of absences
+            const worstDateByAbsences = [...matrixAnalysis].sort((a, b) => b.unexcusedAbsences - a.unexcusedAbsences)[0];
+            
             const insights = {
-                worstDate: matrixAnalysis[0],
+                worstDate: worstDateByAbsences,
                 bestDate: matrixAnalysis[matrixAnalysis.length - 1],
                 avgAbsenteeism: matrixAnalysis.reduce((sum, item) => sum + item.absenteeismRate, 0) / matrixAnalysis.length,
                 totalDates: matrixAnalysis.length,
