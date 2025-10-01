@@ -12165,8 +12165,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                 });
             });
             
-            // Sort by highest unexcused absences (most zeros in the matrix)
-            dateAnalysis.sort((a, b) => b.unexcusedAbsences - a.unexcusedAbsences);
+            // First sort by date (chronologically)
+            dateAnalysis.sort((a, b) => new Date(a.date) - new Date(b.date));
             
             return dateAnalysis;
         }
@@ -13218,11 +13218,9 @@ ${environment.tips.slice(0, 3).join('\n')}
                 // Use our intelligent matrix-based analysis
                 const dateAbsenceAnalysis = analyzeDatesByUnexcusedAbsences(filteredData, totalStudents, allClassDates);
                 
-                if (dateAbsenceAnalysis.length > 0) {
-                    // Show top 10 dates with highest unexcused absences
-                    const topAbsenceDates = dateAbsenceAnalysis.slice(0, 10);
-                    
-                const datesTableData = topAbsenceDates.map(item => [
+            if (dateAbsenceAnalysis.length > 0) {
+                // Get all dates, already sorted chronologically
+                const sortedAbsenceDates = dateAbsenceAnalysis;                const datesTableData = sortedAbsenceDates.map(item => [
                     item.date,
                     item.unexcusedAbsences.toString(),
                     item.presentCount.toString(),
