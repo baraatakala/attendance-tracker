@@ -12124,6 +12124,26 @@ ${environment.tips.slice(0, 3).join('\n')}
                     }
                 });
                 
+                // Track students with unexcused absences
+                const unexcusedStudents = [];
+                uniqueStudents.forEach(studentName => {
+                    const studentRecord = filteredData.find(record => {
+                        const recordStudent = record.studentName || record.studentId || 'Unknown';
+                        const recordDate = record.datetime ? record.datetime.split(' ')[0] : 
+                                         record.date || record.timestamp?.split(' ')[0] || '';
+                        
+                        return recordStudent === studentName && recordDate === date;
+                    });
+                    
+                    if (!studentRecord || 
+                        (studentRecord && 
+                         ((studentRecord.attendanceStatus || studentRecord.action || '').toLowerCase().trim() === 'absent' ||
+                          (studentRecord.attendanceStatus || studentRecord.action || '').toLowerCase().trim().includes('absent')) &&
+                         !isExcusedAbsence(studentRecord.notes || ''))) {
+                        unexcusedStudents.push(studentName);
+                    }
+                });
+
                 // Calculate absenteeism percentage for this date
                 const totalAccountableStudents = presentCount + unexcusedAbsences; // Exclude excused
                 const absenteeismRate = totalAccountableStudents > 0 ? 
@@ -12139,7 +12159,9 @@ ${environment.tips.slice(0, 3).join('\n')}
                     absenteeismRate: absenteeismRate,
                     // Binary matrix representation for this date (sum of zeros)
                     matrixZeros: unexcusedAbsences,
-                    matrixOnes: presentCount
+                    matrixOnes: presentCount,
+                    // Add list of students with unexcused absences
+                    unexcusedStudents: unexcusedStudents
                 });
             });
             
@@ -13200,17 +13222,16 @@ ${environment.tips.slice(0, 3).join('\n')}
                     // Show top 10 dates with highest unexcused absences
                     const topAbsenceDates = dateAbsenceAnalysis.slice(0, 10);
                     
-                    const datesTableData = topAbsenceDates.map(item => [
-                        item.date,
-                        item.unexcusedAbsences.toString(),
-                        item.presentCount.toString(),
-                        item.excusedAbsences.toString(),
-                        `${item.absenteeismRate.toFixed(1)}%`,
-                        `${item.matrixZeros}/${item.accountableStudents}` // Matrix representation
-                    ]);
-                    
-                    doc.autoTable({
-                        head: [['Date', 'Unexcused\nAbsent', 'Present', 'Excused\nAbsent', 'Absence\nRate', 'Matrix\n(0s/Total)']],
+                const datesTableData = topAbsenceDates.map(item => [
+                    item.date,
+                    item.unexcusedAbsences.toString(),
+                    item.presentCount.toString(),
+                    item.excusedAbsences.toString(),
+                    `${item.absenteeismRate.toFixed(1)}%`,
+                    `${item.matrixZeros}/${item.accountableStudents}`, // Matrix representation
+                    item.unexcusedStudents.join(', ') // List of students with unexcused absences
+                ]);                    doc.autoTable({
+                        head: [['Date', 'Unexcused\nAbsent', 'Present', 'Excused\nAbsent', 'Absence\nRate', 'Matrix\n(0s/Total)', 'Unexcused Students']],
                         body: datesTableData,
                         startY: yPosition,
                         theme: 'striped',
@@ -13229,7 +13250,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                             2: { halign: 'center', cellWidth: 18 },  // Present
                             3: { halign: 'center', cellWidth: 20 },  // Excused
                             4: { halign: 'center', cellWidth: 20 },  // Rate
-                            5: { halign: 'center', cellWidth: 25, fontStyle: 'bold' }   // Matrix representation
+                            5: { halign: 'center', cellWidth: 25, fontStyle: 'bold' },   // Matrix representation
+                    6: { halign: 'left', cellWidth: 60 }    // Unexcused students list
                         },
                         styles: {
                             fontSize: 8,
