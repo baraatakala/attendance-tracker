@@ -6652,7 +6652,7 @@
                     
                     <div>
                         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #2196F3;">
-                            <h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">� Email Workflow:</h4>
+                            <h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">  Email Workflow:</h4>
                             <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.4;">
                                 <strong>Step 1:</strong> This will open your email client with pre-filled content
                                 <br><strong>Step 2:</strong> Download PDF from Analytics section (Export PDF button)
@@ -6666,7 +6666,7 @@
                         <button type="button" onclick="closeEmailForm()" 
                                 style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
                         <button type="button" id="sendEmailBtn" onclick="sendSimpleEmail()" 
-                                style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">� Send Email</button>
+                                style="flex: 1; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">  Send Email</button>
                     </div>
                 </form>
             </div>
@@ -12422,18 +12422,28 @@ ${environment.tips.slice(0, 3).join('\n')}
                 const classAverageWeightedScore = attendanceRatesWithWeights.length > 0 ? 
                     (attendanceRatesWithWeights.reduce((sum, student) => sum + student.weightedScore, 0) / attendanceRatesWithWeights.length).toFixed(1) : '0.0';
                 
+                // Get matrix analysis data from the dashboard
+                const worstDate = document.getElementById('worstAbsenceDate').textContent;
+                const maxAbsences = document.getElementById('maxAbsences').textContent;
+                const avgAbsenteeism = document.getElementById('avgAbsenteeism').textContent;
+                const matrixZeros = document.getElementById('matrixZeros').textContent;
+
                 const summaryData = [
                     ['Total Records', totalRecords.toString()],
                     ['Total Students', totalStudents.toString()],
                     ['Present Records', presentRecords.toString()],
+                    ['Days Covered', globalDaysCovered.toString()],
                     ['Excused Absences', totalVacation.toString()],
-                    ['Total Absences', totalAbsent.toString()],
                     ['Unexcused Absences', unexcusedAbsent.toString()],
-                    ['Raw Attendance Rate', `${rawAttendanceRate}%`],
-                    ['Effective Attendance Rate', `${effectiveAttendanceRate}%`],
-                    ['Class Average Rate', `${classAverageRate}%`],
-                    ['Class Average Weighted Score', `${classAverageWeightedScore}`],
-                    ['Days Covered', globalDaysCovered.toString()]
+                    ['Total Absences', totalAbsent.toString()],
+                    ['Average Absenteeism', avgAbsenteeism],
+                    ['Worst absence Date', worstDate],
+                    ['Class Attendance Rate', `${effectiveAttendanceRate}%`],
+                    ['Class individual Average Rate', `${classAverageRate}%`],
+                    ['Class individual Average Weighted Score', `${classAverageWeightedScore}`]
+                    
+                    
+                    
                 ];
                 
                 doc.autoTable({
@@ -12720,8 +12730,9 @@ ${environment.tips.slice(0, 3).join('\n')}
                     const weekToWeekChange = trendWeeklyRates.length > 1 ? 
                         trendWeeklyRates[trendWeeklyRates.length - 1] - trendWeeklyRates[trendWeeklyRates.length - 2] : 0;
                     
-                    // Statistical measures (using last 3 samples)
-                    const avgRate = rates_mean; // Already calculated above
+                    // Calculate average rate using ALL samples, not just last 3
+                    const avgRate = originalWeeklyRates.length > 0 ? 
+                        originalWeeklyRates.reduce((sum, rate) => sum + rate, 0) / originalWeeklyRates.length : 0;
                     
                     // Calculate minimum rate from FULL DATASET (not just last 3 samples) - if it's 0 (absent from day 1), use second minimum for more meaningful analysis
                     let minRate = Math.min(...originalWeeklyRates);
@@ -12920,12 +12931,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                         ? `${attendanceTrend.maxRate.toFixed(1)}%`
                         : `${student.rate.toFixed(1)}%`; // Use current rate instead of N/A when insufficient weekly data
                     
+                    // Get average rate from trend analysis
+                    const avgRate = typeof attendanceTrend === 'object' && attendanceTrend.avgRate !== undefined && attendanceTrend.avgRate !== null
+                        ? `${attendanceTrend.avgRate.toFixed(1)}%`
+                        : '0.0%';
+
                     advancedTableData.push([
                         (index + 1).toString(), // Add row number for reference
                         student.name,
                         `${student.rate}%`, // Rate column (moved from basic table)
                         student.weightedScore.toString(), // Weighted Score column (moved from basic table)
                         weeklyChange, // Weekly Rate Change column
+                        avgRate, // Average Rate from trend analysis
                         minRate, // Min Rate column
                         maxRate, // Max Rate column
                         typeof attendanceTrend === 'object' ? attendanceTrend.displayValue : attendanceTrend // Advanced Trend column with R² info
@@ -12940,7 +12957,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
                 
                 addSectionHeader(doc, 'Basic Attendance Summary', yPosition);
-                yPosition += 12;
+                yPosition += 6;
                 
                 doc.autoTable({
                     head: [['#', 'Student Name', 'Present', 'Absent', 'Num-Excuse', 'Effective Days', 'Late Records', 'On-Time']],
@@ -12996,10 +13013,10 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
                 
                 addSectionHeader(doc, 'Advanced Analytics & Trends', yPosition);
-                yPosition += 12;
+                yPosition += 6;
                 
                 doc.autoTable({
-                    head: [['#', 'Student Name', 'Rate', 'Weighted Score', 'Weekly Change', 'Min Rate', 'Max Rate', 'Trend']],
+                    head: [['#', 'Student Name', 'Rate', 'Weighted Score', 'Weekly Change', 'Avg Rate', 'Min Rate', 'Max Rate', 'Trend']],
                     body: advancedTableData,
                     startY: yPosition,
                     theme: 'striped',
@@ -13014,13 +13031,14 @@ ${environment.tips.slice(0, 3).join('\n')}
                     },
                     columnStyles: {
                         0: { halign: 'center', cellWidth: 8 },    // #
-                        1: { cellWidth: 38 },                     // Student Name
-                        2: { halign: 'center', cellWidth: 18 },   // Rate (moved from basic table)
-                        3: { halign: 'center', cellWidth: 22 },   // Weighted Score (moved from basic table)
-                        4: { halign: 'center', cellWidth: 22 },   // Weekly Change
-                        5: { halign: 'center', cellWidth: 20 },   // Min Rate
-                        6: { halign: 'center', cellWidth: 20 },   // Max Rate
-                        7: { halign: 'center', cellWidth: 48 }    // Trend
+                        1: { cellWidth: 35 },                     // Student Name (reduced)
+                        2: { halign: 'center', cellWidth: 15 },   // Rate (reduced)
+                        3: { halign: 'center', cellWidth: 20 },   // Weighted Score (reduced)
+                        4: { halign: 'center', cellWidth: 20 },   // Weekly Change (reduced)
+                        5: { halign: 'center', cellWidth: 18 },   // Avg Rate (reduced)
+                        6: { halign: 'center', cellWidth: 15 },   // Min Rate (reduced)
+                        7: { halign: 'center', cellWidth: 15 },   // Max Rate (reduced)
+                        8: { halign: 'center', cellWidth: 40 }    // Trend (reduced)
                     },
                     styles: {
                         fontSize: 8,
@@ -13039,6 +13057,14 @@ ${environment.tips.slice(0, 3).join('\n')}
                         if (data.section === 'body') {
                             // Color coding for Rate (moved from basic table - now column index 2)
                             if (data.column.index === 2 && data.cell.raw.includes('%')) { // Rate column
+                                const rate = parseFloat(data.cell.raw);
+                                if (rate >= 80) data.cell.styles.textColor = [46, 204, 113]; // Green
+                                else if (rate >= 60) data.cell.styles.textColor = [243, 156, 18]; // Orange
+                                else data.cell.styles.textColor = [220, 20, 20]; // Bright Red
+                            }
+
+                            // Color coding for Max Rate (column index 7)
+                            if (data.column.index === 7 && data.cell.raw.includes('%')) { // Max Rate column
                                 const rate = parseFloat(data.cell.raw);
                                 if (rate >= 80) data.cell.styles.textColor = [46, 204, 113]; // Green
                                 else if (rate >= 60) data.cell.styles.textColor = [243, 156, 18]; // Orange
@@ -13107,7 +13133,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                             }
                             
                             // Color coding for Min Rate (now column index 5)
-                            if (data.column.index === 5) { // Min Rate column
+                            if (data.column.index === 6) { // Min Rate column
                                 const minRateText = data.cell.raw.toString();
                                 const minRate = parseFloat(minRateText.replace('%', ''));
                                     if (minRate >= 90) {
@@ -13135,7 +13161,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                             }
                             
                             // Color coding for Max Rate (now column index 6)
-                            if (data.column.index === 6) { // Max Rate column
+                            if (data.column.index === 7) { // Max Rate column
                                 const maxRateText = data.cell.raw.toString();
                                 const maxRate = parseFloat(maxRateText.replace('%', ''));
                                     if (maxRate >= 95) {
@@ -13163,7 +13189,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                             }
                             
                             // Color coding for Advanced Trend Analysis
-                            if (data.column.index === 7) { // Trend column (now index 7)
+                            if (data.column.index === 8) { // Trend column (now index 7)
                                 const trendText = data.cell.raw.toString();
                                 
                                 if (trendText.includes('+')) {
@@ -13212,8 +13238,8 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
                 
                 // Add Dates with Highest Unexcused Absences Analysis (Matrix Intelligence)
-                addSectionHeader(doc, 'DATES WITH HIGHEST UNEXCUSED ABSENCES (MATRIX ANALYSIS)', yPosition);
-                yPosition += 12;
+                addSectionHeader(doc, 'Attendance Overview by Date', yPosition);
+                yPosition += 6;
                 
                 // Use our intelligent matrix-based analysis
                 const dateAbsenceAnalysis = analyzeDatesByUnexcusedAbsences(filteredData, totalStudents, allClassDates);
@@ -13281,24 +13307,18 @@ ${environment.tips.slice(0, 3).join('\n')}
                 
                 // Time-Based Attendance Analytics
                 addSectionHeader(doc, 'TIME-BASED ATTENDANCE ANALYTICS', yPosition);
-                yPosition += 12;
+                yPosition += 4;
                 
                 // Calculate time-based analytics from the filtered data
                 const timeAnalytics = calculateTimeBasedAnalyticsForPDF(filteredData);
                 
-                // Add analytics explanation
-                doc.setFontSize(10);
-                doc.text('Analysis of attendance timing patterns based on 1:00-1:15 PM on-time window:', 20, yPosition);
-                yPosition += 10;
+                
                 
                 // Time analytics table
                 const timeTableData = [
-                    ['Category', 'Count'],
+                    ['Punctuality Rate', `${timeAnalytics.punctualityRate}%`],
                     ['On-Time Records (1:00-1:15 PM)', timeAnalytics.onTimeRecords.toString()],
-                    ['Late Records (After 1:15 PM)', timeAnalytics.lateRecords.toString()],
-                    ['Absent Records', timeAnalytics.absentRecords.toString()],
-                    ['Total Records', timeAnalytics.totalRecords.toString()],
-                    ['Punctuality Rate', `${timeAnalytics.punctualityRate}%`]
+                    ['Late Records (After 1:15 PM)', timeAnalytics.lateRecords.toString()]
                 ];
                 
                 doc.autoTable({
@@ -13340,7 +13360,7 @@ ${environment.tips.slice(0, 3).join('\n')}
                 }
                 
                 addSectionHeader(doc, 'EFFECTIVE ATTENDANCE RATE TREND (LAST FOUR RATES)', yPosition);
-                yPosition += 12;
+                yPosition += 6;
                 
                 // Calculate effective attendance rate trend using last four rates
                 const effectiveRateTrend = calculateEffectiveAttendanceRateTrend(filteredData, totalStudents, allClassDates);
@@ -14708,7 +14728,7 @@ File: ${fileName}`, 'success');
                            dataQuality.fair ? 'Fair' : 'Limited'
             };
             
-            console.log('� Final synthetic record result for', student.name, ':', result);
+            console.log('  Final synthetic record result for', student.name, ':', result);
             return result;
         }
 
@@ -16469,7 +16489,7 @@ File: ${fileName}`, 'success');
                 if (finalY < 250) {
                     doc.setFontSize(14);
                     doc.setFont(undefined, 'bold');
-                    doc.text('Summary Statistics', 14, finalY + 20);
+                    doc.text('Summary Statistics', 10, finalY + 15);
                     
                     doc.setFontSize(11);
                     doc.setFont(undefined, 'normal');
@@ -17294,7 +17314,7 @@ Attendance Tracker System v3.0
             closeEmailForm();
             
             // Show success message
-            alert('� Email opened successfully!\n\n� Remember to:\n1. Download the PDF from Analytics section\n2. Attach it to the email\n3. Send the email');
+            alert('  Email opened successfully!\n\n  Remember to:\n1. Download the PDF from Analytics section\n2. Attach it to the email\n3. Send the email');
         }
         
         // Helper function to calculate email analytics
